@@ -26,7 +26,7 @@ To get started:
 7. Join the discord server to get important info and updates: https://discord.gg/S3eVmxD.
 8. Run the setup file.
 9. Enter your details of your personal account and your discord bot's token.
-10. Open Main.py in an IDE or IDLE change the `owner_id` using your `discord id`, your `botid64`, `owener_name` and your `command_prefix` if you want.
+10. Open Main.py in an IDE or IDLE change the `owner_id` using your discord id, your `botid64`, `owner_name` and your `command_prefix` if you want.
 11. Run Main.py using F5 if you are using IDLE.
 12. In your discord sever check your bot is online and type 'info' to check everything is working, everything is DM safe if you would rather DM commands.
 
