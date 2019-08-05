@@ -20,7 +20,7 @@ To get started:
     
     vi) Create a new discord server.
     
-    vii) Invite your bot using OAuth2, go to scopes and click bot and copy the URL.
+    vii) Invite your bot using OAuth2, go to scopes and click bot and copy and paste the URL into your search bar.
     
 6. Clone the repo to somewhere on your HDD or a VPS.
 7. Join the discord server to get important info and updates: https://discord.gg/S3eVmxD.
