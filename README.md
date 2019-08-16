@@ -1,5 +1,5 @@
 # tf2-autocord
-A Discord bot that effectively negates the need for Steam Chat
+A Discord bot that effectively negates the need for Steam Chat, there is a premium version of this if you want it is 2 Mann Co. Supply Crate Keys, message Gobot1234#2435 or Eithan#1553 for more details
 
 To get started:
 
