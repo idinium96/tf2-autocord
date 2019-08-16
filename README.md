@@ -11,20 +11,21 @@ To get started:
 
 5. [Create your self a discord bot](https://discordapp.com/developers/applications/).
 
-        i) Click New Application.
-
-        ii) Type your bot's name.
-
-        iii) Click on the sidebar where it says bot.
-
-        iv) Click Add Bot.
-
-        v) Then reveal your token, store this for later.
-
-        vi) Create a new discord server.
-
-        vii) Invite your bot using OAuth2, go-to scopes and click bot and copy and paste the URL into your search bar.
+- Click New Application.
+        
+- Type your bot's name.
+        
+- Click on the sidebar where it says bot.
+        
+- Click Add Bot.
+        
+- Then copy your token, store this for later.
+        
+- Create a new discord server.
+        
+- Invite your bot using OAuth2, go-to scopes and click bot and copy and paste the URL into your search bar.
     
+    
 6. Clone the repo to somewhere on your HDD or a VPS.
 
 7. [Join the discord server](https://discord.gg/S3eVmxD) to get important info and updates.
