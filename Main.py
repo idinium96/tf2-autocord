@@ -114,15 +114,8 @@ async def help(ctx):
     embed.add_field(name=command_prefix + 'help', value='Brings up this message', inline=True)
     embed.add_field(name=command_prefix + 'info',
                     value='Gives important information about the bot', inline=True)
-    embed.add_field(name=command_prefix + 'scc', value='Creates a Steam chat command to send to the bot', inline=False)
-    embed.add_field(name=command_prefix + 'togprofit',
-                    value='Toggles on or off the  message sent at the end of every day giving the days profit',
-                    inline=True)
-    embed.add_field(name=command_prefix + 'togpremium',
-                    value='Toggles on or off the time for alerts for when bp.tf premium is going to run out',
-                    inline=True)
     embed.add_field(name=command_prefix + 'add/update/remove/profit',
-                    value='Send commands to your bot they allow chaining of commands', inline=False)
+                    value='Send commands to your bot', inline=False)
     embed.add_field(name=command_prefix + 'send [message to send]',
                     value='Allows you to send anything to your Steam bot', inline=False)
     embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435")
@@ -132,13 +125,13 @@ async def help(ctx):
 @bot.command()
 async def info(ctx):
     embed = discord.Embed(title=" ", color=color)
-    embed.set_author(name="Info about this bot")
+    embed.set_author(name="Info about this bot - Free")
     embed.add_field(name='Command prefix', value='Your command prefix is (' + command_prefix + '). Type '
                                                  + command_prefix + 'help to list the commands you can use',
                     inline=False)
     embed.add_field(name='About the bot',
-                    value='It was coded in python to help you manage your tf2automtic bot. DM me with any '
-                          'suggestions or features you would like on this bot', inline=False)
+                    value='It was coded in python to help you manage your tf2automatic bot. DM me with any '
+                          'suggestions or features you would like on this bot, The premium version of this code is 2 keys, again feel free to DM me for me info', inline=False)
     embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435")
     await ctx.send(embed=embed)
 
@@ -147,165 +140,20 @@ async def info(ctx):
 
 @bot.command()
 async def add(ctx, *, content: str):
-    channel = ctx.message.channel
-    if 'names=' in content:
-        mul = 'these '
-        mul2 = ' commands '
-        msgs = content[6:]
-        content = msgs.split(', ')
-        content = [addm + x for x in content]
-
-    elif 'name=' in content:
-        mul = 'this '
-        mul2 = ' command '
-        msgs = content[5:]
-        content = addm + msgs
-
-    dscontent = str(content)
-    dscontent = dscontent.replace('[', '')
-    dscontent = dscontent.replace(']', '')
-    await ctx.send('Do you want to send ' + mul + dscontent + mul2 + 'to the bot?')
-    response = 0
-    while response == 0:
-        def check(m):
-            return m.content and m.channel == channel
-
-        choice = await bot.wait_for('message', check=check)
-        choice = choice.clean_content.lower()
-
-        if choice == 'y' or choice == 'yes':
-            response = 1
-            await ctx.send('Sent ' + mul + 'messages to the bot ' + dscontent)
-            global botresp
-            botresp = False
-            while botresp == False:
-                async with ctx.typing():
-                    global storeresp
-                    storeresp = 1
-                    await asyncio.sleep(5)
-                    nsend = 0
-                    while nsend < len(content):
-                        client.get_user(bot64id).send_message(content[nsend])
-                        nsend += 1
-                        await asyncio.sleep(3)
-                        await ctx.send(sbotresp)
-
-                    botresp = True
-
-
-        elif choice == 'n' or choice == 'no':
-            await ctx.send("The command hasn't been sent")
-            response = 1
-        else:
-            await ctx.send('Try Again')
+    client.get_user(bot64id).send_message(addm + content)
+    await ctx.send('Sent ' + addm + ' ' + content + 'to the bot')
 
 
 @bot.command()
 async def update(ctx, *, content: str):
-    channel = ctx.message.channel
-    if 'names=' in content:
-        mul = 'these '
-        mul2 = ' commands '
-        msgs = content[6:]
-        content = msgs.split(', ')
-        content = [updatem + x for x in content]
-
-    elif 'name=' in content:
-        mul = 'this '
-        mul2 = ' command '
-        msgs = content[5:]
-        content = updatem + msgs
-
-    dscontent = str(content)
-    dscontent = dscontent.replace('[', '')
-    dscontent = dscontent.replace(']', '')
-    await ctx.send('Do you want to send ' + mul + dscontent + mul2 + 'to the bot?')
-    response = 0
-    while response == 0:
-        def check(m):
-            return m.content and m.channel == channel
-
-        choice = await bot.wait_for('message', check=check)
-        choice = choice.clean_content.lower()
-
-        if choice == 'y' or choice == 'yes':
-            response = 1
-            await ctx.send('Sent ' + mul + 'messages to the bot ' + dscontent)
-            global botresp
-            botresp = False
-            while botresp == False:
-                async with ctx.typing():
-                    global storeresp
-                    storeresp = 1
-                    await asyncio.sleep(5)
-                    nsend = 0
-                    while nsend < len(content):
-                        client.get_user(bot64id).send_message(content[nsend])
-                        nsend += 1
-                        while sbotresp is not None:
-                            await ctx.send(sbotresp)
-                    botresp = True
-
-        elif choice == 'n' or choice == 'no':
-            response = 1
-            await ctx.send("The command hasn't been sent")
-
-        else:
-            await ctx.send('Try Again')
+    client.get_user(bot64id).send_message(updatem + content)
+    await ctx.send('Sent ' + updatem + ' ' + content + 'to the bot')
 
 
 @bot.command()
 async def remove(ctx, *, content: str):
-    channel = ctx.message.channel
-    if 'items=' in content:
-        mul = 'these '
-        mul2 = ' commands '
-        msgs = content[6:]
-        content = msgs.split(', ')
-        content = [removem + x for x in content]
-
-    elif 'item=' in content:
-        mul = 'this '
-        mul2 = ' command '
-        msgs = content[5:]
-        content = removem + msgs
-    dscontent = str(content)
-    dscontent = dscontent.replace('[', '')
-    dscontent = dscontent.replace(']', '')
-    await ctx.send('Do you want to send ' + mul + dscontent + mul2 + 'to the bot?')
-    response = 0
-    while response == 0:
-        def check(m):
-            return m.content and m.channel == channel
-
-        choice = await bot.wait_for('message', check=check)
-        choice = choice.clean_content.lower()
-
-        if choice == 'y' or choice == 'yes':
-            await ctx.send('Sent ' + mul + 'messages to the bot ' + dscontent)
-            global botresp
-            botresp = False
-            while botresp == False:
-                async with ctx.typing():
-                    global storeresp
-                    storeresp = 1
-                    await asyncio.sleep(5)
-                    nsend = 0
-                    while nsend < len(content):
-                        client.get_user(bot64id).send_message(content[nsend])
-                        nsend += 1
-                        await asyncio.sleep(3)
-                        await ctx.send(sbotresp)
-                        sbotresp = None
-
-                    botresp = True
-
-
-        elif choice == 'n' or choice == 'no':
-            await ctx.send("The command hasn't been sent")
-            response = 1
-        else:
-            await ctx.send('Try Again')
+    client.get_user(bot64id).send_message(removem + content)
+    await ctx.send('Sent ' + removem + ' ' + content + 'to the bot')
 
 
 @bot.command()
