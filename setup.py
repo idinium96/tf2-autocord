@@ -12,7 +12,9 @@ preferences = {
 sensitives = {
     "Bot Token": "Copy this from discord.app and the bot section in your application",
     "Username": "This is your steam username",
-    "Password": "This is your steam password"
+    "Password": "This is your steam password",
+    "identity_secret": "This is your personal ID secret",
+    "shared_secret": "Tf you don't know how to get these check the github repo, or download the other version of the code"
 }
 
 path = "Login details/"
