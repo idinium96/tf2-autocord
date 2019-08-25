@@ -1,5 +1,5 @@
 # tf2-autocord
-A Discord bot that effectively negates the need for Steam Chat, there is a premium version of this if you want it is 2 Mann Co. Supply Crate Keys, message Gobot1234#2435 or Eithan#1553 for more details
+A Discord bot that effectively negates the need for Steam Chat. Put any issues in #help or if you find any errors in my code put them in #lol-wtf-happened
 
 To get started:
 
@@ -28,14 +28,10 @@ To get started:
 
 5. Run the setup file, you should see some CMD prompts open and close leaving them is fine.
 
-6. Enter your details of your personal account and your discord bot's token, in sensitive details.json replacing the words in the "".
-
-7. Open preferences.json  and fill in all your details replacing the word in the "", if you can't figure out how to get, check on the internet and then if you still can't DM me or use the #help channel on the discord server.
+6. Fill in all your prefernces, if you can't figure out how to get them, check on the internet and then if you still can't DM me or use the #help channel on the discord server. Then enter your details of your personal account and your discord bot's token, in IDLE.
 
 8. Run Main.py using F5 if you are using IDLE.
 
 9. In your discord sever check your bot is online and type your `command_prefix` + 'info' to check everything is working, everything is DM safe if you would rather DM commands.
-
-
 
 If you have any issues DM me :)
