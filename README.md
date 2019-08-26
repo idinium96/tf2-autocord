@@ -3,7 +3,7 @@ A Discord bot that effectively negates the need for Steam Chat. Put any issues i
 
 To get started:
 
-1. Download [Python version 3.6.9](https://www.python.org/downloads/release/python-369/).
+1. Download [Python version 3.7.4](https://www.python.org/downloads/release/python-374/).
 
 2. [Create your self a discord bot](https://discordapp.com/developers/applications/).
 
