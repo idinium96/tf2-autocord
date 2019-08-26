@@ -23,8 +23,8 @@ To get started:
     
     
 3. Clone the appropriate files 
-(The same setup and main files need to be used together
-The cli_login version requires the owner to input their 2FA code every time the bot is ran
+(The same setup and main files need to be used together.
+The cli_login version requires the owner to input their 2FA code every time the bot is ran.
 The automated login version however requires that you have your id and shared secret for your main account.)
 to somewhere on your HDD or a VPS.
 
