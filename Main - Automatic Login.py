@@ -1177,7 +1177,3 @@ t1 = threading.Thread(target=discordside)
 t2 = threading.Thread(target=steamside)
 t1.start()
 t2.start()
-
-'''
-https://steam.readthedocs.io/en/latest/api/steam.client.html#steam.client.SteamClient.login
-'''
