@@ -121,11 +121,10 @@ async def bgcheck():
             color2 = int('FF0000', 16)
         else:
             color2 = color
-        if 'Received offer' in sbotresp:
-            if 'view it here' in sbotresp:
-                image = sbotresp.split('here ', 1)
-                message = sbotresp.replace(image[1], '')[:-1] + ':'
-                image = image[1]
+        if 'view it here' in sbotresp:
+            image = sbotresp.split('here ', 1)
+            message = sbotresp.replace(image[1], '')[:-1] + ':'
+            image = image[1]
             embed = discord.Embed(color=color2)
             embed.add_field(name='Trade: ', value=message, inline=False)
             embed.set_image(url=image)
