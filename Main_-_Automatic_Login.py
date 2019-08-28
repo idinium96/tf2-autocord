@@ -662,7 +662,7 @@ async def send(ctx, *, content: str):
     while botresp is False:
         async with ctx.typing():
             client.get_user(bot64id).send_message(content)
-            await ctx.send("Sent '``" + content + "`' to the bot")
+            await ctx.send("Sent '`" + content + "`' to the bot")
             await asyncio.sleep(3)
             botresp = True
 
