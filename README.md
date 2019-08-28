@@ -22,11 +22,11 @@ To get started:
         - Invite your bot using OAuth2, go-to scopes and click bot and copy and paste the URL into your search bar.
     
     
-3. Clone the appropriate files 
+3. Clone all the files `git clone https://github.com/Gobot1234/tf2-autocord.git Discord`
 (The same setup and main files need to be used together.
 The cli_login version requires the owner to input their 2FA code every time the bot is ran.
 The automated login version however requires that you have your id and shared secret for your main account.)
-to somewhere on your HDD or a VPS.
+to somewhere on your HDD or a VPS. Delete the uneccesary files.
 
 4. [Join the discord server](https://discord.gg/S3eVmxD) to get important info and updates.
 
