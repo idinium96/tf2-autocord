@@ -26,13 +26,13 @@ To get started:
 (The same setup and main files need to be used together.
 The cli_login version requires the owner to input their 2FA code every time the bot is ran.
 The automated login version however requires that you have your id and shared secret for your main account.)
-to somewhere on your HDD or a VPS. Delete the uneccesary files.
+to somewhere on your HDD or a VPS. Delete the unnecessary files.
 
 4. [Join the discord server](https://discord.gg/S3eVmxD) to get important info and updates.
 
 5. Run the setup file, you should see some CMD prompts open and close leaving them is fine.
 
-6. Fill in all your prefernces, if you can't figure out how to get them, check on the internet and then if you still can't DM me or use the #help channel on the discord server. Then enter your details of your personal account and your discord bot's token, in IDLE.
+6. Fill in all your preferences, if you can't figure out how to get them, check on the internet and then if you still can't DM me or use the #help channel on the discord server. Then enter your details of your personal account and your discord bot's token, in IDLE.
 
 7. Run Main.py using F5 if you are using IDLE.
 
