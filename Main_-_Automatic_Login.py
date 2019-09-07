@@ -1,26 +1,19 @@
 import gevent.monkey
+
 gevent.monkey.patch_socket()
 gevent.monkey.patch_ssl()
 
-from steam import guard
-import steam
-from steam.client import SteamClient
-from steam.enums import EResult
-import logging
-
 import discord
 from discord.ext import commands, tasks
-
-import asyncio
-import time
-import datetime
-import threading
 import json
-from platform import python_version
-import os
+import os, sys, traceback
 
-
-# read details ---------------------------------------------------------------------------------------------------------
+from steam.client import SteamClient
+from steam import guard
+from steam.enums import EResult
+import logging
+import datetime, time, asyncio
+import threading
 
 with open("Login details/sensitive details.json", "r") as f:  # reads your details
     login = f.read()
@@ -40,32 +33,21 @@ with open('Login details/preferences.json', 'r') as f:
     global bot64id
     bot64id = int(preferences["Bot's Steam ID"])
     owner_name = preferences["Owner Name"]
-    global command_prefix
     command_prefix = preferences["Command Prefix"]
     color = int(preferences["Embed Colour"], 16)
-    templocation = preferences["Path to Temp"]
 
-# main program ---------------------------------------------------------------------------------------------------------
-
-bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), case_insensitive=True)
-bot.remove_command('help')
+usermessage = 0
+logged_on = 0
+botresp = False
+version = 'V.1.2'
+dsdone = 0
+sbotresp = 0
+toggleprofit = 0
 
 updatem = command_prefix + 'update name='
 removem = command_prefix + 'remove item='
 addm = command_prefix + 'add name='
-
-sbotresp = 0
-usermessage = 0
-logged_on = 0
-toggleprofit = 0
-version = 'V.1.2'
-botresp = False
-dsdone = 0
-acceptedfiles = ['history', 'history.json', 'inventory', 'inventory.json', 'schema', 'schema.json', 'listings',
-                 'listings.json']
-
-activity = owner_name + "'s trades and for " + command_prefix
-activity = discord.Activity(name=activity, type=discord.ActivityType.watching)
+client = SteamClient()
 
 tz = datetime.datetime.now(datetime.timezone.utc).astimezone().tzname()  # makes the time zone variable
 if 'Summer Time' in tz:
@@ -77,36 +59,51 @@ offset = str(offset / 60 / 60 * -1)
 offset = '+' + offset[:-2]
 tz = tz + offset
 
-
-def getcurrenttime():
-    global currenttime
-    currenttime = time.asctime()[11:-8]
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), case_insensitive=True)
+bot.remove_command('help')
+activity = discord.Activity(name=owner_name + "'s trades and for " + command_prefix, type=discord.ActivityType.watching)
 
 
 def is_owner(ctx):
-    return ctx.author.id == owner_id
+    return ctx.message.author.id == owner_id
 
 
-# DM's -----------------------------------------------------------------------------------------------------------------
+# cogs -----------------------------------------------------------------------------------------------------------------
+
+initial_extensions = ['Cogs.discord',
+                      'Cogs.help']
+
+if __name__ == '__main__':
+    for extension in initial_extensions:
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            print(f'Failed to load extension {extension}.', file=sys.stderr)
+            traceback.print_exc()
+
+
+# loading --------------------------------------------------------------------------------------------------------------
 
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=activity)
-    bgcheck.start()
-    githubupdate.start()
+    # githubupdate.start()
+    bgcheck.start
     print("Bot is ready")
     print('Logged in as', bot.user.name,
           '\nThis is: ' + version)
-    global dsdone
-    dsdone = 1
-    await asyncio.sleep(30)
 
-    while logged_on != 1:
-        await bot.get_user(owner_id).send('You aren\'t currently logged into your Steam account'
-                                          '\nTo do that type in your 2FA code into the console.')
-        await asyncio.sleep(60)
-    await bot.get_user(owner_id).send('I\'m online both Steam and Discord dealing with your Steam messages')
+
+@tasks.loop(hours=168)
+async def githubupdate():
+    os.system('cd ' + os.getcwd())
+    updateable = os.popen('git pull').read()
+    if 'Already up to date.' in updateable:
+        pass
+    else:
+        await bot.get_user(owner_id).send(
+            'There is an update to the repo, You will need to restart your program for the new update to take effect')
 
 
 @tasks.loop(seconds=5)
@@ -135,228 +132,13 @@ async def bgcheck():
         await bot.get_user(owner_id).send(embed=embed)
         if usermessage != 0:
             embed = discord.Embed(color=0xFFFF66)
-            embed.add_field(name='User Message:', value='You have a message from a user:\n{0}\nType {1}acknowledged'.format(usermessage, command_prefix), inline=False)
+            embed.add_field(name='User Message:',
+                            value='You have a message from a user:\n{0}\nType {1}acknowledged'.format(usermessage,
+                                                                                                      command_prefix),
+                            inline=False)
             await bot.get_user(owner_id).send(embed=embed)
             await asyncio.sleep(30)
         botresp = False
-
-
-@tasks.loop(hours=168)
-async def githubupdate():
-    os.system('cd ' + os.getcwd())
-    updateable = os.popen('git pull').read()
-    if 'Already up to date.' in updateable:
-        pass
-    else:
-        await bot.get_user(owner_id).send('There is an update to the repo, You will need to restart your program for the new update to take effect')
-
-# help -----------------------------------------------------------------------------------------------------------------
-
-@bot.command()
-@commands.check(is_owner)
-@commands.cooldown(rate=1, per=7200, type=commands.BucketType.user)
-async def suggest(ctx, *, suggestion):
-    author = ctx.message.author
-    embed = discord.Embed(color=0x2e3bad, description=suggestion)
-    embed.set_author(name="Message from " + str(author))
-    try:
-        await bot.get_user(340869611903909888).send(embed=embed)
-    except discord.HTTPException:
-        await ctx.send("I could not deliver your message. Perhaps it is too long?")
-    except:
-        await ctx.send("Alas, for reasons yet unknown to me, I could not deliver your message.")
-    else:
-        await ctx.send("I have delivered your message to Gobot1234#2435 (I may be in contact)"
-                       ", this command is limited to working every 2 hours so you can't spam me")
-
-
-@bot.command()
-@commands.check(is_owner)
-async def ping(ctx):
-    await ctx.send('Pong! {0} is online. Latency is {1} ms'.format(bot.user.name, round(bot.latency, 2)))
-
-
-@bot.command()
-@commands.check(is_owner)
-async def github(ctx):
-    url = 'https://github.com/Gobot1234/tf2-autocord/pulse'
-    embed = discord.Embed(title='GitHub Repo Infomation', color=0x2e3bad)
-    embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-    embed.add_field(name='Current Version', value=version, inline=True)
-    embed.add_field(name='GitHub Stats', value=url)
-    embed.add_field(name='Link to the repo', value='https://github.com/Gobot1234/tf2-autocord')
-    embed.add_field(name='What to check for an update', value=command_prefix + 'updaterepo')
-    await ctx.send(embed=embed)
-
-
-@bot.command()
-@commands.check(is_owner)
-async def updaterepo(ctx):
-    await ctx.send('Attempting to update to the latest version of the code')
-    os.system('cd ' + os.getcwd())
-    updateable = os.popen('git pull').read()
-    if 'Already up to date.' in updateable:
-        await ctx.send('You are using the latest version of the code')
-    else:
-        await ctx.send('Updating the repo, you need to restart your program for the new update to take effect')
-
-
-@bot.command()
-@commands.check(is_owner)
-async def help(ctx, page=''):
-    page = page.lower()
-    if command_prefix in page:
-        page.replace(command_prefix, '')
-    if page == '' or page == 'help':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name='Help, you can get help with any of these commands individually by typing:'
-                              '\n' + command_prefix + 'help [command]')
-        embed.add_field(name=command_prefix + 'help', value='Brings up this message', inline=True)
-        embed.add_field(name=command_prefix + 'info',
-                        value='Gives important information about the bot', inline=True)
-        embed.add_field(name=command_prefix + 'help steam', value='Lists all of the Steam based commands', inline=True)
-        embed.add_field(name=command_prefix + 'help discord', value='Lists all of the Discord based commands',
-                        inline=True)
-        embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435")
-    elif page == 'steam':
-        embed = discord.Embed(title=" ", color=0x00adee)
-        embed.set_author(name='Steam Bound commands are as follows:')
-        embed.add_field(name=command_prefix + 'scc', value='Creates a Steam chat command to send to the bot',
-                        inline=False)
-        embed.add_field(name=command_prefix + 'togprofit [time]',
-                        value='Toggles on or off the  message sent at the end of every day giving the days profit',
-                        inline=True)
-        embed.add_field(name=command_prefix + 'add/update/remove/profit',
-                        value='Send commands to your bot they allow chaining of commands', inline=False)
-        embed.add_field(name=command_prefix + 'send [message to send]',
-                        value='Allows you to send anything to your Steam bot', inline=False)
-    elif page == 'discord':
-        embed = discord.Embed(title=" ", color=0x7289da)
-        embed.set_author(name='Discord Bound commands are as follows:')
-        embed.add_field(name=command_prefix + 'togpremium',
-                        value='Toggles on or off the time for alerts for when bp.tf premium is going to run out',
-                        inline=True)
-        embed.add_field(name=command_prefix + 'get [filename in temp]',
-                        value='Gets files from your bot\'s temp folder', inline=False)
-        embed.add_field(name=command_prefix + 'acknowledged',
-                        value='Acknowledge a user\'s message', inline=False)
-        embed.add_field(name=command_prefix + 'github',
-                        value='Links you to the GitHub repo', inline=False)
-        embed.add_field(name=command_prefix + 'ping',
-                        value='Gives your bot\'s ping', inline=False)
-        embed.add_field(name=command_prefix + 'get [filename in temp]',
-                        value='Gets files from your bot\'s temp folder', inline=False)
-        embed.add_field(name=command_prefix + 'suggest',
-                        value='Suggest a feature to be implemented', inline=False)
-        embed.add_field(name=command_prefix + 'donate',
-                        value='Want to feel warm inside? Donations are appreciated', inline=False)
-        embed.add_field(name=command_prefix + 'backpack',
-                        value='Links you to your bp.tf profile and your bot\'s backpack', inline=False)
-    # single commands
-    elif page == 'scc':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'scc')
-        embed.add_field(name='Usage of scc',
-                        value='Scc should be relatively straight forward to use, go through the process like you would normally.',
-                        inline=True)
-    elif page == 'togprofit':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'togprofit [time]')
-        embed.add_field(name='Usage of togprofit',
-                        value='Togprofit can have the time that '
-                              + command_prefix + 'profit will be sent to your bot, passed into it in the form of HH:MM.',
-                        inline=True)
-    elif page == 'add' or page == 'update' or page == 'remove' or page == 'profit':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'add/update/remove/profit')
-        embed.add_field(name='Usage of add/update/remove/profit',
-                        value='These commands have the exact same functionality as the normally expect,'
-                              ' except you can chain commands by using names/items= and separate items '
-                              'by a comma and space.',
-                        inline=True)
-    elif page == 'send':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'send [messaage]')
-        embed.add_field(name='Usage of send',
-                        value='These commands have the exact same functionality as the normally expect,'
-                              ' except you can chain commands by using names/items= and separate items '
-                              'by a comma and space.',
-                        inline=True)
-    elif page == 'togpremium':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'togpremium')
-        embed.add_field(name='Usage of togpremium',
-                        value='Togpremium is used to set an alarm for 2 months - 1 day,'
-                              ' mainly to be remind you your bp.tf premium subscription is about to run out.',
-                        inline=True)
-    elif page == 'get':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'get [file]')
-        embed.add_field(name='Usage of get',
-                        value='Get is used to retrive files from your bot\'s temp folder, you can request'
-                              ' (' + str(acceptedfiles) + ').', inline=True)
-    elif page == 'suggest':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'suggest')
-        embed.add_field(name='Usage of suggest',
-                        value='Suggest is used to suggest a feature to the developer of the code, '
-                              'it has a two hour message cooldown.', inline=True)
-    elif page == 'donate':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'donate')
-        embed.add_field(name='Usage of donate',
-                        value='Donate is used to donate to support the development of the code, '
-                              'all donations are greatly appreciated', inline=True)
-    elif page == 'backpack':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'backpack')
-        embed.add_field(name='Usage of backpack',
-                        value='Backpack is used to get your backpack and your bot\'s.', inline=True)
-    elif page == 'updaterepo':
-        embed = discord.Embed(title=" ", color=color)
-        embed.set_author(name=command_prefix + 'updaterepo')
-        embed.add_field(name='Usage of updaterepo',
-                        value='Used to update the repo (only works if you cloned using git).', inline=True)
-    else:
-        await ctx.send('**Error 404:** Page not found ¯\_(ツ)_/¯')
-    await ctx.send(embed=embed)
-
-
-@bot.command()
-@commands.check(is_owner)
-async def info(ctx):
-    embed = discord.Embed(title='Version is ' + version, color=color)
-    embed.set_thumbnail(
-        url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.png?size=1024')
-    embed.set_author(name="Info about this bot")
-    embed.add_field(name='Command prefix', value='Your command prefix is (' + command_prefix + '). Type '
-                                                 + command_prefix + 'help to list the commands you can use',
-                    inline=False)
-    embed.add_field(name='About the bot',
-                    value='It was coded in python to help you manage your tf2automtic bot. DM me with any '
-                          'suggestions or features you would like on this bot', inline=False)
-    embed.add_field(name='Discord.py Version',
-                    value=discord.__version__ + ' works with versions 1.1+ of Discord.py',
-                    inline=True)
-    embed.add_field(name='Python Version',
-                    value=python_version() + ' works with versions 3+',
-                    inline=True)
-    embed.add_field(name='Steam Version',
-                    value=steam.__version__ + ' works with versions 3.4+ of python',
-                    inline=True)
-    embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435")
-    await ctx.send(embed=embed)
-
-
-# toggle commands ------------------------------------------------------------------------------------------------------
-
-
-@bot.command()
-@commands.check(is_owner)
-async def acknowledged(ctx):
-    global usermessage
-    usermessage = 0
-    await ctx.send('Acknowledged the user\'s message')
 
 
 @bot.command()
@@ -374,72 +156,23 @@ async def togprofit(ctx, profittime="23:59"):
         getcurrenttime()
         if profittime == currenttime:
             client.get_user(bot64id).send_message(command_prefix + 'profit')
-            await ctx.send('You have made ' + sbotresp)
+            await ctx.send(f'You have made {sbotresp}')
             await asyncio.sleep(61)
 
         elif currenttime != profittime:
             await asyncio.sleep(5)
 
 
-@bot.command()
-@commands.check(is_owner)
-async def togpremium(ctx):
-    global togglepremium
-    if togglepremium == 0:
-        togglepremium = 1
-        await ctx.send(
-            'Premium Alerts now toggled on (this will send you a message when 1 months and 29 days have gone past)')
-    elif togglepremium == 1:
-        togglepremium = 0
-        await ctx.send('Premium Alerts now toggled off')
-
-    while togglepremium == 1:
-        await asyncio.sleep(4654687)  # 2 months in seconds - 1 day = 4654687 seconds
-        await ctx.send('You may wish to renew your premium subscription')
-
-
-# normal ---------------------------------------------------------------------------------------------------------------
-
-
-@bot.command()
-@commands.check(is_owner)
-async def donate(ctx):
-    embed = discord.Embed(title=' ', color=0x2e3bad)
-    embed.set_thumbnail(
-        url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.png?size=1024')
-    embed.add_field(name='Want to donate?',
-                    value='https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2')
-    embed.set_footer(text='Thank you for any donations')
-    await ctx.send(embed=embed)
-
-
-@bot.command()
+@bot.command
 @commands.check(is_owner)
 async def backpack(ctx):
     embed = discord.Embed(title=' ', color=0x58788F)
     embed.set_thumbnail(
         url='https://steamuserimages-a.akamaihd.net/ugc/44226880714734120/EE4DAE995040556E8013F583ACBA971846FA1E2B/')
-    embed.add_field(name='You backpack:', value='https://backpack.tf/profiles/' + str(client.steam_id), inline=False)
-    embed.add_field(name='Your bot\'s backpack', value='https://backpack.tf/profiles/' + str(bot64id))
+    embed.add_field(name='You backpack:', value=f'https://backpack.tf/profiles/{client.steam_id}',
+                    inline=False)
+    embed.add_field(name='Your bot\'s backpack', value=f'https://backpack.tf/profiles/{bot64id}')
     await ctx.send(embed=embed)
-
-
-@bot.command()
-@commands.check(is_owner)
-async def get(ctx, *, file: str):
-    file = file.lower()
-    if file in acceptedfiles:
-        file = '/' + file
-        if '.json' in file:
-            filename = file
-            file = templocation + file
-        elif '.json' not in file:
-            filename = file + '.json'
-            file = templocation + file + '.json'
-        file = discord.File(file, filename=filename)
-        await ctx.send('Here you go, don\'t do anything naughty with it.', file=file)
-    else:
-        await ctx.send('I\'m sorry you can request that file')
 
 
 @bot.command()
@@ -474,7 +207,7 @@ async def add(ctx, *, content: str):
         dscontent = dscontent.replace(', ', '`, `')
     elif string == 1:
         dscontent = '`' + content + '`'
-    await ctx.send('Do you want to send {0} {1} {2} to the bot?'.format(mul, dscontent, mul2))
+    await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
     response = 0
     while response == 0:
         choice = await bot.wait_for('message', check=check)
@@ -482,7 +215,7 @@ async def add(ctx, *, content: str):
 
         if choice == 'y' or choice == 'yes':
             response = 1
-            await ctx.send('Sent {0} {1} to the bot {2}'.format(mul, mul2, dscontent))
+            await ctx.send(f'Sent {mul} {mul2} to the bot {dscontent}')
             botresp = False
             while botresp is False:
                 async with ctx.typing():
@@ -507,7 +240,7 @@ async def add(ctx, *, content: str):
             await ctx.send('Try Again')
 
 
-@bot.command()
+@commands.command()
 @commands.check(is_owner)
 async def update(ctx, *, content: str):
     channel = ctx.message.channel
@@ -540,7 +273,7 @@ async def update(ctx, *, content: str):
         dscontent = dscontent.replace(', ', '`, `')
     elif string == 1:
         dscontent = '`' + content + '`'
-    await ctx.send('Do you want to send {0} {1} {2} to the bot?'.format(mul, dscontent, mul2))
+    await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
     response = 0
     while response == 0:
         choice = await bot.wait_for('message', check=check)
@@ -548,7 +281,7 @@ async def update(ctx, *, content: str):
 
         if choice == 'y' or choice == 'yes':
             response = 1
-            await ctx.send('Sent {0} {1} to the bot {2}'.format(mul, mul2, dscontent))
+            await ctx.send(f'Sent {mul} {mul2} to the bot {dscontent}')
             global botresp
             botresp = False
             while botresp is False:
@@ -608,7 +341,7 @@ async def remove(ctx, *, content: str):
         dscontent = dscontent.replace(', ', '`, `')
     elif string == 1:
         dscontent = '`' + content + '`'
-    await ctx.send('Do you want to send {0} {1} {2} to the bot?'.format(mul, dscontent, mul2))
+    await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
     response = 0
     while response == 0:
         choice = await bot.wait_for('message', check=check)
@@ -616,7 +349,7 @@ async def remove(ctx, *, content: str):
 
         if choice == 'y' or choice == 'yes':
             response = 1
-            await ctx.send('Sent {0} {1} to the bot {2}'.format(mul, mul2, dscontent))
+            await ctx.send(f'Sent {mul} {mul2} to the bot {dscontent}')
             global botresp
             botresp = False
             while botresp is False:
@@ -662,12 +395,9 @@ async def send(ctx, *, content: str):
     while botresp is False:
         async with ctx.typing():
             client.get_user(bot64id).send_message(content)
-            await ctx.send("Sent '`" + content + "`' to the bot")
+            await ctx.send("Sent `" + content + "` to the bot")
             await asyncio.sleep(3)
             botresp = True
-
-
-# scc ------------------------------------------------------------------------------------------------------------------
 
 
 @bot.command()
@@ -1156,8 +886,6 @@ async def scc(ctx):
             else:
                 await ctx.send('Please try again with Y/N')
 
-# threading ------------------------------------------------------------------------------------------------------------
-
 
 def discordside():
     bot.run(token)
@@ -1169,8 +897,6 @@ def steamside():
         while dsdone != 0:
             logging.basicConfig(format="%(asctime)s | %(message)s", level=logging.INFO)
             LOG = logging.getLogger()
-            global client
-            client = SteamClient()
             client.set_credential_location("Login Details/")  # where to store sentry files and other stuff  
 
             @client.on("error")
@@ -1199,9 +925,6 @@ def steamside():
                 logged_on = 1
                 LOG.info("-" * 30)
                 LOG.info("Logged on as: %s", client.user.name)
-                LOG.info("Community profile: %s", client.steam_id.community_url)
-                LOG.info("Last logon: %s", client.user.last_logon)
-                LOG.info("Last logoff: %s", client.user.last_logoff)
                 LOG.info("-" * 30)
 
             @client.on("chat_message")
@@ -1224,8 +947,7 @@ def steamside():
             result = client.login(username=username, password=password, two_factor_code=SA)
             if result != EResult.OK:
                 LOG.info("Failed to login: %s, restart the program" % repr(result))
-            while 1:
-                client.run_forever()
+            client.run_forever()
 
 
 t1 = threading.Thread(target=discordside)
