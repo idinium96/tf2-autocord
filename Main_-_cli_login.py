@@ -34,7 +34,7 @@ with open('Login details/preferences.json', 'r') as f:
 usermessage = 0
 logged_on = 0
 botresp = False
-version = 'V.1.2'
+version = 'V.1.2.1'
 dsdone = 0
 sbotresp = 0
 toggleprofit = 0
