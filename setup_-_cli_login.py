@@ -41,7 +41,7 @@ while choice != 'yes':
 path = "Login details/"
 
 print('Beginning to install necessary modules')
-os.system('pip install -U steam')
+os.system('py -3 -m pip install -U steam')
 os.system('py -3 -m pip install -U discord.py')
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
 
