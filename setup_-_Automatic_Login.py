@@ -48,6 +48,8 @@ path = "Login details/"
 print('Beginning to install necessary modules')
 os.system('py -3 -m pip install -U steam')
 os.system('py -3 -m pip install -U discord.py')
+os.system('py -3 -m pip install -U matplotlib')
+os.system('py -3 -m pip install -U psutuil')
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
 
 try:

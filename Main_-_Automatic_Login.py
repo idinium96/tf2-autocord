@@ -15,31 +15,27 @@ import logging
 import datetime, time, asyncio
 import threading
 
-with open("Login details/sensitive details.json", "r") as f:  # reads your details
-    login = f.read()
-    login = json.loads(login)
-    token = login["Bot Token"]
-    username = login["Username"]
-    password = login["Password"]
-    secrets = {
-        "identity_secret": login["Identity Secret"],
-        "shared_secret": login["Shared Secret"]
-    }
+login = json.loads(open("Login details/sensitive details.json", "r").read())
+token = login["Bot Token"]
+username = login["Username"]
+password = login["Password"]
+secrets = {
+    "identity_secret": login["Identity Secret"],
+    "shared_secret": login["Shared Secret"]
+}
 
-with open('Login details/preferences.json', 'r') as f:
-    preferences = f.read()
-    preferences = json.loads(preferences)
-    owner_id = int(preferences["Discord ID"])
-    global bot64id
-    bot64id = int(preferences["Bot's Steam ID"])
-    owner_name = preferences["Owner Name"]
-    command_prefix = preferences["Command Prefix"]
-    color = int(preferences["Embed Colour"], 16)
+preferences = json.loads(open('Login details/preferences.json', 'r').read())
+owner_id = int(preferences["Discord ID"])
+global bot64id
+bot64id = int(preferences["Bot's Steam ID"])
+owner_name = preferences["Owner Name"]
+command_prefix = preferences["Command Prefix"]
+color = int(preferences["Embed Colour"], 16)
 
 usermessage = 0
 logged_on = 0
 botresp = False
-version = 'V.1.2.1'
+version = 'V.1.2'
 dsdone = 0
 sbotresp = 0
 toggleprofit = 0
@@ -68,28 +64,11 @@ def is_owner(ctx):
     return ctx.message.author.id == owner_id
 
 
-# cogs -----------------------------------------------------------------------------------------------------------------
-
-initial_extensions = ['Cogs.discord',
-                      'Cogs.help']
-
-if __name__ == '__main__':
-    for extension in initial_extensions:
-        try:
-            bot.load_extension(extension)
-        except Exception as e:
-            print(f'Failed to load extension {extension}.', file=sys.stderr)
-            traceback.print_exc()
-
-
-# loading --------------------------------------------------------------------------------------------------------------
-
-
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=activity)
     # githubupdate.start()
-    bgcheck.start
+    bgcheck.start()
     print("Bot is ready")
     print('Logged in as', bot.user.name,
           '\nThis is: ' + version)

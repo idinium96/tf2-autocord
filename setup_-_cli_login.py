@@ -43,12 +43,14 @@ path = "Login details/"
 print('Beginning to install necessary modules')
 os.system('py -3 -m pip install -U steam')
 os.system('py -3 -m pip install -U discord.py')
+os.system('py -3 -m pip install -U matplotlib')
+os.system('py -3 -m pip install -U psutuil')
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
 
 try:
     os.mkdir(path)
 except OSError:
-    print("Creation of the directory %s failed" % path)
+    print(f"Creation of the directory {path} failed")
 else:
     print("Successfully created the directory %s " % path)
     with open(path + 'preferences.json', 'w+') as f:
