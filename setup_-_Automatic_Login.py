@@ -63,7 +63,7 @@ else:
     with open(path + 'sensitive details.json', 'w+') as f:
          f.write(json.dumps(sensitives, indent=2))
     with open(path + 'profit_graphing.json', 'w+') as f:
-         f.write(json.dumps(sensitives, indent=2))
+         f.write(json.dumps('{}', indent=2))
 
     os.remove('setup.py')
     os.remove('Main_-_cli_login.py')
