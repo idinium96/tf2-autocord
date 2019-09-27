@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from .loader import LoaderCog
 
 import os, sys
 
@@ -71,7 +72,7 @@ class HelperCog(commands.Cog, name='Help'):
             emoji = '<:goodcross:626829085682827266>'
         embed = discord.Embed(title='GitHub Repo Infomation', color=0x2e3bad)
         embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-        embed.add_field(name='Current Version', value=f'{self.bot.version} Up to date: {emoji}', inline=True)
+        embed.add_field(name='Current Version', value=f'{LoaderCog.__version__} Up to date: {emoji}', inline=True)
         embed.add_field(name='GitHub Stats', value='https://github.com/Gobot1234/tf2-autocord/pulse')
         embed.add_field(name='Link to the repo', value='[Here](https://github.com/Gobot1234/tf2-autocord)')
         embed.add_field(name='What to check for an update', value=f'{self.bot.command_prefix}updaterepo')
