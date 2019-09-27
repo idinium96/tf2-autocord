@@ -1,35 +1,22 @@
 import discord
 from discord.ext import commands, tasks
-import datetime, asyncio, time
+import asyncio, time
 
 
 togprofit = 0
-
-tz = datetime.datetime.now(datetime.timezone.utc).astimezone().tzname()  # makes the time zone variable
-if 'Summer Time' in tz:
-    tz = tz.replace(' Summer Time', '')
-elif 'Daylight Saving Time' in tz:
-    tz = tz.replace(' Daylight Saving Time', '')
-offset = time.timezone if (time.localtime().tm_isdst == 0) else time.altzone
-offset = str(offset / 60 / 60 * -1)
-offset = '+' + offset[:-2]
-tz = tz + offset
-
 
 def getcurrenttime():
     global currenttime
     currenttime = time.asctime()[11:-8]
 
 class SteamCog(commands.Cog, name='Steam'):
-    """Steam based commands"""
+    """Commands that are mainly owner restricted and only work if you are logged in"""
     def __init__(self, bot):
         self.bot = bot
         self.bgcheck.start()
 
     @tasks.loop(seconds=5)
     async def bgcheck(self):
-        global sbotresp
-        global usermessage
         if self.bot.botresp is True:
             if 'accepted' in self.bot.sbotresp:
                 color2 = int('5C7E10', 16)
@@ -37,12 +24,12 @@ class SteamCog(commands.Cog, name='Steam'):
                 color2 = discord.Color.red()
             else:
                 color2 = self.bot.color
-            if 'view it here' in self.bot.sbotresp:
+            if 'view it here' in self.bot.sbotresp and 'https' in self.bot.sbotresp:
                 image = self.bot.sbotresp.split('here ', 1)
                 message = self.bot.sbotresp.replace(image[1], '')[:-1] + ':'
                 image = image[1]
                 embed = discord.Embed(color=color2)
-                embed.add_field(name='Trade: ', value=self.bot.message, inline=False)
+                embed.add_field(name='Trade: ', value=message, inline=False)
                 embed.set_image(url=image)
             else:
                 embed = discord.Embed(color=color2)
@@ -61,7 +48,7 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def add(self, ctx, *, content: str):
+    async def add(self, ctx, *, name: str):
         """Aad is used to add items from your bot's classifieds, it allows the chaining of commands eg. `!add names=This&intent=sell, That, The other`"""
         channel = ctx.message.channel
 
@@ -70,28 +57,25 @@ class SteamCog(commands.Cog, name='Steam'):
 
         string = 0
         list = 0
-        if 'names=' in content:
+        if 'names=' in name:
             mul = 'these'
             mul2 = 'commands'
-            msgs = content[6:]
-            content = msgs.split(', ')
-            content = [self.bot.addm + x for x in content]
+            msgs = name[6:]
+            name = msgs.split(', ')
+            name = [self.bot.addm + x for x in name]
             list = 1
 
-        elif 'name=' in content:
+        elif 'name=' in name:
             mul = 'this'
             mul2 = 'command'
-            msgs = content[5:]
-            content = self.bot.addm + msgs
+            msgs = name[5:]
+            name = self.bot.addm + msgs
             string = 1
 
         if list == 1:
-            dscontent = str(content)
-            dscontent = dscontent.replace('[', '`')
-            dscontent = dscontent.replace(']', '`')
-            dscontent = dscontent.replace(', ', '`, `')
+            dscontent = str(name).replace('[', '`').replace(']', '`').replace(', ', '`, `')
         elif string == 1:
-            dscontent = f'`{content}`'
+            dscontent = f'`{name}`'
         await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
         response = 0
         while response == 0:
@@ -108,13 +92,13 @@ class SteamCog(commands.Cog, name='Steam'):
                         await asyncio.sleep(5)
                         nsend = 0
                         if list == 1:
-                            while nsend < len(content):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(content[nsend])
+                            while nsend < len(name):
+                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
                                 nsend += 1
                                 await asyncio.sleep(3)
 
                         if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(content)
+                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
                             await asyncio.sleep(3)
 
                         self.bot.botresp = True
@@ -127,38 +111,32 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def update(self, ctx, *, content: str):
+    async def update(self, ctx, *, name: str):
         """Update is used to update items from your bot's classifieds, it allows the chaining of commands eg. `!update names=This&intent=bank, That, The other`"""
         channel = ctx.message.channel
-        author = ctx.message.author
 
         def check(m):
             return m.content and m.channel == channel and m.author.id == self.bot.owner_id
 
-        list = 0
-        string = 0
-        if 'names=' in content:
+        if 'names=' in name:
             mul = 'these'
             mul2 = 'commands'
-            msgs = content[6:]
-            content = msgs.split(', ')
-            content = [self.bot.updatem + x for x in content]
+            msgs = name[6:]
+            name = msgs.split(', ')
+            name = [self.bot.updatem + x for x in name]
             list = 1
 
-        elif 'name=' in content:
+        elif 'name=' in name:
             mul = 'this'
             mul2 = 'command'
-            msgs = content[5:]
-            content = self.bot.updatem + msgs
+            msgs = name[5:]
+            name = self.bot.updatem + msgs
             string = 1
 
         if list == 1:
-            dscontent = str(content)
-            dscontent = dscontent.replace('[', '`')
-            dscontent = dscontent.replace(']', '`')
-            dscontent = dscontent.replace(', ', '`, `')
+            dscontent = str(name).replace('[', '`').replace(']', '`').replace(', ', '`, `')
         elif string == 1:
-            dscontent = f'`{content}`'
+            dscontent = f'`{name}`'
         await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
         response = 0
         while response == 0:
@@ -175,13 +153,13 @@ class SteamCog(commands.Cog, name='Steam'):
                         await asyncio.sleep(5)
                         nsend = 0
                         if list == 1:
-                            while nsend < len(content):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(content[nsend])
+                            while nsend < len(name):
+                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
                                 nsend += 1
                                 await asyncio.sleep(3)
 
                         if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(content)
+                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
                             await asyncio.sleep(3)
 
                         self.bot.botresp = True
@@ -194,38 +172,32 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def remove(self, ctx, *, content: str):
+    async def remove(self, ctx, *, name: str):
         """Remove is used to remove items from your bot's classifieds, it allows the chaining of commands eg. `!remove names=This&intent=bank, That, The Other`"""
         channel = ctx.message.channel
-        author = ctx.message.author
 
         def check(m):
             return m.content and m.channel == channel and m.author.id == self.bot.owner_id
 
-        list = 0
-        string = 0
-        if 'items=' in content:
+        if 'names=' in name:
             mul = 'these'
             mul2 = 'commands'
-            msgs = content[6:]
-            content = msgs.split(', ')
-            content = [self.bot.removem + x for x in content]
+            msgs = name[6:]
+            name = msgs.split(', ')
+            name = [self.bot.removem + x for x in name]
             list = 1
 
-        elif 'item=' in content:
+        elif 'name=' in name:
             mul = 'this'
             mul2 = 'command'
-            msgs = content[5:]
-            content = self.bot.removem + msgs
+            msgs = name[5:]
+            name = self.bot.removem + msgs
             string = 1
 
         if list == 1:
-            dscontent = str(content)
-            dscontent = dscontent.replace('[', '`')
-            dscontent = dscontent.replace(']', '`')
-            dscontent = dscontent.replace(', ', '`, `')
+            dscontent = str(name).replace('[', '`').replace(']', '`').replace(', ', '`, `')
         elif string == 1:
-            dscontent = f'`{content}`'
+            dscontent = f'`{name}`'
         await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
         response = 0
         while response == 0:
@@ -242,13 +214,13 @@ class SteamCog(commands.Cog, name='Steam'):
                         await asyncio.sleep(5)
                         nsend = 0
                         if list == 1:
-                            while nsend < len(content):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(content[nsend])
+                            while nsend < len(name):
+                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
                                 nsend += 1
                                 await asyncio.sleep(3)
 
                         if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(content)
+                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
                             await asyncio.sleep(3)
 
                         self.bot.botresp = True
@@ -262,7 +234,7 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.command()
     @commands.is_owner()
     async def profit(self, ctx):
-        """Returns your profit as it normally would"""
+        """Returns your bot's profit as it normally would"""
         self.bot.botresp = False
         while self.bot.botresp is False:
             async with ctx.typing():
@@ -272,30 +244,8 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def togprofit(self, ctx, profittime="23:59"):
-        """Used to set a time to get your days profit eg. !togprofit [time] in the form of HH:MM time by default is 23:59"""
-        global toggleprofit
-        if toggleprofit == 0:
-            toggleprofit = 1
-            await ctx.send(f'Profit Alerts now toggled on this will send you profit at {profittime} {tz}')
-        elif toggleprofit == 1:
-            toggleprofit = 0
-            await ctx.send('Profit Alerts now toggled off')
-
-        while toggleprofit == 1:
-            getcurrenttime()
-            if profittime == currenttime:
-                self.bot.client.get_userr(self.bot.bot64id).send_message(self.bot.command_prefix + 'profit')
-                await ctx.send('You have made ' + self.bot.sbotresp)
-                await asyncio.sleep(61)
-
-            elif currenttime != profittime:
-                await asyncio.sleep(5)
-
-    @commands.command()
-    @commands.is_owner()
     async def send(self, ctx, *, message: str):
-        """Send is used to send a message to the bot"""
+        """Send is used to send a message to the bot eg. `!send [message]`"""
         self.bot.botresp = False
         while self.bot.botresp is False:
             async with ctx.typing():
