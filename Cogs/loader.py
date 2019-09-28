@@ -5,7 +5,7 @@ from steam.client import SteamClient
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting"""
-    __version__ = 'Version: 1.1.3'
+    __version__ = '1.1.3'
 
     def __init__(self, bot):
         self.bot = bot

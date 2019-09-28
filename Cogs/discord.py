@@ -25,7 +25,7 @@ tz = tz + offset
 
 def getcurrenttime():
     global currenttime
-    return time.asctime()[11:-8]
+    currenttime = time.asctime()[11:-8]
 
 
 class DiscordCog(commands.Cog, name='Discord'):
@@ -39,9 +39,8 @@ class DiscordCog(commands.Cog, name='Discord'):
 
     @tasks.loop(seconds=10)
     async def profitgraphing(self):
-        global currenttime
         self.bot.currenttime = time.asctime()[11:-8]
-        if self.currenttime == '23:59':
+        if self.bot.currenttime == '23:59':
             date = datetime.datetime.today().strftime("%d-%m-%Y")
             self.bot.client.get_user(self.bot.bot64id).send_message(self.bot.command_prefix + 'profit')
             await asyncio.sleep(5)
@@ -242,7 +241,7 @@ class DiscordCog(commands.Cog, name='Discord'):
                         value=f'{round(rawram[3] / 1024 ** 2)} MB used / {round(rawram[0] / 1024 ** 2)} MB total | {rawram[2]}% used',
                         inline=True)
         embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'{psutil.cpu_percent()}%', inline=True)
-        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version', value=f'{LoaderCog.__version__} Up to date: {emoji}')
+        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version', value=f'Version: {LoaderCog.__version__}. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
                         value=f"Your command prefix is \"{self.bot.command_prefix}\". "
                               f"Type {self.bot.command_prefix}help to list the commands you can use",

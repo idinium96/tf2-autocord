@@ -20,7 +20,7 @@ class HelperCog(commands.Cog, name='Help'):
             pass
         else:
             await self.bot.get_user(self.bot.owner_id).send(
-                f'There is an update to the repo. Do you want to install it? '
+                'There is an update to the repo. Do you want to install it? '
                 f'(Type {self.bot.command_prefix}updaterepo to install it)')
 
     @commands.command()
@@ -72,10 +72,11 @@ class HelperCog(commands.Cog, name='Help'):
             emoji = '<:goodcross:626829085682827266>'
         embed = discord.Embed(title='GitHub Repo Infomation', color=0x2e3bad)
         embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-        embed.add_field(name='Current Version', value=f'{LoaderCog.__version__} Up to date: {emoji}', inline=True)
+        embed.add_field(name='Current Version', value=f'Version: {LoaderCog.__version__}. Up to date: {emoji}',
+                        inline=True)
         embed.add_field(name='GitHub Stats', value='https://github.com/Gobot1234/tf2-autocord/pulse')
-        embed.add_field(name='Link to the repo', value='[Here](https://github.com/Gobot1234/tf2-autocord)')
-        embed.add_field(name='What to check for an update', value=f'{self.bot.command_prefix}updaterepo')
+        embed.add_field(name='Link to the repo', value='[Repository](https://github.com/Gobot1234/tf2-autocord)')
+        embed.add_field(name='Want to check for an update?', value=f'{self.bot.command_prefix}updaterepo')
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -112,7 +113,7 @@ class HelperCog(commands.Cog, name='Help'):
             emoji = '<:discord:626486432793493540>'
         elif 'Steam' in cog:
             color = int('0x00adee', 16)
-            emoji ='<:steam:622621553800249364>'
+            emoji = '<:steam:622621553800249364>'
         elif 'Loader' in cog:
             await ctx.send('Nothing interesting happens in the loader cog')
             return
@@ -150,7 +151,7 @@ class HelperCog(commands.Cog, name='Help'):
                 halp.add_field(name=f'Current loaded Cogs are ({allcogs[:-2]}) :gear:', value='​')
 
         halp.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435",
-                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
+                        icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
 
     @commands.Cog.listener()

@@ -1,16 +1,11 @@
 import discord
 from discord.ext import commands, tasks
-import asyncio, time
+import asyncio, datetime
 
-
-togprofit = 0
-
-def getcurrenttime():
-    global currenttime
-    currenttime = time.asctime()[11:-8]
 
 class SteamCog(commands.Cog, name='Steam'):
-    """Commands that are mainly owner restricted and only work if you are logged in"""
+    """Commands that are mainly owner restricted and only work if you are logged in to your steam account"""
+
     def __init__(self, bot):
         self.bot = bot
         self.bgcheck.start()
@@ -20,7 +15,7 @@ class SteamCog(commands.Cog, name='Steam'):
         if self.bot.botresp is True:
             if 'accepted' in self.bot.sbotresp:
                 color2 = int('5C7E10', 16)
-            elif 'declined' in self.bot.sbotresp or 'canceled' in self.bot.sbotresp:
+            elif 'declined' in self.bot.sbotresp or 'canceled' in self.bot.sbotresp or 'invaliditems' in self.bot.sbotresp:
                 color2 = discord.Color.red()
             else:
                 color2 = self.bot.color
@@ -34,7 +29,8 @@ class SteamCog(commands.Cog, name='Steam'):
             else:
                 embed = discord.Embed(color=color2)
                 embed.add_field(name='New Message:', value=self.bot.sbotresp, inline=False)
-            embed.set_footer(text=time.asctime())
+            embed.set_footer(text=str(
+                datetime.datetime.now().strftime('%H:%M:%S %d/%m/%Y')))  # 12hr time, am/pm, weekday, day, month
             await self.bot.get_user(self.bot.owner_id).send(embed=embed)
             if self.bot.usermessage != 0:
                 embed = discord.Embed(color=0xFFFF66)
@@ -85,7 +81,6 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                global botresp
                 self.bot.botresp = False
                 while self.bot.botresp is False:
                     async with ctx.typing():
@@ -146,7 +141,6 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                global botresp
                 self.bot.botresp = False
                 while self.bot.botresp is False:
                     async with ctx.typing():
@@ -207,7 +201,6 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                global botresp
                 self.bot.botresp = False
                 while self.bot.botresp is False:
                     async with ctx.typing():
@@ -271,9 +264,6 @@ class SteamCog(commands.Cog, name='Steam'):
         """Scc is a discount version of Hackerino's command generator tool"""
         channel = ctx.message.channel
         author = ctx.message.author
-        suffixes = 0
-        prefixes = 0
-        choice = 0
         notgonethrough = True
         notgonethrough1 = True
         notgonethrough2 = True
@@ -298,437 +288,246 @@ class SteamCog(commands.Cog, name='Steam'):
             choice = await self.bot.wait_for('message', check=check)
             choice = choice.clean_content.lower()
 
-            # remove ---------------------------------------------------------------------------------------------------
-
-            if choice == 'remove' or choice == 'r':
-                response = 1
-                do = 'remove '
-                await ctx.send('What do you want to remove?')
-                item_to_uar = await self.bot.wait_for('message', check=check)
-                item_to_uar = item_to_uar.clean_content
-                steamcommand = self.bot.removem + item_to_uar
-
-            # update ---------------------------------------------------------------------------------------------------
-
-            elif choice == 'update' or choice == 'u':
-                do = 'update '
-                await ctx.send('What items do you want to update?')
+            if choice == 'update' or choice == 'u' or choice == 'add' or choice == 'a' or choice == 'remove' or choice == 'r':
+                if choice == 'update' or choice == 'u':
+                    do = 'update'
+                elif choice == 'add' or choice == 'a':
+                    do = 'add'
+                elif choice == 'remove' or choice == 'r':
+                    do = 'remove'
+                await ctx.send(f'What item do you want to {do}?')
                 item_to_uar = await self.bot.wait_for('message', check=check)
                 item_to_uar = item_to_uar.clean_content
                 steamcommand = item_to_uar
-                await ctx.send('Want to add prefixes?\nType yes or no')
-                response = 0
-                while response == 0:
-                    choice = await self.bot.wait_for('message', check=check)
-                    choice = choice.clean_content.lower()
 
-                    if choice == 'yes' or choice == 'y':
-                        response = 1
-                        await ctx.send(scclist)
-                        prefixes = 0
-                        while prefixes != 9:
-                            response = 0
-                            while response == 0:
-                                prefix = await self.bot.wait_for('message', check=check)
-                                prefix = prefix.clean_content.lower()
+                if do == 'remove':
+                    steamcommand = self.bot.removem + steamcommand
 
-                                if prefix == 'price' or prefix == 'p' and notgonethrough is True:  # buy price prefix
-                                    await ctx.send('Buy price in refined metal')
-                                    bp = await self.bot.wait_for('message', check=check)
-                                    bp = bp.clean_content.lower()
-                                    buy1 = '&buy_metal=' + bp
-                                    await ctx.send('Buy price in keys')
-                                    bp = await self.bot.wait_for('message', check=check)
-                                    bp = bp.clean_content.lower()
-                                    buy2 = '&buy_keys=' + bp
-                                    steamcommand = steamcommand + buy1 + buy2
+                else:
+                    await ctx.send('Want to add prefixes?\nType yes or no')
+                    response = 0
+                    while response == 0:
+                        choice = await self.bot.wait_for('message', check=check)
+                        choice = choice.clean_content.lower()
 
-                                    await ctx.send('Sell price in refined metal')
-                                    sp = await self.bot.wait_for('message', check=check)
-                                    sp = sp.clean_content.lower()
-                                    sell1 = '&sell_metal=' + sp
-                                    await ctx.send('Sell price in keys')
-                                    sp = await self.bot.wait_for('message', check=check)
-                                    sp = sp.clean_content.lower()
-                                    sell2 = '&sell_keys=' + sp
-                                    steamcommand = steamcommand + sell1 + sell2
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nPrice', '')
-                                    notgonethrough1 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                        if choice == 'yes' or choice == 'y':
+                            response = 1
+                            prefixes = 0
+                            await ctx.send(scclist)
 
-                                elif prefix == 'limit' or prefix == 'l' and notgonethrough1 is True:  # limit prefix
-                                    await ctx.send('Max stock is')
-                                    limit = await self.bot.wait_for('message', check=check)
-                                    limit = limit.clean_content.lower()
-                                    limit = '&limit=' + limit
-                                    steamcommand = steamcommand + limit
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nLimit', '')
-                                    notgonethrough1 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                            while prefixes != 9:
+                                response = 0
+                                while response == 0:
+                                    prefix = await self.bot.wait_for('message', check=check)
+                                    prefix = prefix.clean_content.lower()
 
-                                elif prefix == 'quality' or prefix == 'q' and notgonethrough2 is True:  # quality prefix
-                                    await ctx.send('Quality (enter ' + qualities + ')')
-                                    response = 0
-                                    while response == 0:
-                                        quality = await self.bot.wait_for('message', check=check)
-                                        quality = quality.clean_content.lower()
-                                        if quality in qualities.replace(',', '').lower():
-                                            steamcommand = quality + ' ' + steamcommand
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (' + qualities + ')')
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nQuality', '')
-                                    notgonethrough2 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                    if prefix == 'price' or prefix == 'p' and notgonethrough:  # buy price prefix
+                                        await ctx.send('Buy price in refined metal')
+                                        bp = await self.bot.wait_for('message', check=check)
+                                        bp = bp.clean_content.lower()
+                                        buy1 = '&buy_metal=' + bp
+                                        await ctx.send('Buy price in keys')
+                                        bp = await self.bot.wait_for('message', check=check)
+                                        bp = bp.clean_content.lower()
+                                        buy2 = '&buy_keys=' + bp
+                                        steamcommand += buy1 + buy2
 
-                                elif prefix == 'intent' or prefix == 'i' and notgonethrough3 is True:  # intent prefix
-                                    await ctx.send('Intent is to (' + intents + ')')
-                                    response = 0
-                                    while response == 0:
-                                        intent = await self.bot.wait_for('message', check=check)
-                                        intent = intent.clean_content.lower()
-                                        if intent in intents.lower():
-                                            intent = '&intent=' + intent
-                                            steamcommand = steamcommand + intent
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (' + intents + ')')
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nIntent', '')
-                                    notgonethrough3 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                        await ctx.send('Sell price in refined metal')
+                                        sp = await self.bot.wait_for('message', check=check)
+                                        sp = sp.clean_content.lower()
+                                        sell1 = '&sell_metal=' + sp
+                                        await ctx.send('Sell price in keys')
+                                        sp = await self.bot.wait_for('message', check=check)
+                                        sp = sp.clean_content.lower()
+                                        sell2 = '&sell_keys=' + sp
+                                        steamcommand += sell1 + sell2
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nPrice', '')
+                                        notgonethrough1 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
 
-                                elif prefix == 'craftable' or prefix == 'c' and notgonethrough4 is True:  # craftable prefix
-                                    await ctx.send('Is the item craftable?')
-                                    response = 0
-                                    while response == 0:
-                                        craftable = await self.bot.wait_for('message', check=check)
-                                        craftable = craftable.clean_content.lower()
-                                        if craftable == 't' or craftable == 'true' or craftable == 'y' or craftable == 'yes':
-                                            craftable = 'Craftable'
-                                        elif craftable == 'f' or craftable == 'false' or craftable == 'n' or craftable == 'no':
-                                            craftable = 'Non-Craftable'
-                                        else:
-                                            await ctx.send('Try again with a valid value (Y/N or T/F)')
-                                    steamcommand = craftable + steamcommand
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nCraftable', '')
-                                    notgonethrough4 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                    elif prefix == 'limit' or prefix == 'l' and notgonethrough1:  # limit prefix
+                                        await ctx.send('Max stock is')
+                                        limit = await self.bot.wait_for('message', check=check)
+                                        limit = limit.clean_content.lower()
+                                        steamcommand += '&limit=' + limit
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nLimit', '')
+                                        notgonethrough1 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
 
-                                elif prefix == 'australium' or prefix == 'au' and notgonethrough5 is True:  # australium prefix
-                                    await ctx.send('Is the item australium?')
-                                    response = 0
-                                    while response == 0:
-                                        australium = await self.bot.wait_for('message', check=check)
-                                        australium = australium.clean_content.lower()
-                                        if australium == 't' or australium == 'true' or australium == 'y' or australium == 'yes':
-                                            australium = 'Strange Australium'
-                                            steamcommand = australium + steamcommand
-                                            response = 1
-                                        elif australium == 'f' or australium == 'false' or australium:
-                                            response = 1
-                                            pass
-                                        else:
-                                            await ctx.send('Try again with a valid value (Y/N or T/F)')
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nAustralium', '')
-                                    notgonethrough5 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                    elif prefix == 'quality' or prefix == 'q' and notgonethrough2:  # quality prefix
+                                        await ctx.send('Quality (enter ' + qualities + ')')
+                                        while 1:
+                                            quality = await self.bot.wait_for('message', check=check)
+                                            quality = quality.clean_content.lower()
+                                            if quality in qualities.replace(',', '').lower():
+                                                if do == 'update':
+                                                    steamcommand = quality + ' ' + steamcommand
 
-                                elif prefix == 'killstreak' or prefix == 'k' and notgonethrough6 is True:  # killstreak prefix
-                                    await ctx.send(
-                                        'Is the item killstreak (Killstreak (1), Specialized (2) or Professional (3))')
-                                    response = 0
-                                    while response == 0:
-                                        killstreak = await self.bot.wait_for('message', check=check)
-                                        killstreak = killstreak.clean_content.lower()
-                                        if killstreak == 1 or killstreak == 'k':
-                                            killstreak = 'killstreak'
-                                            response = 1
-                                        elif killstreak == 2 or killstreak == 's':
-                                            killstreak = 'specialized'
-                                            response = 1
-                                        elif killstreak == 3 or killstreak == 'p':
-                                            killstreak = 'professional'
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (1/2/3 or K/S/P)')
-                                    steamcommand = killstreak + steamcommand
-                                    prefixes += 1
-                                    scclist = scclist.replace('\nKillstreak', '')
-                                    notgonethrough6 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                                elif do == 'add':
+                                                    quality = '&quality=' + quality
+                                                    steamcommand += quality
+                                                break
+                                            else:
+                                                await ctx.send('Try again with a valid value (' + qualities + ')')
 
-                                elif prefix == 'effect' or prefix == 'e' and notgonethrough7 is True:  # effect suffix
-                                    await ctx.send('What is the unusual effect? E.g Burning Flames')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    effect = suffix.clean_content
-                                    steamcommand = effect + steamcommand
-                                    scclist = scclist.replace('\nEffect', '')
-                                    notgonethrough7 = False
-                                    prefixes += 1
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nQuality', '')
+                                        notgonethrough2 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
 
-                                elif prefix == 'autoprice' or prefix == 'ap' and notgonethrough8 is True:  # effect suffix
-                                    await ctx.send('Is autoprice enabled')
-                                    response = 0
-                                    while response == 0:
+                                    elif prefix == 'intent' or prefix == 'i' and notgonethrough3:  # intent prefix
+                                        await ctx.send('Intent is to (' + intents + ')')
+                                        response = 0
+                                        while response == 0:
+                                            intent = await self.bot.wait_for('message', check=check)
+                                            intent = intent.clean_content.lower()
+                                            if intent in intents.lower():
+                                                steamcommand += '&intent=' + intent
+                                                response = 1
+                                            else:
+                                                await ctx.send('Try again with a valid value (' + intents + ')')
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nIntent', '')
+                                        notgonethrough3 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
+                                    elif prefix == 'craftable' or prefix == 'c' and notgonethrough4:  # craftable prefix
+                                        await ctx.send('Is the item craftable?')
+                                        while 1:
+                                            craftable = await self.bot.wait_for('message', check=check)
+                                            craftable = craftable.clean_content.lower()
+                                            if craftable == 't' or craftable == 'true' or craftable == 'y' or craftable == 'yes':
+                                                if do == 'update':
+                                                    craftable = 'Craftable '
+                                                    steamcommand = craftable + steamcommand
+                                                elif do == 'add':
+                                                    steamcommand += '&quality=true'
+                                                break
+                                            elif craftable == 'f' or craftable == 'false' or craftable == 'n' or craftable == 'no':
+                                                if do == 'update':
+                                                    craftable = 'Non-Craftable '
+                                                    steamcommand = craftable + steamcommand
+                                                elif do == 'add':
+                                                    steamcommand += '&quality=false'
+                                            else:
+                                                await ctx.send('Try again with a valid value (y/n or t/f)')
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nCraftable', '')
+                                        notgonethrough4 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
+                                    elif prefix == 'australium' or prefix == 'au' and notgonethrough5:  # australium prefix
+                                        await ctx.send('Is the item australium?')
+                                        while 1:
+                                            australium = await self.bot.wait_for('message', check=check)
+                                            australium = australium.clean_content.lower()
+                                            if australium == 't' or australium == 'true' or australium == 'y' or australium == 'yes':
+                                                if do == 'update':
+                                                    australium = 'Strange Australium'
+                                                    steamcommand = australium + steamcommand
+                                                elif do == 'add':
+                                                    australium = 'true'
+                                                    australium = '&strange=' + australium + '&australium=' + australium
+                                                    steamcommand = steamcommand + australium
+                                                break
+                                            elif australium == 'f' or australium == 'false' or australium:
+                                                break
+                                            else:
+                                                await ctx.send('Try again with a valid value (y/n or t/f)')
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nAustralium', '')
+                                        notgonethrough5 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
+                                    elif prefix == 'killstreak' or prefix == 'k' and notgonethrough6:  # killstreak prefix
+                                        await ctx.send(
+                                            'Is the item killstreak (Killstreak (1), Specialized (2) or Professional (3))')
+                                        while 1:
+                                            killstreak = await self.bot.wait_for('message', check=check)
+                                            killstreak = killstreak.clean_content.lower()
+                                            if killstreak == '1' or killstreak == 'k' or killstreak == 'killstreak' or killstreak == 'basic':
+                                                if do == 'update':
+                                                    steamcommand = 'Killstreak ' + steamcommand
+                                                elif do == 'add':
+                                                    steamcommand += '&quality=1'
+                                                break
+                                            elif killstreak == '2' or killstreak == 's' or killstreak == 'specialized':
+                                                if do == 'update':
+                                                    steamcommand = 'Specialized ' + steamcommand
+                                                elif do == 'add':
+                                                    steamcommand += '&quality=2'
+                                                break
+                                            elif killstreak == '3' or killstreak == 'p' or killstreak == 'professional':
+                                                if do == 'update':
+                                                    steamcommand = 'Professional ' + steamcommand
+                                                elif do == 'add':
+                                                    steamcommand += '&quality=3'
+                                                break
+                                            else:
+                                                await ctx.send('Try again with a valid value (1/2/3 or k/s/p)')
+                                        prefixes += 1
+                                        scclist = scclist.replace('\nKillstreak', '')
+                                        notgonethrough6 = False
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
+                                    elif prefix == 'effect' or prefix == 'e' and notgonethrough7:  # effect suffix
+                                        await ctx.send('What is the unusual effect? E.g Burning Flames')
                                         suffix = await self.bot.wait_for('message', check=check)
-                                        autoprice = suffix.clean_content.lower()
-                                        if autoprice == 't' or autoprice == 'true' or autoprice == 'y' or autoprice == 'yes':
-                                            autoprice = '&autoprice=' + autoprice
-                                            steamcommand = steamcommand + autoprice
-                                            response = 1
-                                        elif autoprice == 'f' or autoprice == 'false' or autoprice == 'n' or autoprice == 'no':
-                                            autoprice = '&autoprice=' + autoprice
-                                            steamcommand = steamcommand + autoprice
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (Y/N or T/F)')
-                                    scclist = scclist.replace('\nAutopricing', '')
-                                    notgonethrough8 = False
-                                    prefixes += 1
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
+                                        effect = suffix.clean_content
+                                        if do == 'update':
+                                            steamcommand = effect + steamcommand
+                                        elif do == 'add':
+                                            steamcommand += '&effect=' + effect
+                                        scclist = scclist.replace('\nEffect', '')
+                                        notgonethrough7 = False
+                                        prefixes += 1
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
 
-                                elif prefix == 'escape' or prefix == 'esc':
-                                    response = 1
-                                    steamcommand = self.bot.updatem + steamcommand
-                                    prefixes = 9
-                                else:
-                                    await ctx.send('Try again this time with something in the list')
+                                    elif prefix == 'autoprice' or prefix == 'ap' and notgonethrough8:  # effect suffix
+                                        await ctx.send('Is autoprice enabled')
+                                        while 1:
+                                            suffix = await self.bot.wait_for('message', check=check)
+                                            autoprice = suffix.clean_content.lower()
+                                            if autoprice == 't' or autoprice == 'true' or autoprice == 'y' or autoprice == 'yes':
+                                                steamcommand += '&autoprice=' + autoprice
+                                                break
+                                            elif autoprice == 'f' or autoprice == 'false' or autoprice == 'n' or autoprice == 'no':
+                                                steamcommand += '&autoprice=' + autoprice
+                                                break
+                                            else:
+                                                await ctx.send('Try again with a valid value (Y/N or T/F)')
 
-                    elif choice == 'no' or choice == 'n':
-                        steamcommand = self.bot.updatem + steamcommand
-                        response = 1
+                                        scclist = scclist.replace('\nAutopricing', '')
+                                        notgonethrough8 = False
+                                        prefixes += 1
+                                        await ctx.send(
+                                            f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
 
-                    else:
-                        await ctx.send('Please try again')
+                                    elif prefix == 'escape' or prefix == 'esc':
+                                        break
 
-            # add ------------------------------------------------------------------------------------------------------
+                                    else:
+                                        await ctx.send('Try again this time with something in the list')
 
-            elif choice == 'add' or choice == 'a':
-                do = 'add '
-                await ctx.send('What item do you want to add to your classifieds?')
-                response = 0
-                while response == 0:
-                    item_to_uar = await self.bot.wait_for('message', check=check)
-                    item_to_uar = item_to_uar.clean_content
-                    steamcommand = item_to_uar
+                        elif choice == 'no' or choice == 'n':
+                            if do == 'update':
+                                steamcommand = self.bot.updatem + steamcommand
+                            elif do == 'add':
+                                steamcommand = self.bot.addm + steamcommand
+                            break
 
-                    await ctx.send('Want to add suffixes?\nType yes or no')
-
-                    choice = await self.bot.wait_for('message', check=check)
-                    choice = choice.clean_content.lower()
-                    if choice == 'yes' or choice == 'y':
-                        await ctx.send(scclist)
-                        suffixes = 0
-                        while suffixes != 9:
-                            response = 0
-                            while response == 0:
-                                suffix = await self.bot.wait_for('message', check=check)
-                                suffix = suffix.clean_content
-
-                                if suffix == 'p' or suffix == 'price' and notgonethrough is True:  # buy price suffix
-                                    await ctx.send('Buy price in refined metal')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    bp = suffix.clean_content
-                                    buy1 = '&buy_metal=' + bp
-                                    await ctx.send('Buy price in keys')
-                                    bp = await self.bot.wait_for('message', check=check)
-                                    bp = bp.clean_content
-                                    buy2 = '&buy_keys=' + bp
-                                    steamcommand = steamcommand + buy1 + buy2
-
-                                    await ctx.send('Sell price in refined metal')
-                                    sp = await self.bot.wait_for('message', check=check)
-                                    sp = sp.clean_content
-                                    sell1 = '&sell_metal=' + sp
-                                    await ctx.send('Sell price in keys')
-                                    sp = await self.bot.wait_for('message', check=check)
-                                    sp = sp.clean_content
-                                    sell2 = '&sell_keys=' + sp
-                                    steamcommand = steamcommand + sell1 + sell2
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nPrice', '')
-                                    notgonethrough = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'limit' or suffix == 'l' and notgonethrough1 is True:  # limit suffix
-                                    response = 1
-                                    await ctx.send('Max stock is (enter a number)')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    limit = suffix.clean_content
-                                    limit = '&limit=' + limit
-                                    steamcommand = steamcommand + limit
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nLimit', '')
-                                    notgonethrough1 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'quality' or suffix == 'q' and notgonethrough2 is True:  # quality suffix
-                                    await ctx.send('Quality (enter ' + qualities + ')')
-                                    response = 0
-                                    while response == 0:
-                                        suffix = await self.bot.wait_for('message', check=check)
-                                        quality = suffix.clean_content.lower()
-                                        if quality in qualities.replace(',', '').lower():
-                                            quality = '&quality=' + quality
-                                            steamcommand = steamcommand + quality
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (' + qualities + ')')
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nQuality', '')
-                                    notgonethrough2 = True
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'intent' or suffix == 'i' and notgonethrough3 is True:  # intent suffix
-                                    await ctx.send('Intent (enter ' + intents + ')')
-                                    response = 0
-                                    while response == 0:
-                                        suffix = await self.bot.wait_for('message', check=check)
-                                        intent = suffix.clean_content
-                                        if intent in intents.lower():
-                                            intent = '&intent=' + intent
-                                            steamcommand = steamcommand + intent
-                                        else:
-                                            await ctx.send('Try again with a valid value (' + intents + ')')
-                                    suffixes = suffixes + 1
-                                    scclist = scclist.replace('\nIntent', '')
-                                    notgonethrough3 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'craftable' or suffix == 'c' and notgonethrough4 is True:  # craftable suffix
-                                    await ctx.send('Is the item craftable?')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    craftable = suffix.clean_content.lower()
-                                    while response == 0:
-                                        if craftable == 't' or craftable == 'true' or craftable == 'y' or craftable == 'yes':
-                                            craftable = 'true'
-                                            response = 1
-                                        elif 'f' == craftable or craftable == 'false' or craftable == 'n' or craftable == 'no':
-                                            craftable = 'false'
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (Y/N or T/F)')
-                                    craftable = '&craftable=' + craftable
-                                    steamcommand = steamcommand + craftable
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nCraftable', '')
-                                    notgonethrough4 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'australium' or suffix == 'au' and notgonethrough5 is True:  # australium suffix
-                                    await ctx.send('Is the item australium (True or False)')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    australium = suffix.clean_content.lower()
-                                    response = 0
-                                    while response == 0:
-                                        if australium == 't' or australium == 'true':
-                                            australium = 'true'
-                                            response = 1
-                                        elif 'f' == australium or australium == 'false':
-                                            australium = 'false'
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (T/F)')
-                                    australium = '&strange=' + australium + '&australium=' + australium
-                                    steamcommand = steamcommand + australium
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nAustralium', '')
-                                    notgonethrough5 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'killstreak' or suffix == 'k' and notgonethrough6 is True:  # killstreak suffix
-                                    await ctx.send('Is the item killstreak/specialized/professional?')
-                                    response = 0
-                                    while response == 0:
-                                        suffix = await self.bot.wait_for('message', check=check)
-                                        killstreak = suffix.clean_content
-                                        if killstreak == 1 or killstreak == 'k' or killstreak == 'killstreak' or killstreak == 'basic':
-                                            killstreak = 1
-                                            response = 1
-                                        elif killstreak == 2 or killstreak == 's' or killstreak == 'specialized':
-                                            killstreak = 2
-                                            response = 1
-                                        elif killstreak == 3 or killstreak == 'p' or killstreak == 'professional':
-                                            killstreak = 3
-                                            response = 1
-                                        else:
-                                            await ctx.send('Try again with a valid value (1/2/3 or K/S/P)')
-                                    killstreak = '&killstreak=' + killstreak
-                                    steamcommand = steamcommand + killstreak
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nKillstreak', '')
-                                    notgonethrough6 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'effect' or suffix == 'e' and notgonethrough7 is True:  # effect suffix
-                                    await ctx.send('What is the unusual effect? E.g Burning Flames')
-                                    suffix = await self.bot.wait_for('message', check=check)
-                                    effect = suffix.clean_content
-                                    effect = '&effect=' + effect
-                                    steamcommand = steamcommand + effect
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nEffect', '')
-                                    notgonethrough7 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'autoprice' or suffix == 'ap' and notgonethrough8 is True:  # effect suffix
-                                    await ctx.send('Is autoprice enabled')
-                                    response = 0
-                                    while response == 0:
-                                        suffix = await self.bot.wait_for('message', check=check)
-                                        autoprice = suffix.clean_content.lower()
-                                        if autoprice == 't' or autoprice == 'true' or autoprice == 'y' or autoprice == 'yes':
-                                            autoprice = '&autoprice=' + autoprice
-                                            steamcommand = steamcommand + autoprice
-                                        elif autoprice == 'f' or autoprice == 'false' or autoprice == 'n' or autoprice == 'no':
-                                            autoprice = '&autoprice=' + autoprice
-                                            steamcommand = steamcommand + autoprice
-                                        else:
-                                            await ctx.send('Try again with a valid value (Y/N or T/F)')
-                                    suffixes += 1
-                                    scclist = scclist.replace('\nEffect', '')
-                                    notgonethrough8 = False
-                                    await ctx.send(
-                                        'Want to add more prefixes from the list:' + scclist + '\nIf not type escape')
-
-                                elif suffix == 'escape' or suffix == 'esc':
-                                    steamcommand = self.bot.addm + steamcommand
-                                    response = 1
-                                    suffixes = 9
-
-                                else:
-                                    await ctx.send('Try again this time with something in the list' + scclist)
-
-                    elif choice == 'no' or choice == 'n':
-                        response = 1
-                        steamcommand = self.bot.addm + steamcommand
-
-                    else:
-                        await ctx.send('Please try again')
+                        else:
+                            await ctx.send('Please try again')
 
             else:
                 await ctx.send('Please try again with Update/Add/Remove')
@@ -737,7 +536,6 @@ class SteamCog(commands.Cog, name='Steam'):
 
             await ctx.send(f'Command to {do} {item_to_uar} is `{steamcommand}`')
             await ctx.send('Do you want to send the command to the bot?\nType yes or no')
-            response = 0
             while response == 0:
                 choice = await self.bot.wait_for('message', check=check)
                 choice = choice.clean_content.lower()
@@ -750,7 +548,7 @@ class SteamCog(commands.Cog, name='Steam'):
                     response = 1
                     await ctx.send("You didn't send the command to the bot :(")
                 else:
-                    await ctx.send('Please try again with Y/N')
+                    await ctx.send('Please try again with y/n')
 
 
 def setup(bot):
