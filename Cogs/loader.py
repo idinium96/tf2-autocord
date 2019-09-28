@@ -13,10 +13,14 @@ class LoaderCog(commands.Cog, name='Loader'):
         login = json.loads(open("Login details/sensitive details.json", "r").read())
         bot.username = login["Username"]
         bot.password = login["Password"]
-        bot.secrets = {
-            "identity_secret": login["Identity Secret"],
-            "shared_secret": login["Shared Secret"]
-        }
+        try:
+            bot.secrets = {
+                "identity_secret": login["Identity Secret"],
+                "shared_secret": login["Shared Secret"]
+            }
+        except KeyError:
+            pass
+
         preferences = json.loads(open('Login details/preferences.json', 'r').read())
         bot.owner_id = int(preferences["Discord ID"])
         bot.bot64id = int(preferences["Bot's Steam ID"])
