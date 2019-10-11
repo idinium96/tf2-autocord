@@ -1,7 +1,6 @@
 import gevent.monkey
 gevent.monkey.patch_socket()
 gevent.monkey.patch_ssl()
-from steam import guard
 from steam.enums import EResult
 from steam.client import SteamClient
 
@@ -91,8 +90,7 @@ def steamside():
                         if bot.currenttime == '23:59' and "You've made" in bot.sbotresp:
                             bot.graphplots = bot.sbotresp
 
-            SA = guard.SteamAuthenticator(bot.secrets).get_code()
-            result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
+            result = bot.client.cli_login(username=bot.username, password=bot.password)
             if result != EResult.OK:
                 print('\033[91m' + f'Failed to login: {repr(result)}' + '\033[91m')
                 raise SystemExit
