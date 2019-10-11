@@ -1,31 +1,18 @@
 import discord
 from discord.ext import commands, tasks
-import datetime, asyncio, time
 
+import asyncio
 import steam
-from platform import python_version
 import psutil
 import json
-from aiohttp import ClientSession
 import matplotlib.pyplot as plt
 import os
+
+from platform import python_version
+from datetime import datetime
+from aiohttp import ClientSession
+
 from .loader import LoaderCog
-
-
-tz = datetime.datetime.now(datetime.timezone.utc).astimezone().tzname()  # makes the time zone variable
-if 'Summer Time' in tz:
-    tz = tz.replace(' Summer Time', '')
-elif 'Daylight Saving Time' in tz:
-    tz = tz.replace(' Daylight Saving Time', '')
-offset = time.timezone if (time.localtime().tm_isdst == 0) else time.altzone
-offset = str(offset / 60 / 60 * -1)
-offset = '+' + offset[:-2]
-tz = tz + offset
-
-
-def getcurrenttime():
-    global currenttime
-    currenttime = time.asctime()[11:-8]
 
 
 class DiscordCog(commands.Cog, name='Discord'):
@@ -39,10 +26,10 @@ class DiscordCog(commands.Cog, name='Discord'):
 
     @tasks.loop(seconds=10)
     async def profitgraphing(self):
-        self.bot.currenttime = time.asctime()[11:-8]
+        self.bot.currenttime = datetime.now().strftime("%H:%M")
         if self.bot.currenttime == '23:59':
             date = datetime.datetime.today().strftime("%d-%m-%Y")
-            self.bot.client.get_user(self.bot.bot64id).send_message(self.bot.command_prefix + 'profit')
+            self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
             await asyncio.sleep(5)
             async with ClientSession() as session:
                 async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
@@ -98,9 +85,9 @@ class DiscordCog(commands.Cog, name='Discord'):
 
                         fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
                         print(fixedpredprofit)
-                        graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit]
+                        graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
                     else:
-                        graphdata = [fixedtodprofit, fixedtotprofit]
+                        graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
 
                     tempprofit = {date: graphdata}
 
@@ -114,7 +101,9 @@ class DiscordCog(commands.Cog, name='Discord'):
     @commands.command()
     @commands.is_owner()
     async def last(self, ctx, days: int = 7):
-        """Used to get the last x days profit eg. `!last 7`"""
+        """Used to get the last x days profit
+
+        eg. `!last 7` (days has to be an integer)"""
         data = json.load(open('Login details/profit_graphing.json', 'r'))
         if days > len(data):
             await ctx.send('You can\'t request that man days as there haven\'t been enough days plotted to do that.\n'
@@ -123,8 +112,12 @@ class DiscordCog(commands.Cog, name='Discord'):
             embed = discord.Embed(title=' ', color=self.bot.color)
             embed.set_author(name=f'Last {days} days profit')
             for key, value in reversed(list(data.items())):
-                embed.add_field(name=key + ':', value=f"Days profit {value[0]} keys. Total profit {value[1]} keys. "
-                                                      f"Predicted profit {value[2]} keys", inline=False)
+                try:
+                    embed.add_field(name=key + ':', value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}'
+                                                          f'** keys. Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
+                                    inline=False)
+                except:
+                    pass
             await ctx.send(embed=embed)
 
     @commands.command()
@@ -156,6 +149,7 @@ class DiscordCog(commands.Cog, name='Discord'):
         plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
         plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
 
+
         plt.title(f"A graph to show your bot\'s over the last {len(data)} days", fontsize=16)
         plt.xlabel("Date", fontsize=10)
         plt.ylabel("Keys", fontsize=10)
@@ -172,7 +166,9 @@ class DiscordCog(commands.Cog, name='Discord'):
     @commands.command()
     @commands.is_owner()
     async def acknowledged(self, ctx):
-        """Used to acknowledge a user message"""
+        """Used to acknowledge a user message
+
+        This is so user messages don't get lost in the channel history"""
         self.bot.usermessage = 0
         await ctx.send('Acknowledged the user\'s message')
 
@@ -206,8 +202,12 @@ class DiscordCog(commands.Cog, name='Discord'):
 
     @commands.command(aliases=['gimme'])
     @commands.is_owner()
-    async def get(self, ctx, *, file: str):
-        """Used to get files from your temp folder eg. `!get history`"""
+    async def get(self, ctx, *, file: str = None):
+        """Used to get files from your temp folder
+
+        eg. `!get history` (if you don't type anything you can see the files you can request)"""
+        if file is None:
+            await ctx.send(f'You can request these `{self.acceptedfiles}`')
         file = file.lower()
         if file in self.acceptedfiles:
             file = '/' + file
@@ -235,28 +235,28 @@ class DiscordCog(commands.Cog, name='Discord'):
         embed = discord.Embed(title="**tf2-autocord:** Developer - Gobot1234", colour=self.bot.color)
         embed.set_thumbnail(url=ctx.bot.user.avatar_url)
         embed.add_field(name="Commands loaded & Cogs loaded",
-                        value=f'{(len([x.name for x in self.bot.commands]))} commands loaded, {len([x for x in self.bot.cogs])} cogs loaded :gear:',
+                        value=f'`{(len([x.name for x in self.bot.commands]))}` commands loaded, `{len([x for x in self.bot.cogs])}` cogs loaded :gear:',
                         inline=True)
         embed.add_field(name="<:compram:622622385182474254> RAM Usage",
-                        value=f'{round(rawram[3] / 1024 ** 2)} MB used / {round(rawram[0] / 1024 ** 2)} MB total | {rawram[2]}% used',
+                        value=f'`{round(rawram[3] / 1024 ** 2)}` MB used / `{round(rawram[0] / 1024 ** 2)}` MB total | `{rawram[2]}`% used',
                         inline=True)
-        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'{psutil.cpu_percent()}%', inline=True)
-        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version', value=f'Version: {LoaderCog.__version__}. Up to date: {emoji}')
+        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{psutil.cpu_percent()}`%', inline=True)
+        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version', value=f'Version: `{LoaderCog.__version__}`. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
-                        value=f"Your command prefix is \"{self.bot.command_prefix}\". "
+                        value=f"Your command prefix is `{self.bot.command_prefix}`. "
                               f"Type {self.bot.command_prefix}help to list the commands you can use",
                         inline=False)
         embed.add_field(name='<:tf2automatic:624658370447671297> About the bot',
                         value='It was coded in Python to help you manage your tf2automtic bot. DM me with any '
                               'suggestions or features you would like on this bot', inline=False)
         embed.add_field(name='<:dpy:622794044547792926> Discord.py Version',
-                        value=discord.__version__ + ' works with versions 1.1+ of Discord.py and versions 3.5.4+ of Python',
+                        value=f'`{discord.__version__}` works with versions 1.1+ of Discord.py and versions 3.5.4+ of Python',
                         inline=True)
         embed.add_field(name='<:python:622621989474926622> Python Version',
-                        value=python_version() + ' works with versions 3.6+ (uses f-strings)',
+                        value=f'`{python_version()}` works with versions 3.6+ (uses f-strings)',
                         inline=True)
         embed.add_field(name='<:steam:622621553800249364> Steam Version',
-                        value=steam.__version__ + ' works with versions 3.4+ of Python',
+                        value=f'`{steam.__version__}` works with versions 3.4+ of Python',
                         inline=True)
         embed.add_field(name='Join the help server :hugging:', value='[Here](https://discord.gg/S3eVmxD)')
         embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435",

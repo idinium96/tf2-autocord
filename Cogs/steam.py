@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands, tasks
-import asyncio, datetime
+
+import asyncio
+import datetime
 
 
 class SteamCog(commands.Cog, name='Steam'):
@@ -8,11 +10,15 @@ class SteamCog(commands.Cog, name='Steam'):
 
     def __init__(self, bot):
         self.bot = bot
-        self.bgcheck.start()
+        self.discordcheck.start()
+        self.bot.trades = 0
 
-    @tasks.loop(seconds=5)
-    async def bgcheck(self):
+
+    @tasks.loop(seconds=1)
+    async def discordcheck(self):
         if self.bot.botresp is True:
+            if 'Recieved offer' in self.bot.sbotresp:
+                self.bot.trades += 1
             if 'accepted' in self.bot.sbotresp:
                 color2 = int('5C7E10', 16)
             elif 'declined' in self.bot.sbotresp or 'canceled' in self.bot.sbotresp or 'invaliditems' in self.bot.sbotresp:
@@ -42,10 +48,26 @@ class SteamCog(commands.Cog, name='Steam'):
                 await asyncio.sleep(30)
             self.bot.botresp = False
 
+    @commands.command(aliases=['reconnect', 'logged_on', 'online'])
+    async def relogin(self, ctx):
+        """Attempt to reconnect to Steam if you logged out"""
+        if self.bot.client.logged_on:
+            await ctx.send(f'You are already logged in as {self.bot.client.user.name}')
+        else:
+            await ctx.send("Reconnecting...")
+            async with ctx.typing():
+                if self.bot.client.relogin_available:
+                    self.bot.client.reconnect(maxdelay=30)
+                    await ctx.send('Reconnected to Steam')
+                else:
+                    await ctx.send('Try again later or restart the program')
+
     @commands.command()
     @commands.is_owner()
-    async def add(self, ctx, *, name: str):
-        """Aad is used to add items from your bot's classifieds, it allows the chaining of commands eg. `!add names=This&intent=sell, That, The other`"""
+    async def add(self, ctx, *, name):
+        """Aad is used to add items from your bot's classifieds
+
+        It allows the chaining of commands eg. `!add names=This&intent=sell, That, The other`"""
         channel = ctx.message.channel
 
         def check(m):
@@ -85,11 +107,9 @@ class SteamCog(commands.Cog, name='Steam'):
                 while self.bot.botresp is False:
                     async with ctx.typing():
                         await asyncio.sleep(5)
-                        nsend = 0
                         if list == 1:
-                            while nsend < len(name):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
-                                nsend += 1
+                            for message in name:
+                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
                                 await asyncio.sleep(3)
 
                         if string == 1:
@@ -106,8 +126,10 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def update(self, ctx, *, name: str):
-        """Update is used to update items from your bot's classifieds, it allows the chaining of commands eg. `!update names=This&intent=bank, That, The other`"""
+    async def update(self, ctx, *, name):
+        """Update is used to update items from your bot's classifieds
+
+        It allows the chaining of commands eg. `!update names=This&intent=bank, That, The other`"""
         channel = ctx.message.channel
 
         def check(m):
@@ -145,11 +167,9 @@ class SteamCog(commands.Cog, name='Steam'):
                 while self.bot.botresp is False:
                     async with ctx.typing():
                         await asyncio.sleep(5)
-                        nsend = 0
                         if list == 1:
-                            while nsend < len(name):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
-                                nsend += 1
+                            for message in name:
+                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
                                 await asyncio.sleep(3)
 
                         if string == 1:
@@ -166,14 +186,16 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command()
     @commands.is_owner()
-    async def remove(self, ctx, *, name: str):
-        """Remove is used to remove items from your bot's classifieds, it allows the chaining of commands eg. `!remove names=This&intent=bank, That, The Other`"""
+    async def remove(self, ctx, *, name):
+        """Remove is used to remove items from your bot's classifieds
+
+        It allows the chaining of commands eg. `!remove names=This&intent=bank, That, The Other`"""
         channel = ctx.message.channel
 
         def check(m):
             return m.content and m.channel == channel and m.author.id == self.bot.owner_id
 
-        if 'names=' in name:
+        if 'items=' in name:
             mul = 'these'
             mul2 = 'commands'
             msgs = name[6:]
@@ -181,7 +203,7 @@ class SteamCog(commands.Cog, name='Steam'):
             name = [self.bot.removem + x for x in name]
             list = 1
 
-        elif 'name=' in name:
+        elif 'item=' in name:
             mul = 'this'
             mul2 = 'command'
             msgs = name[5:]
@@ -205,13 +227,10 @@ class SteamCog(commands.Cog, name='Steam'):
                 while self.bot.botresp is False:
                     async with ctx.typing():
                         await asyncio.sleep(5)
-                        nsend = 0
                         if list == 1:
-                            while nsend < len(name):
-                                self.bot.client.get_user(self.bot.bot64id).send_message(name[nsend])
-                                nsend += 1
+                            for message in name:
+                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
                                 await asyncio.sleep(3)
-
                         if string == 1:
                             self.bot.client.get_user(self.bot.bot64id).send_message(name)
                             await asyncio.sleep(3)
@@ -231,14 +250,16 @@ class SteamCog(commands.Cog, name='Steam'):
         self.bot.botresp = False
         while self.bot.botresp is False:
             async with ctx.typing():
-                self.bot.client.get_user(self.bot.bot64id).send_message(self.bot.command_prefix + 'profit')
+                self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
                 await asyncio.sleep(3)
                 self.bot.botresp = True
 
     @commands.command()
     @commands.is_owner()
-    async def send(self, ctx, *, message: str):
-        """Send is used to send a message to the bot eg. `!send [message]`"""
+    async def send(self, ctx, *, message):
+        """Send is used to send a message to the bot
+
+        eg. `!send !message 76561198248053954 Get on steam `"""
         self.bot.botresp = False
         while self.bot.botresp is False:
             async with ctx.typing():
@@ -251,19 +272,20 @@ class SteamCog(commands.Cog, name='Steam'):
     async def backpack(self, ctx):
         """Pull up your backpack and your bot's"""
         embed = discord.Embed(title=' ', color=0x58788F)
-        embed.set_thumbnail(
-            url='https://steamuserimages-a.akamaihd.net/ugc/44226880714734120/EE4DAE995040556E8013F583ACBA971846FA1E2B/')
-        embed.add_field(name='You backpack:', value='https://backpack.tf/profiles/' + str(self.bot.client.steam_id),
-                        inline=False)
-        embed.add_field(name='Your bot\'s backpack', value='https://backpack.tf/profiles/' + str(self.bot.bot64id))
+        embed.set_thumbnail(url='https://steamuserimages-a.akamaihd.net/ugc'
+                '/44226880714734120/EE4DAE995040556E8013F583ACBA971846FA1E2B/')
+        embed.add_field(name='Your backpack:', value=f'https://backpack.tf/profiles/{self.bot.client.user.steam_id}')
+        embed.add_field(name='Your bot\'s backpack', value=f'https://backpack.tf/profiles/{self.bot.bot64id}')
         await ctx.send(embed=embed)
 
     @commands.command()
     @commands.is_owner()
     async def scc(self, ctx):
-        """Scc is a discount version of Hackerino's command generator tool"""
-        channel = ctx.message.channel
-        author = ctx.message.author
+        """Scc is a worse version of Hackerino's command generator tool
+
+        scc makes me happy and it should make you aswell and it's easy to use :thumbsup:"""
+        channel = ctx.channel
+        author = ctx.author
         notgonethrough = True
         notgonethrough1 = True
         notgonethrough2 = True
@@ -301,8 +323,7 @@ class SteamCog(commands.Cog, name='Steam'):
                 steamcommand = item_to_uar
 
                 if do == 'remove':
-                    steamcommand = self.bot.removem + steamcommand
-
+                    f'{self.bot.removem}{steamcommand}'
                 else:
                     await ctx.send('Want to add prefixes?\nType yes or no')
                     response = 0
@@ -521,9 +542,9 @@ class SteamCog(commands.Cog, name='Steam'):
 
                         elif choice == 'no' or choice == 'n':
                             if do == 'update':
-                                steamcommand = self.bot.updatem + steamcommand
+                                steamcommand = f'{self.bot.updatem}{steamcommand}'
                             elif do == 'add':
-                                steamcommand = self.bot.addm + steamcommand
+                                steamcommand = f'{self.bot.addm}{steamcommand}'
                             break
 
                         else:
@@ -536,17 +557,17 @@ class SteamCog(commands.Cog, name='Steam'):
 
             await ctx.send(f'Command to {do} {item_to_uar} is `{steamcommand}`')
             await ctx.send('Do you want to send the command to the bot?\nType yes or no')
-            while response == 0:
+            while 1:
                 choice = await self.bot.wait_for('message', check=check)
                 choice = choice.clean_content.lower()
 
                 if choice == 'yes' or choice == 'y':
-                    response = 1
                     await ctx.send("You have sent the bot a new command")
                     self.bot.client.get_user(self.bot.bot64id).send_message(steamcommand)
+                    return
                 elif choice == 'no' or choice == 'n':
-                    response = 1
                     await ctx.send("You didn't send the command to the bot :(")
+                    return
                 else:
                     await ctx.send('Please try again with y/n')
 
