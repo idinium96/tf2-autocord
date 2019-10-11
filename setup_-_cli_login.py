@@ -44,7 +44,7 @@ print('Beginning to install necessary modules')
 os.system('py -3 -m pip install -U steam')
 os.system('py -3 -m pip install -U discord.py')
 os.system('py -3 -m pip install -U matplotlib')
-os.system('py -3 -m pip install -U psutuil')
+os.system('pip install -U psutuil')
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
 
 try:
@@ -52,7 +52,7 @@ try:
 except OSError:
     print(f"Creation of the directory {path} failed")
 else:
-    print("Successfully created the directory %s " % path)
+    print(f"Successfully created the directory {path}")
     with open(path + 'preferences.json', 'w+') as f:
         f.write(json.dumps(preferences, indent=2))
     with open(path + 'sensitive details.json', 'w+') as f:

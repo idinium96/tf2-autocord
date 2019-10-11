@@ -29,16 +29,11 @@ while choice != 'yes':
     BT = input("Bot Token:\nCopy this from discord.app and the bot section in your application\n>>> ")
     U = input("Username:\nThis is your steam username\n>>> ")
     P = input("Password:\nThis is your steam password\n>>> ")
-    print('If you don\'t know how to get these check the github repo, or download the other version of the code')
-    ID = input("Identity Secret:\nThis is your personal ID secret\n>>> ")
-    SS = input("Shared Secret:\n>>> ")
 
     sensitives = {
         "Bot Token": BT,
         "Username": U,
-        "Password": P,
-        "Identity Secret": ID,
-        "Shared Secret": SS
+        "Password": P
     }
     print(sensitives)
     choice = input('Are you happy with these? (you can change them later)\n>>> ')
@@ -49,21 +44,21 @@ print('Beginning to install necessary modules')
 os.system('py -3 -m pip install -U steam')
 os.system('py -3 -m pip install -U discord.py')
 os.system('py -3 -m pip install -U matplotlib')
-os.system('py -3 -m pip install -U psutuil')
+os.system('pip install -U psutuil')
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
 
 try:
     os.mkdir(path)
 except OSError:
-    print("Creation of the directory %s failed" % path)
+    print(f"Creation of the directory {path} failed")
 else:
-    print("Successfully created the directory %s " % path)
+    print(f"Successfully created the directory {path}")
     with open(path + 'preferences.json', 'w+') as f:
         f.write(json.dumps(preferences, indent=2))
     with open(path + 'sensitive details.json', 'w+') as f:
          f.write(json.dumps(sensitives, indent=2))
     with open(path + 'profit_graphing.json', 'w+') as f:
-         f.write(json.dumps('{}', indent=2))
+        f.write(json.dumps('{}', indent=2))
 
     os.remove('setup.py')
     os.remove('Main_-_cli_login.py')
