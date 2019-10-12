@@ -166,6 +166,7 @@ class HelperCog(commands.Cog, name='Help'):
                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
 
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
@@ -177,9 +178,9 @@ class HelperCog(commands.Cog, name='Help'):
         elif isinstance(error, commands.MissingRequiredArgument):
             title = 'Missing argument'
         elif isinstance(error, commands.NotOwner):
-            title = ' You aren\'t the owner of the bot'
+            title = 'You aren\'t the owner of the bot'
         elif isinstance(error, commands.MissingPermissions):
-            title = ' You don\'t have the necessarily permissions'
+            title = 'You don\'t have the necessary permissions'
         elif isinstance(error, commands.CommandNotFound):
             title = 'Command not found'
         else:
