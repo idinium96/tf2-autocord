@@ -13,9 +13,9 @@ class SteamCog(commands.Cog, name='Steam'):
         self.discordcheck.start()
         self.bot.trades = 0
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=3)
     async def discordcheck(self):
-        if self.bot.sbotresp is not None:
+        if self.bot.sbotresp != 0:
             if 'Received offer' in self.bot.sbotresp:
                 self.bot.trades += 1
             if 'accepted' in self.bot.sbotresp:
@@ -46,7 +46,14 @@ class SteamCog(commands.Cog, name='Steam'):
                                 inline=False)
                 await self.bot.get_user(self.bot.owner_id).send(embed=embed)
                 await asyncio.sleep(60)
-            self.bot.sbotresp = None
+            self.bot.sbotresp = 0
+
+    @discordcheck.after_loop
+    async def after(self):
+        if self.discordcheck.failed():
+            import traceback
+            exc = self.discordcheck.exception()
+            traceback.print_exception(type(exc), exc, exc.__traceback__)
 
     @commands.is_owner()
     @commands.command(aliases=['reconnect', 'logged_on', 'online'])
