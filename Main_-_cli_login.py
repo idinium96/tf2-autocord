@@ -1,6 +1,6 @@
-import gevent.monkey
-gevent.monkey.patch_socket()
-gevent.monkey.patch_ssl()
+from gevent.monkey import patch_socket, patch_ssl
+patch_socket()
+patch_ssl()
 from steam.enums import EResult
 from steam.client import SteamClient
 
@@ -9,7 +9,7 @@ from discord.ext import commands
 import sys
 import traceback
 import json
-import threading
+from threading import Thread
 import os
 
 
@@ -98,6 +98,5 @@ def steamside():
                 bot.client.run_forever()
 
 
-
-t1 = threading.Thread(target=discordside).start()
-t2 = threading.Thread(target=steamside).start()
+t1 = Thread(target=discordside).start()
+t2 = Thread(target=steamside).start()
