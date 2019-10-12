@@ -82,7 +82,7 @@ def steamside():
             def handle_message(user, message_text):
                 if user.steam_id == bot.bot64id:
                     if 'view it here' not in message_text and 'marked as declined' in message_text:
-                        pass
+                        bot.trades += 1
                     else:
                         bot.sbotresp = message_text
                         if 'from user' in bot.sbotresp:
