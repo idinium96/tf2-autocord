@@ -74,8 +74,9 @@ class LoaderCog(commands.Cog, name='Loader'):
         """You probably don't need to use this, however it can be used to reload a cog
 
         eg. `!reload loader`"""
+        extension = extension.lower()
         if 'Cogs.' not in extension:
-            extension = 'Cogs.' + extension.lower()
+            extension = f'Cogs.{extension}'
         if '.py' in extension:
             extension = extension[:-3]
         try:
