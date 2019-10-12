@@ -11,7 +11,7 @@ from datetime import datetime
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.2.1'
+    __version__ = '1.2.1.1'
 
     def __init__(self, bot):
         self.bot = bot

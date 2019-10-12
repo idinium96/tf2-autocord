@@ -62,7 +62,9 @@ class HelperCog(commands.Cog, name='Help'):
     @commands.is_owner()
     @commands.cooldown(rate=1, per=7200, type=commands.BucketType.user)
     async def suggest(self, ctx, *, suggestion):
-        """Suggest a feature to <@340869611903909888> (the developer) eg. `!suggest update the repo`"""
+        """Suggest a feature to <@340869611903909888>
+
+         eg. `!suggest update the repo`"""
         author = ctx.message.author
         embed = discord.Embed(color=0x2e3bad, description=suggestion)
         embed.set_author(name=f'Message from {str(author)}')
@@ -81,7 +83,7 @@ class HelperCog(commands.Cog, name='Help'):
             message = f'You are logged in as {self.bot.client.user.name}'
         else:
             message = 'You aren\'t logged into steam'
-        await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms, {message}')
+        await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms. {message}')
 
     @commands.command()
     async def help(self, ctx, *help):
@@ -123,7 +125,7 @@ class HelperCog(commands.Cog, name='Help'):
                             halp.add_field(name='**Bot description:**', value=self.bot.description)
                             allcogs = ''
                             for x in self.bot.cogs:
-                                allcogs += '`' + x + '`' + ', '
+                                allcogs += f'`{x}`, '
                                 allcogs = allcogs.replace('`Loader`, ', '')
                             halp.add_field(name=f'The current loaded cogs are ({allcogs[:-2]}) :gear:', value='​')
                             for c in self.bot.get_cog(y).get_commands():
@@ -156,7 +158,7 @@ class HelperCog(commands.Cog, name='Help'):
                                      color=discord.Color.red())
                 allcogs = ''
                 for x in self.bot.cogs:
-                    allcogs += '`' + x + '`' + ', '
+                    allcogs += f'`{x}`, '
                     allcogs = allcogs.replace('`Loader`, ', '')
                 halp.add_field(name=f'Current loaded Cogs are ({allcogs[:-2]}) :gear:', value='​')
 

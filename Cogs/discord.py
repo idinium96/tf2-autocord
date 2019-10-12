@@ -94,7 +94,6 @@ class DiscordCog(commands.Cog, name='Discord'):
                     with open('profit_graphing.json') as f:
                         data = json.load(f)
                         data.update(tempprofit)
-
                     with open('profit_graphing.json', 'w') as f:
                         json.dump(data, f, indent=4)
 
@@ -113,8 +112,9 @@ class DiscordCog(commands.Cog, name='Discord'):
             embed.set_author(name=f'Last {days} days profit')
             for key, value in reversed(list(data.items())):
                 try:
-                    embed.add_field(name=key + ':', value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}'
-                                                          f'** keys. Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
+                    embed.add_field(name=f'{key}:', value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}'
+                                                          f'** keys. Predicted profit **{value[2]}** keys. '
+                                                          f'Total trades **{value[3]}**',
                                     inline=False)
                 except:
                     pass
@@ -144,11 +144,9 @@ class DiscordCog(commands.Cog, name='Discord'):
                 pred_values.append(0)
 
         # Plot the number in the list and set the line thickness.
-
         plt.setp(plt.plot(date_values, tod_values, linewidth=3), color='blue')
         plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
         plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
-
 
         plt.title(f"A graph to show your bot\'s over the last {len(data)} days", fontsize=16)
         plt.xlabel("Date", fontsize=10)
@@ -210,13 +208,13 @@ class DiscordCog(commands.Cog, name='Discord'):
             await ctx.send(f'You can request these `{self.acceptedfiles}`')
         file = file.lower()
         if file in self.acceptedfiles:
-            file = '/' + file
+            file = f'/{file}'
             if '.json' in file:
                 filename = file
-                file = self.bot.templocation + file
+                file = f'{self.bot.templocation}{file}'
             elif '.json' not in file:
-                filename = file + '.json'
-                file = self.bot.templocation + file + '.json'
+                filename = f'{file}.json'
+                file = f'{self.bot.templocation}{file}.json'
             file = discord.File(file, filename=filename)
             await ctx.send('Here you go, don\'t do anything naughty with it.', file=file)
         else:
@@ -226,7 +224,7 @@ class DiscordCog(commands.Cog, name='Discord'):
     async def info(self, ctx):
         """Get some interesting info about the bot"""
         rawram = psutil.virtual_memory()
-        os.system('cd ' + os.getcwd())
+        os.system(f'cd {os.getcwd()}')
         updateable = os.popen('git checkout').read()
         if 'Your branch is up to date with' in updateable:
             emoji = '<:tick:626829044134182923>'
