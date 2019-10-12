@@ -14,7 +14,7 @@ class SteamCog(commands.Cog, name='Steam'):
         self.bot.trades = 0
 
 
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=1)
     async def discordcheck(self):
         if self.bot.sbotresp is not None:
             if 'Recieved offer' in self.bot.sbotresp:
@@ -49,7 +49,7 @@ class SteamCog(commands.Cog, name='Steam'):
                 await asyncio.sleep(60)
             self.bot.sbotresp = None
 
-
+    @commands.is_owner()
     @commands.command(aliases=['reconnect', 'logged_on', 'online'])
     async def relogin(self, ctx):
         """Attempt to reconnect to Steam if you logged out"""
