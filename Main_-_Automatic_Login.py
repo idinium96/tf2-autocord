@@ -86,7 +86,6 @@ def steamside():
                         pass
                     else:
                         bot.sbotresp = message_text
-                        bot.botresp = True
                         if 'from user' in bot.sbotresp:
                             bot.usermessage = bot.sbotresp
                         if bot.currenttime == '23:59' and "You've made" in bot.sbotresp:
