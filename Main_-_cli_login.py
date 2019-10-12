@@ -21,7 +21,7 @@ token = login["Bot Token"]
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), case_insensitive=True,
                    description='Used to manage your tf2automatic bot and send all of your messages via Discord')
 bot.remove_command('help')
-bot.cli_login = False
+bot.cli_login = True
 
 # cogs -----------------------------------------------------------------------------------------------------------------
 
