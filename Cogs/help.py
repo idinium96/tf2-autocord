@@ -2,18 +2,8 @@ import discord
 from discord.ext import commands, tasks
 
 import os
-from sys import argv, executable
 
 from .loader import LoaderCog
-
-
-'''
-class HelpCommand(commands.HelpCommand):
-    def get_opening_note(self):
-        command_name = self.invoked_with
-        return f"Use `{self.clean_prefix}{command_name} [command]` for more info on a command.\n" \
-               f"You can also use `{self.clean_prefix}{command_name} [category]` for more info on a category."
-'''
 
 
 class HelperCog(commands.Cog, name='Help'):
@@ -22,9 +12,6 @@ class HelperCog(commands.Cog, name='Help'):
     def __init__(self, bot):
         self.bot = bot
         self.githubupdate.start()
-        #self._original_help_command = bot.help_command
-        #bot.help_command = HelpCommand()
-        #bot.help_command.cog = self
 
     @tasks.loop(hours=24)
     async def githubupdate(self):
@@ -40,20 +27,23 @@ class HelperCog(commands.Cog, name='Help'):
     @commands.command()
     @commands.is_owner()
     async def updaterepo(self, ctx):
-        """Used to update to the newest version of the code"""
+        """Used to update to the newest version of the code
+
+        This will overwrite any changes you have made locally"""
         await ctx.send('Attempting to update to the latest version of the code')
-        os.system('cd ' + os.getcwd())
+        os.system(f'cd {os.getcwd()}')
+        os.system('git reset --hard HEAD')
         updateable = os.popen('git pull').read()
         if 'Already up to date.' in updateable:
             await ctx.send('No updates to be had?')
         else:
-            await ctx.send('Updating from the newest GitHub push and restarting')
-            os.execv(executable, ['python'] + argv)
+            await ctx.send('Updating from the latest GitHub push\n'
+                           'You will need to restart for the update to take effect')
 
     @commands.command()
     async def github(self, ctx):
         """Shows the GitHub repo and some info about it"""
-        os.system('cd ' + os.getcwd())
+        os.system(f'cd {os.getcwd()}')
         updateable = os.popen('git checkout').read()
         if 'Your branch is up to date with' in updateable:
             emoji = '<:tick:626829044134182923>'
@@ -79,15 +69,19 @@ class HelperCog(commands.Cog, name='Help'):
         try:
             await self.bot.get_user(340869611903909888).send(embed=embed)
         except:
-            await ctx.send("I could not deliver your message. ¯\_(ツ)_/¯")
+            await ctx.send('I could not deliver your message. ¯\_(ツ)_/¯')
         else:
-            await ctx.send("I have delivered your message to Gobot1234#2435 (I may be in contact)"
-                           ", this command is limited to working every 2 hours so you can't spam me")
+            await ctx.send('I have delivered your message to Gobot1234#2435 (I may be in contact), '
+                           'this command is limited to working every 2 hours so you can\'t spam me')
 
     @commands.command()
     async def ping(self, ctx):
         """Check if your bot is online"""
-        await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms')
+        if self.bot.client.logged_on:
+            message = f'You are logged in as {self.bot.client.user.name}'
+        else:
+            message = 'You aren\'t logged into steam'
+        await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms, {message}')
 
     @commands.command()
     async def help(self, ctx, *help):
@@ -146,8 +140,9 @@ class HelperCog(commands.Cog, name='Help'):
                     commandlist.append(command.name)
                 helpl = help[0].lower()
                 if helpl in commandlist:
-                    halp = discord.Embed(title=f'Help with the `{self.bot.command_prefix}{self.bot.get_command(helpl)}` command {emoji}',
-                                         color=color)
+                    halp = discord.Embed(
+                        title=f'Help with the `{self.bot.command_prefix}{self.bot.get_command(helpl)}` command {emoji}',
+                        color=color)
                     halp.add_field(name='**Bot description:**', value=self.bot.description)
                     if len(self.bot.get_command(helpl).signature) != 0:
                         args = f'Arguments = `{self.bot.get_command(helpl).signature}`'
@@ -168,7 +163,6 @@ class HelperCog(commands.Cog, name='Help'):
         halp.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435",
                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
-
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
