@@ -14,9 +14,9 @@ class SteamCog(commands.Cog, name='Steam'):
         self.bot.trades = 0
 
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=5)
     async def discordcheck(self):
-        if self.bot.botresp is True:
+        if self.bot.sbotresp is not None:
             if 'Recieved offer' in self.bot.sbotresp:
                 self.bot.trades += 1
             if 'accepted' in self.bot.sbotresp:
@@ -25,6 +25,7 @@ class SteamCog(commands.Cog, name='Steam'):
                 color2 = discord.Color.red()
             else:
                 color2 = self.bot.color
+
             if 'view it here' in self.bot.sbotresp and 'https' in self.bot.sbotresp:
                 image = self.bot.sbotresp.split('here ', 1)
                 message = self.bot.sbotresp.replace(image[1], '')[:-1] + ':'
@@ -35,8 +36,8 @@ class SteamCog(commands.Cog, name='Steam'):
             else:
                 embed = discord.Embed(color=color2)
                 embed.add_field(name='New Message:', value=self.bot.sbotresp, inline=False)
-            embed.set_footer(text=str(
-                datetime.datetime.now().strftime('%H:%M:%S %d/%m/%Y')))  # 12hr time, am/pm, weekday, day, month
+
+            embed.set_footer(text=str(datetime.datetime.now().strftime('%H:%M:%S %d/%m/%Y')))  # 12hr time, am/pm, weekday, day, month
             await self.bot.get_user(self.bot.owner_id).send(embed=embed)
             if self.bot.usermessage != 0:
                 embed = discord.Embed(color=0xFFFF66)
@@ -45,8 +46,9 @@ class SteamCog(commands.Cog, name='Steam'):
                                       f'\nType {self.bot.command_prefix}acknowledged',
                                 inline=False)
                 await self.bot.get_user(self.bot.owner_id).send(embed=embed)
-                await asyncio.sleep(30)
-            self.bot.botresp = False
+                await asyncio.sleep(60)
+            self.bot.sbotresp = None
+
 
     @commands.command(aliases=['reconnect', 'logged_on', 'online'])
     async def relogin(self, ctx):
@@ -103,20 +105,16 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                self.bot.botresp = False
-                while self.bot.botresp is False:
-                    async with ctx.typing():
-                        await asyncio.sleep(5)
-                        if list == 1:
-                            for message in name:
-                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
-                                await asyncio.sleep(3)
-
-                        if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                async with ctx.typing():
+                    await asyncio.sleep(5)
+                    if list == 1:
+                        for message in name:
+                            self.bot.client.get_user(self.bot.bot64id).send_message(message)
                             await asyncio.sleep(3)
 
-                        self.bot.botresp = True
+                    if string == 1:
+                        self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                        await asyncio.sleep(3)
 
             elif choice == 'n' or choice == 'no':
                 await ctx.send("The command hasn't been sent")
@@ -163,20 +161,16 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                self.bot.botresp = False
-                while self.bot.botresp is False:
-                    async with ctx.typing():
-                        await asyncio.sleep(5)
-                        if list == 1:
-                            for message in name:
-                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
-                                await asyncio.sleep(3)
-
-                        if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                async with ctx.typing():
+                    await asyncio.sleep(5)
+                    if list == 1:
+                        for message in name:
+                            self.bot.client.get_user(self.bot.bot64id).send_message(message)
                             await asyncio.sleep(3)
 
-                        self.bot.botresp = True
+                    if string == 1:
+                        self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                        await asyncio.sleep(3)
 
             elif choice == 'n' or choice == 'no':
                 await ctx.send("The command hasn't been sent")
@@ -223,19 +217,15 @@ class SteamCog(commands.Cog, name='Steam'):
             if choice == 'y' or choice == 'yes':
                 response = 1
                 await ctx.send(f'Send {mul} {mul2} to the bot {dscontent}')
-                self.bot.botresp = False
-                while self.bot.botresp is False:
-                    async with ctx.typing():
-                        await asyncio.sleep(5)
-                        if list == 1:
-                            for message in name:
-                                self.bot.client.get_user(self.bot.bot64id).send_message(message)
-                                await asyncio.sleep(3)
-                        if string == 1:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                async with ctx.typing():
+                    await asyncio.sleep(5)
+                    if list == 1:
+                        for message in name:
+                            self.bot.client.get_user(self.bot.bot64id).send_message(message)
                             await asyncio.sleep(3)
-
-                        self.bot.botresp = True
+                    if string == 1:
+                        self.bot.client.get_user(self.bot.bot64id).send_message(name)
+                        await asyncio.sleep(3)
 
             elif choice == 'n' or choice == 'no':
                 await ctx.send("The command hasn't been sent")
@@ -247,12 +237,9 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.is_owner()
     async def profit(self, ctx):
         """Returns your bot's profit as it normally would"""
-        self.bot.botresp = False
-        while self.bot.botresp is False:
-            async with ctx.typing():
-                self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
-                await asyncio.sleep(3)
-                self.bot.botresp = True
+        async with ctx.typing():
+            self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
+            await asyncio.sleep(3)
 
     @commands.command()
     @commands.is_owner()
@@ -260,13 +247,10 @@ class SteamCog(commands.Cog, name='Steam'):
         """Send is used to send a message to the bot
 
         eg. `!send !message 76561198248053954 Get on steam `"""
-        self.bot.botresp = False
-        while self.bot.botresp is False:
-            async with ctx.typing():
-                self.bot.client.get_user(self.bot.bot64id).send_message(message)
-                await ctx.send(f"Sent `{message}` to the bot")
-                await asyncio.sleep(3)
-                self.bot.botresp = True
+        async with ctx.typing():
+            self.bot.client.get_user(self.bot.bot64id).send_message(message)
+            await ctx.send(f"Sent `{message}` to the bot")
+            await asyncio.sleep(3)
 
     @commands.command(aliases=['bp'])
     async def backpack(self, ctx):

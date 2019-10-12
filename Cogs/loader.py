@@ -11,7 +11,7 @@ from datetime import datetime
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.2'
+    __version__ = '1.2.1'
 
     def __init__(self, bot):
         self.bot = bot
@@ -39,8 +39,6 @@ class LoaderCog(commands.Cog, name='Loader'):
         bot.usermessage = 0
         bot.logged_on = 0
         bot.toggleprofit = 0
-        bot.botresp = False
-        bot.beginSteam = False
         bot.dsdone = 0
         bot.currenttime = datetime.now().strftime("%H:%M")
 
