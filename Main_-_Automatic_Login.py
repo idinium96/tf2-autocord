@@ -20,7 +20,7 @@ login = json.loads(open('Login details/sensitive details.json', 'r').read())
 token = login["Bot Token"]
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), case_insensitive=True,
-                   description='Used to manage your tf2automatic bot and send all of your messages via Discord')
+                   description='Used to manage your tf2automatic bot and send all of Steam messages through Discord')
 bot.remove_command('help')
 bot.cli_login = False
 
@@ -37,6 +37,7 @@ if __name__ == '__main__':
             except Exception as e:
                 print(f'Failed to load extension {extension}.', file=stderr)
                 print_exc()
+
 
 # threading ------------------------------------------------------------------------------------------------------------
 
@@ -85,11 +86,12 @@ def steamside():
                     if 'view it here' not in message_text and 'marked as declined' in message_text:
                         bot.trades += 1
                     else:
-                        bot.sbotresp = message_text
-                        if 'from user' in bot.sbotresp:
-                            bot.usermessage = bot.sbotresp
-                        if bot.currenttime == '23:59' and "You've made" in bot.sbotresp:
-                            bot.graphplots = bot.sbotresp
+                        if 'from user' in message_text:
+                            bot.usermessage = message_text
+                        if bot.currenttime == '23:59' and "You've made" in message_text:
+                            bot.graphplots = message_text
+                        else:
+                            bot.sbotresp = message_text
 
             SA = guard.SteamAuthenticator(bot.secrets).get_code()
             result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
