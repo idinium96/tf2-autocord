@@ -64,6 +64,7 @@ class HelperCog(commands.Cog, name='Help'):
     async def suggest(self, ctx, *, suggestion):
         """Suggest a feature to <@340869611903909888>
 
+        :suggestion [required]
          eg. `!suggest update the repo`"""
         author = ctx.message.author
         embed = discord.Embed(color=0x2e3bad, description=suggestion)
@@ -71,14 +72,15 @@ class HelperCog(commands.Cog, name='Help'):
         try:
             await self.bot.get_user(340869611903909888).send(embed=embed)
         except:
-            await ctx.send('I could not deliver your message. ¯\_(ツ)_/¯')
+            await ctx.send('I could not deliver your message. ¯\_(ツ)_/¯, probably as your bot '
+                           'isn\'t in the server send {self.bot.user.id} to <@340869611903909888>')
         else:
-            await ctx.send('I have delivered your message to Gobot1234#2435 (I may be in contact), '
+            await ctx.send('I have delivered your message to <@340869611903909888> (I may be in contact), '
                            'this command is limited to working every 2 hours so you can\'t spam me')
 
     @commands.command()
     async def ping(self, ctx):
-        """Check if your bot is online"""
+        """Check if your bot is online on both Steam and Discord"""
         if self.bot.client.logged_on:
             message = f'You are logged in as {self.bot.client.user.name}'
         else:
@@ -86,22 +88,23 @@ class HelperCog(commands.Cog, name='Help'):
         await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms. {message}')
 
     @commands.command()
-    async def help(self, ctx, *help):
+    async def help(self, ctx, help = None):
         """Get help with a cog or command
 
+        :help [required]
         eg. `!help Steam` (There should be 4 cogs and 22 commands)"""
-        help = tuple((str(word).capitalize() for word in help))
-        if str(help) == '()' or 'Help' in help:
-            help = ('Help',)
+        help = help or 'Help'
+        help = help.captialize()
+        if 'Help' in help:
             color = self.bot.color
             emoji = '<:tf2autocord:624658299224326148>'
             helper = 'cogs'
         elif 'Discord' in help:
-            color = int('0x7289da', 16)
+            color = 0x7289da
             emoji = '<:discord:626486432793493540>'
             helper = 'cogs'
         elif 'Steam' in help:
-            color = int('0x00adee', 16)
+            color = 0x00adee
             emoji = '<:steam:622621553800249364>'
             helper = 'cogs'
         elif 'Loader' in help:
@@ -111,64 +114,61 @@ class HelperCog(commands.Cog, name='Help'):
             helper = 'commands'
             emoji = '<:tf2autocord:624658299224326148>'
             color = self.bot.color
-        if len(help) > 1:
-            halp = discord.Embed(title='Error!', description=f'\"{help}\" That is too many Commands or Cogs!',
+
+        allcogs = ''
+        for x in self.bot.cogs:
+            allcogs += f'`{x}`, '
+            allcogs = allcogs.replace('`Loader`, ', '')
+
+        found = False
+        if helper == 'cogs':
+            for x in self.bot.cogs:
+                for y in help:
+                    if x == y:
+                        halp = discord.Embed(title=f'Help with {help} commands {emoji}',
+                                             description=self.bot.cogs[help].__doc__, color=color)
+                        halp.add_field(name='**Bot description:**', value=self.bot.description)
+                        halp.add_field(name=f'The current loaded cogs are ({allcogs[:-2]}) :gear:', value='​')
+                        for c in self.bot.get_cog(y).get_commands():
+                            if len(c.signature) == 0:
+                                command = f'`{self.bot.command_prefix}{c.name}`'
+                            else:
+                                command = f'`{self.bot.command_prefix}{c.name} {c.signature}`'
+                            halp.add_field(name=command, value=c.short_doc,
+                                           inline=False)
+                        found = True
+        elif helper == 'commands':
+            commandlist = []
+            for command in self.bot.commands:
+                commandlist.append(command.name)
+            helpl = help.lower()
+            if helpl in commandlist:
+                halp = discord.Embed(
+                    title=f'Help with the `{self.bot.command_prefix}{self.bot.get_command(helpl)}` command {emoji}',
+                    color=color)
+                halp.add_field(name='**Bot description:**', value=self.bot.description)
+                if len(self.bot.get_command(helpl).signature) != 0:
+                    args = f'Arguments = `{self.bot.get_command(helpl).signature}`'
+                else:
+                    args = '\u200b'
+                halp.add_field(name=args, value=self.bot.get_command(helpl).help)
+                found = True
+        if not found:
+            halp = discord.Embed(title='Error!',
+                                 description=f'**Error 404:** Command or Cog \"{help}\" not found ¯\_(ツ)_/¯',
                                  color=discord.Color.red())
-        else:
-            found = False
-            if helper == 'cogs':
-                for x in self.bot.cogs:
-                    for y in help:
-                        if x == y:
-                            halp = discord.Embed(title=f'Help with {help[0]} commands {emoji}',
-                                                 description=self.bot.cogs[help[0]].__doc__, color=color)
-                            halp.add_field(name='**Bot description:**', value=self.bot.description)
-                            allcogs = ''
-                            for x in self.bot.cogs:
-                                allcogs += f'`{x}`, '
-                                allcogs = allcogs.replace('`Loader`, ', '')
-                            halp.add_field(name=f'The current loaded cogs are ({allcogs[:-2]}) :gear:', value='​')
-                            for c in self.bot.get_cog(y).get_commands():
-                                if len(c.signature) == 0:
-                                    command = f'`{self.bot.command_prefix}{c.name}`'
-                                else:
-                                    command = f'`{self.bot.command_prefix}{c.name} {c.signature}`'
-                                halp.add_field(name=command, value=c.short_doc,
-                                               inline=False)
-                            found = True
-            elif helper == 'commands':
-                commandlist = []
-                for command in self.bot.commands:
-                    commandlist.append(command.name)
-                helpl = help[0].lower()
-                if helpl in commandlist:
-                    halp = discord.Embed(
-                        title=f'Help with the `{self.bot.command_prefix}{self.bot.get_command(helpl)}` command {emoji}',
-                        color=color)
-                    halp.add_field(name='**Bot description:**', value=self.bot.description)
-                    if len(self.bot.get_command(helpl).signature) != 0:
-                        args = f'Arguments = `{self.bot.get_command(helpl).signature}`'
-                    else:
-                        args = '\u200b'
-                    halp.add_field(name=args, value=self.bot.get_command(helpl).help)
-                    found = True
-            if not found:
-                halp = discord.Embed(title='Error!',
-                                     description=f'**Error 404:** Command or Cog \"{help[0]}\" not found ¯\_(ツ)_/¯',
-                                     color=discord.Color.red())
-                allcogs = ''
-                for x in self.bot.cogs:
-                    allcogs += f'`{x}`, '
-                    allcogs = allcogs.replace('`Loader`, ', '')
-                halp.add_field(name=f'Current loaded Cogs are ({allcogs[:-2]}) :gear:', value='​')
+
+            halp.add_field(name=f'Current loaded Cogs are ({allcogs[:-2]}) :gear:', value='​')
 
         halp.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435",
                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
 
-
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        """The event triggered when an error is raised while invoking a command.
+        ctx   : Context
+        error : Exception"""
         if isinstance(error, commands.MissingRequiredArgument):
             title = 'Missing a required argument'
         elif isinstance(error, commands.CommandOnCooldown):

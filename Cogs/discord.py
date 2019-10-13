@@ -26,82 +26,81 @@ class DiscordCog(commands.Cog, name='Discord'):
 
     @tasks.loop(seconds=10)
     async def profitgraphing(self):
-        self.bot.currenttime = datetime.now().strftime("%H:%M")
+        """A task that at 23:59 will get your profit
+        It will convert all your values to keys"""
+        self.bot.currenttime = str(datetime.now().strftime("%H:%M"))
         if self.bot.currenttime == '23:59':
-            date = datetime.datetime.today().strftime("%d-%m-%Y")
+            date = datetime.today().strftime("%d-%m-%Y")
             self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
             async with ClientSession() as session:
                 async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
                     response = await response.json()
-                    keyValue = response.get('price').get('metal')
+                    keyValue = response["sell"]["metal"]
 
-                    log = self.bot.graphplots
-                    log = log.replace("You've made ", '')
-                    if 'all' in log:
-                        log = log.replace(' if all items were sold).', '')
-                    else:
-                        log = log[:-1]
+            log = self.bot.graphplots
+            log = log.replace("You've made ", '')
+            if 'all' in log:
+                log = log.replace(' if all items were sold).', '')
+            else:
+                log = log[:-1]
 
-                    todprofit = log.split(' today')
-                    fixedtodprofit = todprofit[0][:-4]
-                    totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
+            todprofit = log.split(' today')
+            fixedtodprofit = int(todprofit[0][:-4])
+            totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
 
-                    if '(' in log:  # checks your total profit and if you have total profit
-                        totprofit = totprofit[2:-5].split(' in total')
-                    else:
-                        totprofit = totprofit[2:].split(' in total')
+            if '(' in log:  # checks your total profit and if you have total profit
+                totprofit = totprofit[2:-5].split(' in total')
+            else:
+                totprofit = totprofit[2:].split(' in total')
 
-                    if 'key' in fixedtodprofit:  # converts 1st value to keys
-                        fixedtodprofit = fixedtodprofit.split(' ')
-                        if '-' in fixedtodprofit[0]:
-                            minus = '-'
-                        else:
-                            minus = ''
-                        fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue,
-                                               2)
-                        print(fixedtodprofit)
+            if 'key' in fixedtodprofit:  # converts 1st value to keys
+                fixedtodprofit = fixedtodprofit.split(' ')
+                if '-' in fixedtodprofit[0]:
+                    minus = '-'
+                else:
+                    minus = ''
+                fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue, 2)
 
-                    if 'key' in totprofit[0] or 'keys' in totprofit[0]:  # converting 2nd
-                        fixedtotprofit = totprofit[0].split(', ')
-                        if 'keys' in fixedtotprofit[0]:
-                            fixedtotprofit[0] = fixedtotprofit[0][:-5]
-                        elif 'key' in fixedtotprofit[0]:
-                            fixedtotprofit[0] = fixedtotprofit[0][:-3]
-                        fixedtotprofit[1] = fixedtotprofit[1][:-4]
+            if 'key' in totprofit[0] or 'keys' in totprofit[0]:  # converting 2nd
+                fixedtotprofit = totprofit[0].split(', ')
+                if 'keys' in fixedtotprofit[0]:
+                    fixedtotprofit[0] = fixedtotprofit[0][:-5]
+                elif 'key' in fixedtotprofit[0]:
+                    fixedtotprofit[0] = fixedtotprofit[0][:-3]
+                fixedtotprofit[1] = fixedtotprofit[1][:-4]
 
-                        fixedtotprofit = round(float(fixedtotprofit[0]) + float(fixedtotprofit[1]) / keyValue, 2)
-                        print(fixedtotprofit)
+                fixedtotprofit = round(float(fixedtotprofit[0]) + float(fixedtotprofit[1]) / keyValue, 2)
 
-                    if 'more' in str(log):  # checks if you have predicted profit
-                        predprofit = str(totprofit[1]).replace(' (', '').replace('[', '').replace(']', '').replace("'",
-                                                                                                                   '')
-                        fixedpredprofit = predprofit.split(', ')
-                        if 'keys' in fixedpredprofit[0]:
-                            fixedpredprofit[0] = fixedpredprofit[0][:-5]
-                        elif 'key' in fixedpredprofit[0]:
-                            fixedpredprofit[0] = fixedpredprofit[0][:-3]
-                        fixedpredprofit[1] = fixedpredprofit[1][:-4]
+            if 'more' in str(log):  # checks if you have predicted profit
+                predprofit = str(totprofit[1]).replace(' (', '').replace('[', '').replace(']', '').replace("'",
+                                                                                                           '')
+                fixedpredprofit = predprofit.split(', ')
+                if 'keys' in fixedpredprofit[0]:
+                    fixedpredprofit[0] = fixedpredprofit[0][:-5]
+                elif 'key' in fixedpredprofit[0]:
+                    fixedpredprofit[0] = fixedpredprofit[0][:-3]
+                fixedpredprofit[1] = fixedpredprofit[1][:-4]
 
-                        fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
-                        print(fixedpredprofit)
-                        graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
-                    else:
-                        graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
+                fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
+                graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
+            else:
+                graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
 
-                    tempprofit = {date: graphdata}
+            tempprofit = {date: graphdata}
 
-                    with open('profit_graphing.json') as f:
-                        data = json.load(f)
-                        data.update(tempprofit)
-                    with open('profit_graphing.json', 'w') as f:
-                        json.dump(data, f, indent=4)
+            with open('profit_graphing.json') as f:
+                data = json.load(f)
+                data.update(tempprofit)
+            with open('profit_graphing.json', 'w') as f:
+                json.dump(data, f, indent=4)
 
     @commands.command()
     @commands.is_owner()
     async def last(self, ctx, days: int = 7):
         """Used to get the last x days profit
 
+        :days <7>
         eg. `!last 7` (days has to be an integer)"""
         data = json.load(open('Login details/profit_graphing.json', 'r'))
         if days > len(data):
@@ -200,9 +199,10 @@ class DiscordCog(commands.Cog, name='Discord'):
 
     @commands.command(aliases=['gimme'])
     @commands.is_owner()
-    async def get(self, ctx, *, file: str = None):
+    async def get(self, ctx, *, file=None):
         """Used to get files from your temp folder
 
+        :file [required]
         eg. `!get history` (if you don't type anything you can see the files you can request)"""
         if file is None:
             await ctx.send(f'You can request these `{self.acceptedfiles}`')

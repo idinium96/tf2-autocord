@@ -41,6 +41,7 @@ class LoaderCog(commands.Cog, name='Loader'):
         bot.toggleprofit = 0
         bot.dsdone = 0
         bot.currenttime = datetime.now().strftime("%H:%M")
+        bot.trades = 0
 
         bot.updatem = f'{bot.command_prefix}update name='
         bot.removem = f'{bot.command_prefix}remove item='

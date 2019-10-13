@@ -15,6 +15,7 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @tasks.loop(seconds=3)
     async def discordcheck(self):
+        """The task that forwards messages from Steam to Discord"""
         if self.bot.sbotresp != 0:
             if 'Received offer' in self.bot.sbotresp:
                 self.bot.trades += 1
@@ -48,13 +49,6 @@ class SteamCog(commands.Cog, name='Steam'):
                 await asyncio.sleep(60)
             self.bot.sbotresp = 0
 
-    @discordcheck.after_loop
-    async def after(self):
-        if self.discordcheck.failed():
-            import traceback
-            exc = self.discordcheck.exception()
-            traceback.print_exception(type(exc), exc, exc.__traceback__)
-
     @commands.is_owner()
     @commands.command(aliases=['reconnect', 'logged_on', 'online'])
     async def relogin(self, ctx):
@@ -73,9 +67,11 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.command()
     @commands.is_owner()
     async def add(self, ctx, *, name):
-        """Aad is used to add items from your bot's classifieds
+        """Add is used to add items from your bot's classifieds
 
-        It allows the chaining of commands eg. `!add names=This&intent=sell, That, The other`"""
+        :name [required]
+        It allows the chaining of commands
+        eg. `!add names=This&intent=sell, That, The other`"""
         channel = ctx.message.channel
 
         def check(m):
@@ -133,7 +129,9 @@ class SteamCog(commands.Cog, name='Steam'):
     async def update(self, ctx, *, name):
         """Update is used to update items from your bot's classifieds
 
-        It allows the chaining of commands eg. `!update names=This&intent=bank, That, The other`"""
+        :name [required]
+        It allows the chaining of commands
+        eg. `!update names=This&intent=bank, That, The other`"""
         channel = ctx.message.channel
 
         def check(m):
@@ -189,7 +187,9 @@ class SteamCog(commands.Cog, name='Steam'):
     async def remove(self, ctx, *, name):
         """Remove is used to remove items from your bot's classifieds
 
-        It allows the chaining of commands eg. `!remove names=This&intent=bank, That, The Other`"""
+        :name [required]
+        It allows the chaining of commands
+        `!remove names=This&intent=bank, That, The Other`"""
         channel = ctx.message.channel
 
         def check(m):
@@ -252,6 +252,7 @@ class SteamCog(commands.Cog, name='Steam'):
     async def send(self, ctx, *, message):
         """Send is used to send a message to the bot
 
+        :message [required]
         eg. `!send !message 76561198248053954 Get on steam `"""
         async with ctx.typing():
             self.bot.client.get_user(self.bot.bot64id).send_message(message)
