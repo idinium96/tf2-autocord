@@ -24,7 +24,7 @@ class DiscordCog(commands.Cog, name='Discord'):
         self.acceptedfiles = ['history', 'history.json', 'inventory', 'inventory.json', 'schema', 'schema.json',
                               'listings', 'listings.json']
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=5)
     async def profitgraphing(self):
         """A task that at 23:59 will get your profit
         It will convert all your values to keys"""
@@ -46,21 +46,26 @@ class DiscordCog(commands.Cog, name='Discord'):
                 log = log[:-1]
 
             todprofit = log.split(' today')
-            fixedtodprofit = int(todprofit[0][:-4])
-            totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
+            fixedtodprofit = todprofit[0]
 
+            totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
             if '(' in log:  # checks your total profit and if you have total profit
                 totprofit = totprofit[2:-5].split(' in total')
             else:
                 totprofit = totprofit[2:].split(' in total')
-
-            if 'key' in fixedtodprofit:  # converts 1st value to keys
+            if 'key' in fixedtodprofit or 'keys' in fixedtodprofit:  # converts 1st value to keys
                 fixedtodprofit = fixedtodprofit.split(' ')
+                print(fixedtodprofit, 'keys in')
                 if '-' in fixedtodprofit[0]:
                     minus = '-'
                 else:
                     minus = ''
+
                 fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue, 2)
+
+            else:
+                fixedtodprofit = fixedtodprofit.split(' ')
+                fixedtodprofit = round(float(fixedtodprofit[0]) / keyValue, 2)
 
             if 'key' in totprofit[0] or 'keys' in totprofit[0]:  # converting 2nd
                 fixedtotprofit = totprofit[0].split(', ')
@@ -71,7 +76,9 @@ class DiscordCog(commands.Cog, name='Discord'):
                 fixedtotprofit[1] = fixedtotprofit[1][:-4]
 
                 fixedtotprofit = round(float(fixedtotprofit[0]) + float(fixedtotprofit[1]) / keyValue, 2)
-
+            else:
+                fixedtotprofit = totprofit[0].split(', ')
+                fixedtotprofit = round(float(fixedtotprofit[0][:-4]) / keyValue, 2)
             if 'more' in str(log):  # checks if you have predicted profit
                 predprofit = str(totprofit[1]).replace(' (', '').replace('[', '').replace(']', '').replace("'",
                                                                                                            '')
@@ -80,20 +87,30 @@ class DiscordCog(commands.Cog, name='Discord'):
                     fixedpredprofit[0] = fixedpredprofit[0][:-5]
                 elif 'key' in fixedpredprofit[0]:
                     fixedpredprofit[0] = fixedpredprofit[0][:-3]
-                fixedpredprofit[1] = fixedpredprofit[1][:-4]
+                elif 'ref' in fixedpredprofit[0]:
+                    fixedpredprofit[0] = fixedpredprofit[0][:-4]
+                try:
+                    if 'ref' in fixedpredprofit[1]:
+                        fixedpredprofit[1] = fixedpredprofit[1][:-4]
+                except:
+                    pass
 
-                fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
+                try:
+                    fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
+                except:
+                    fixedpredprofit = round(float(fixedpredprofit[0]) / keyValue, 2)
+
                 graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
             else:
                 graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
 
             tempprofit = {date: graphdata}
-
-            with open('profit_graphing.json') as f:
+            with open('Login details\profit_graphing.json') as f:
                 data = json.load(f)
                 data.update(tempprofit)
-            with open('profit_graphing.json', 'w') as f:
+            with open('Login details\profit_graphing.json', 'w') as f:
                 json.dump(data, f, indent=4)
+
 
     @commands.command()
     @commands.is_owner()
@@ -123,40 +140,41 @@ class DiscordCog(commands.Cog, name='Discord'):
     @commands.is_owner()
     async def graph(self, ctx):
         """Used to generate a graph of all of your profit whilst using the bot"""
-        data = json.load(open('Login details/profit_graphing.json', 'r'))
-        date_values = []
-        for key in data.keys():
-            date_values.append(key)
+        async with ctx.typing():
+            data = json.load(open('Login details/profit_graphing.json', 'r'))
+            date_values = []
+            for key in data.keys():
+                date_values.append(key)
 
-        # List to hold y values.
-        tod_values = []
-        for value in data.values():
-            tod_values.append(float(value[0]))
-        tot_values = []
-        for value in data.values():
-            tot_values.append(float(value[1]))
-        pred_values = []
-        for value in data.values():
-            try:
-                pred_values.append(float(value[2]))
-            except IndexError:
-                pred_values.append(0)
+            # List to hold y values.
+            tod_values = []
+            for value in data.values():
+                tod_values.append(float(value[0]))
+            tot_values = []
+            for value in data.values():
+                tot_values.append(float(value[1]))
+            pred_values = []
+            for value in data.values():
+                try:
+                    pred_values.append(float(value[2]))
+                except IndexError:
+                    pred_values.append(0)
 
-        # Plot the number in the list and set the line thickness.
-        plt.setp(plt.plot(date_values, tod_values, linewidth=3), color='blue')
-        plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
-        plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
+            # Plot the number in the list and set the line thickness.
+            plt.setp(plt.plot(date_values, tod_values, linewidth=3), color='blue')
+            plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
+            plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
 
-        plt.title(f"A graph to show your bot\'s over the last {len(data)} days", fontsize=16)
-        plt.xlabel("Date", fontsize=10)
-        plt.ylabel("Keys", fontsize=10)
-        plt.tick_params(axis='both', labelsize=9)
-        plt.gca().legend(('Days profit', 'Total profit', 'Predicted profit'))
+            plt.title(f"A graph to show your bot\'s over the last {len(data)} days", fontsize=16)
+            plt.xlabel("Date", fontsize=10)
+            plt.ylabel("Keys", fontsize=10)
+            plt.tick_params(axis='both', labelsize=9)
+            plt.gca().legend(('Days profit', 'Total profit', 'Predicted profit'))
 
-        location = os.getcwd() + '\\Login details\\graph.png'
-        plt.savefig(location)
-        file = discord.File(location, filename='graph.png')
-        await ctx.send(content='Here is your graph:', file=file)
+            location = os.getcwd() + '\\Login details\\graph.png'
+            plt.savefig(location)
+            file = discord.File(location, filename='graph.png')
+            await ctx.send(content='Here is your graph:', file=file)
         await asyncio.sleep(10)
         os.remove(location)
 

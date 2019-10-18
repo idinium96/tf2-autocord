@@ -94,20 +94,20 @@ class HelperCog(commands.Cog, name='Help'):
         :help [required]
         eg. `!help Steam` (There should be 4 cogs and 22 commands)"""
         help = help or 'Help'
-        help = help.captialize()
-        if 'Help' in help:
+        help = str(help).capitalize()
+        if help == 'Help':
             color = self.bot.color
             emoji = '<:tf2autocord:624658299224326148>'
             helper = 'cogs'
-        elif 'Discord' in help:
+        elif help == 'Discord':
             color = 0x7289da
             emoji = '<:discord:626486432793493540>'
             helper = 'cogs'
-        elif 'Steam' in help:
+        elif help == 'Steam':
             color = 0x00adee
             emoji = '<:steam:622621553800249364>'
             helper = 'cogs'
-        elif 'Loader' in help:
+        elif help == 'Loader':
             await ctx.send('Nothing interesting happens in the loader cog')
             return
         else:
@@ -122,21 +122,18 @@ class HelperCog(commands.Cog, name='Help'):
 
         found = False
         if helper == 'cogs':
-            for x in self.bot.cogs:
-                for y in help:
-                    if x == y:
-                        halp = discord.Embed(title=f'Help with {help} commands {emoji}',
-                                             description=self.bot.cogs[help].__doc__, color=color)
-                        halp.add_field(name='**Bot description:**', value=self.bot.description)
-                        halp.add_field(name=f'The current loaded cogs are ({allcogs[:-2]}) :gear:', value='​')
-                        for c in self.bot.get_cog(y).get_commands():
-                            if len(c.signature) == 0:
-                                command = f'`{self.bot.command_prefix}{c.name}`'
-                            else:
-                                command = f'`{self.bot.command_prefix}{c.name} {c.signature}`'
-                            halp.add_field(name=command, value=c.short_doc,
-                                           inline=False)
-                        found = True
+            halp = discord.Embed(title=f'Help with {help} commands {emoji}',
+                                 description=self.bot.cogs[help].__doc__, color=color)
+            halp.add_field(name='**Bot description:**', value=self.bot.description)
+            halp.add_field(name=f'The current loaded cogs are ({allcogs[:-2]}) :gear:', value='​')
+            for c in self.bot.get_cog(help).get_commands():
+                if len(c.signature) == 0:
+                    command = f'`{self.bot.command_prefix}{c.name}`'
+                else:
+                    command = f'`{self.bot.command_prefix}{c.name} {c.signature}`'
+                halp.add_field(name=command, value=c.short_doc,
+                               inline=False)
+            found = True
         elif helper == 'commands':
             commandlist = []
             for command in self.bot.commands:
@@ -164,6 +161,7 @@ class HelperCog(commands.Cog, name='Help'):
                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
 
+'''
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
@@ -189,7 +187,7 @@ class HelperCog(commands.Cog, name='Help'):
         embed = discord.Embed(title=f':warning: **{title}**', description=str(error), color=discord.Colour.red())
         await ctx.send(embed=embed)
         raise error
-
+'''
 
 def setup(bot):
     bot.add_cog(HelperCog(bot))
