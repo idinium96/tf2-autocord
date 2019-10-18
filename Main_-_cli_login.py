@@ -34,7 +34,7 @@ if __name__ == '__main__':
             try:
                 bot.load_extension(f'Cogs.{extension[:-3]}')
             except Exception as e:
-                print(f'Failed to load extension {extension}.', file=stderr)
+                print(f'Failed to load extension {extension} because {e}.', file=stderr)
                 print_exc()
 
 
@@ -43,7 +43,8 @@ if __name__ == '__main__':
 def discordside():
     print('\033[95m' + '-' * 30 + '\033[95m')
     print('\033[95m' + 'Discord is logging on' + '\033[95m')
-    bot.run(token)
+    while 1:
+        bot.run(token)
 
 
 def steamside():
@@ -100,5 +101,5 @@ def steamside():
                 bot.client.run_forever()
 
 
-t1 = Thread(target=discordside).start()
-t2 = Thread(target=steamside).start()
+Thread(target=discordside).start()
+Thread(target=steamside).start()
