@@ -55,7 +55,6 @@ class DiscordCog(commands.Cog, name='Discord'):
                 totprofit = totprofit[2:].split(' in total')
             if 'key' in fixedtodprofit or 'keys' in fixedtodprofit:  # converts 1st value to keys
                 fixedtodprofit = fixedtodprofit.split(' ')
-                print(fixedtodprofit, 'keys in')
                 if '-' in fixedtodprofit[0]:
                     minus = '-'
                 else:
@@ -111,6 +110,80 @@ class DiscordCog(commands.Cog, name='Discord'):
             with open('Login details\profit_graphing.json', 'w') as f:
                 json.dump(data, f, indent=4)
 
+    @commands.command()
+    async def sugar(self, ctx, *, log):
+        date = datetime.today().strftime("%d-%m-%Y")
+        async with ClientSession() as session:
+            async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
+                response = await response.json()
+                keyValue = response["sell"]["metal"]
+
+        log = log.replace("You've made ", '')
+        if 'all' in log:
+            log = log.replace(' if all items were sold).', '')
+        else:
+            log = log[:-1]
+
+        todprofit = log.split(' today')
+        fixedtodprofit = todprofit[0]
+
+        totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
+        if '(' in log:  # checks your total profit and if you have total profit
+            totprofit = totprofit[2:-5].split(' in total')
+        else:
+            totprofit = totprofit[2:].split(' in total')
+        if 'key' in fixedtodprofit or 'keys' in fixedtodprofit:  # converts 1st value to keys
+            fixedtodprofit = fixedtodprofit.split(' ')
+            if '-' in fixedtodprofit[0]:
+                minus = '-'
+            else:
+                minus = ''
+
+            fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue, 2)
+
+        else:
+            fixedtodprofit = fixedtodprofit.split(' ')
+            fixedtodprofit = round(float(fixedtodprofit[0]) / keyValue, 2)
+
+        if 'key' in totprofit[0] or 'keys' in totprofit[0]:  # converting 2nd
+            fixedtotprofit = totprofit[0].split(', ')
+            if 'keys' in fixedtotprofit[0]:
+                fixedtotprofit[0] = fixedtotprofit[0][:-5]
+            elif 'key' in fixedtotprofit[0]:
+                fixedtotprofit[0] = fixedtotprofit[0][:-3]
+            fixedtotprofit[1] = fixedtotprofit[1][:-4]
+
+            fixedtotprofit = round(float(fixedtotprofit[0]) + float(fixedtotprofit[1]) / keyValue, 2)
+        else:
+            fixedtotprofit = totprofit[0].split(', ')
+            fixedtotprofit = round(float(fixedtotprofit[0][:-4]) / keyValue, 2)
+        if 'more' in str(log):  # checks if you have predicted profit
+            predprofit = str(totprofit[1]).replace(' (', '').replace('[', '').replace(']', '').replace("'",
+                                                                                                       '')
+            fixedpredprofit = predprofit.split(', ')
+            if 'keys' in fixedpredprofit[0]:
+                fixedpredprofit[0] = fixedpredprofit[0][:-5]
+            elif 'key' in fixedpredprofit[0]:
+                fixedpredprofit[0] = fixedpredprofit[0][:-3]
+            elif 'ref' in fixedpredprofit[0]:
+                fixedpredprofit[0] = fixedpredprofit[0][:-4]
+            try:
+                if 'ref' in fixedpredprofit[1]:
+                    fixedpredprofit[1] = fixedpredprofit[1][:-4]
+            except:
+                pass
+
+            try:
+                fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
+            except:
+                fixedpredprofit = round(float(fixedpredprofit[0]) / keyValue, 2)
+
+            graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
+        else:
+            graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
+
+        tempprofit = {date: graphdata}
+        await ctx.send(tempprofit)
 
     @commands.command()
     @commands.is_owner()
@@ -257,7 +330,8 @@ class DiscordCog(commands.Cog, name='Discord'):
                         value=f'`{round(rawram[3] / 1024 ** 2)}` MB used / `{round(rawram[0] / 1024 ** 2)}` MB total | `{rawram[2]}`% used',
                         inline=True)
         embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{psutil.cpu_percent()}`%', inline=True)
-        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version', value=f'Version: `{LoaderCog.__version__}`. Up to date: {emoji}')
+        embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version',
+                        value=f'Version: `{LoaderCog.__version__}`. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
                         value=f"Your command prefix is `{self.bot.command_prefix}`. "
                               f"Type {self.bot.command_prefix}help to list the commands you can use",
@@ -282,3 +356,7 @@ class DiscordCog(commands.Cog, name='Discord'):
 
 def setup(bot):
     bot.add_cog(DiscordCog(bot))
+
+
+def teardown():
+    DiscordCog.profitgraphing.stop()

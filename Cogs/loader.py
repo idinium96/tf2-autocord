@@ -1,3 +1,5 @@
+import traceback
+
 import discord
 from discord.ext import commands
 
@@ -5,13 +7,13 @@ import asyncio
 import json
 import os
 
-from sys import argv, executable
+from sys import argv, executable, stderr
 from datetime import datetime
 
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.2.1.1'
+    __version__ = '1.2.2'
 
     def __init__(self, bot):
         self.bot = bot
@@ -58,8 +60,9 @@ class LoaderCog(commands.Cog, name='Loader'):
             f'Send this id: ' + '\033[95m' + f'\"{self.bot.user.id}\"' + '\033[95m' + '\033[92m' + ' to Gobot1234 to add your bot to the server to use the custom emojis',
             '\nThis is: ' + '\033[95m' + f'Version {LoaderCog.__version__}' + '\033[95m')
         self.bot.dsdone = True
+        self.bot.trades = int(open('trades.txt', 'r').read())
         await asyncio.sleep(15)
-
+        os.remove('trades.txt')
         while self.bot.logged_on is False:
             if self.bot.cli_login:
                 await self.bot.get_user(self.bot.owner_id).send('You aren\'t currently logged into your Steam account'
@@ -75,19 +78,43 @@ class LoaderCog(commands.Cog, name='Loader'):
         """You probably don't need to use this, however it can be used to reload a cog
 
         eg. `!reload loader`"""
-        extension = extension.lower()
         if 'Cogs.' not in extension:
-            extension = f'Cogs.{extension}'
+            extension = 'Cogs.' + extension.lower()
         if '.py' in extension:
             extension = extension[:-3]
+        if extension == 'Cogs.all':
+            self.bot.initial_extensions = os.listdir(
+                'Cogs')  # getting the cog files in the "Cogs" folder and removing the none .py ones
+
+            for extension in self.bot.initial_extensions:
+                if extension.endswith('.py'):
+                    try:
+                        self.bot.reload_extension(f'Cogs.{extension[:-3]}')
+                    except Exception as e:
+                        await ctx.send(
+                            f'**`ERROR:`** {ctx.message.author.display_name}, `{extension}` `{type(e).__name__}` - {e} hasn\'t been loaded')
+                        print(f'Failed to load extension {extension}.', file=stderr)
+                        traceback.print_exc()
+                    else:
+                        await ctx.send(
+                            f'**`SUCCESS`** {ctx.message.author.display_name}, `{extension}` has been reloaded')
+            await ctx.send(f'Finished reloading these `{self.bot.initial_extensions}` cogs')
+            return
         try:
             self.bot.reload_extension(extension)
-            await ctx.send(f'{ctx.message.author.display_name}, `{extension}` has been reloaded')
-        except commands.ExtensionNotLoaded:
-            await ctx.send(f'{ctx.message.author.display_name}, `{extension}` hasn\'t been loaded')
+        except commands.ExtensionNotLoaded as e:
+            await ctx.send(
+                f'**`ERROR:`** {ctx.message.author.display_name}, `{extension}` `{type(e).__name__}` - {e} hasn\'t been loaded')
             await ctx.send(f"I'm going to load it now.")
-            self.bot.load_extension(extension)
+            try:
+                self.bot.load_extension(extension)
+            except Exception as e:
+                await ctx.send(f'**`ERROR:`** `{type(e).__name__}` - {e}')
+                print(f'Failed to load extension {extension}.', file=stderr)
+                traceback.print_exc()
             raise
+        else:
+            await ctx.send(f'**`SUCCESS`** {ctx.message.author.display_name}, `{extension}` has been reloaded')
 
     @commands.command()
     @commands.is_owner()
@@ -98,7 +125,8 @@ class LoaderCog(commands.Cog, name='Loader'):
         if self.bot.cli_login:
             await ctx.send('You really really shouldn\'t do this')
         else:
-            await ctx.send('**Restarting the bot**, don\'t use this often')
+            open('trades.txt', 'w+').write(str(self.bot.trades))
+            await ctx.send(f'**Restarting the bot** {ctx.author.mention}, don\'t use this often')
             os.execv(executable, ['python'] + argv)
 
 

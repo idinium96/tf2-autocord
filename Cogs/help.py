@@ -161,7 +161,6 @@ class HelperCog(commands.Cog, name='Help'):
                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
         await ctx.send(embed=halp)
 
-'''
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         """The event triggered when an error is raised while invoking a command.
@@ -187,7 +186,7 @@ class HelperCog(commands.Cog, name='Help'):
         embed = discord.Embed(title=f':warning: **{title}**', description=str(error), color=discord.Colour.red())
         await ctx.send(embed=embed)
         raise error
-'''
+
 
 def setup(bot):
     bot.add_cog(HelperCog(bot))
