@@ -60,9 +60,15 @@ class LoaderCog(commands.Cog, name='Loader'):
             f'Send this id: ' + '\033[95m' + f'\"{self.bot.user.id}\"' + '\033[95m' + '\033[92m' + ' to Gobot1234 to add your bot to the server to use the custom emojis',
             '\nThis is: ' + '\033[95m' + f'Version {LoaderCog.__version__}' + '\033[95m')
         self.bot.dsdone = True
-        self.bot.trades = int(open('trades.txt', 'r').read())
+        try:
+            self.bot.trades = int(open('trades.txt', 'r').read())
+        except:
+            pass
         await asyncio.sleep(15)
-        os.remove('trades.txt')
+        try:
+            os.remove('trades.txt')
+        except:
+            pass
         while self.bot.logged_on is False:
             if self.bot.cli_login:
                 await self.bot.get_user(self.bot.owner_id).send('You aren\'t currently logged into your Steam account'
