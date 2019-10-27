@@ -31,7 +31,7 @@ while choice != 'yes':
     BT = input("Bot Token:\nCopy this from discord.app and the bot section in your application\n>>> ")
     U = input("Username:\nThis is your steam username\n>>> ")
     P = input("Password:\nThis is your steam password\n>>> ")
-    IS = input("Identity Secret:\nThis is your steam identitiy secret\n>>> ")
+    IS = input("Identity Secret:\nThis is your steam identity secret\n>>> ")
     SS = input("Shared Secret:\nThis is your steam shared secret\n>>> ")
 
     sensitives = {
