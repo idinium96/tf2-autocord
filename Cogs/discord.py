@@ -38,13 +38,8 @@ class DiscordCog(commands.Cog, name='Discord'):
                     response = await response.json()
                     keyValue = response["sell"]["metal"]
 
-            log = self.bot.graphplots
-            log = log.replace("You've made ", '')
-            if 'all' in log:
-                log = log.replace(' if all items were sold).', '')
-            else:
-                log = log[:-1]
-
+            log = self.bot.graphplots.replace("You've made ", '')
+            log = log.replace(' if all items were sold).', '') if 'all' in log else log[:-1]
             todprofit = log.split(' today')
             fixedtodprofit = todprofit[0]
 
@@ -55,10 +50,7 @@ class DiscordCog(commands.Cog, name='Discord'):
                 totprofit = totprofit[2:].split(' in total')
             if 'key' in fixedtodprofit or 'keys' in fixedtodprofit:  # converts 1st value to keys
                 fixedtodprofit = fixedtodprofit.split(' ')
-                if '-' in fixedtodprofit[0]:
-                    minus = '-'
-                else:
-                    minus = ''
+                minus = '-' if '-' in fixedtodprofit[0] else '-'
 
                 fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue, 2)
 
@@ -119,7 +111,7 @@ class DiscordCog(commands.Cog, name='Discord'):
         eg. `!last 7` (days has to be an integer)"""
         data = json.load(open('Login details/profit_graphing.json', 'r'))
         if days > len(data):
-            await ctx.send('You can\'t request that man days as there haven\'t been enough days plotted to do that.\n'
+            await ctx.send('You can\'t request that many days as there haven\'t been enough days plotted to do that.\n'
                            f'Maximum requestable days is {len(data)}')
         else:
             embed = discord.Embed(title=' ', color=self.bot.color)
@@ -167,9 +159,9 @@ class DiscordCog(commands.Cog, name='Discord'):
             plt.xlabel("Date", fontsize=10)
             plt.ylabel("Keys", fontsize=10)
             plt.tick_params(axis='both', labelsize=9)
-            plt.gca().legend(('Days profit', 'Total profit', 'Predicted profit'))
+            plt.gca().legend(('Days profit', 'Total profit', 'Projected profit'))
 
-            location = os.getcwd() + '\\Login details\\graph.png'
+            location = f'/Login details/graph.png'
             plt.savefig(location)
             file = discord.File(location, filename='graph.png')
             await ctx.send(content='Here is your graph:', file=file)
@@ -218,7 +210,7 @@ class DiscordCog(commands.Cog, name='Discord'):
     async def get(self, ctx, *, file=None):
         """Used to get files from your temp folder
 
-        :file [required]
+        :file <required>
         eg. `!get history` (if you don't type anything you can see the files you can request)"""
         if file is None:
             await ctx.send(f'You can request these `{self.acceptedfiles}`')

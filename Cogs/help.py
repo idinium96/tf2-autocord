@@ -180,10 +180,12 @@ class HelperCog(commands.Cog, name='Help'):
             title = 'You don\'t have the necessary permissions'
         elif isinstance(error, commands.CommandNotFound):
             title = 'Command not found'
+        elif isinstance(error, commands.CommandInvokeError):
+            title = 'Invoke error'
         else:
             title = 'Unspecified error'
             error = 'Please try again, and maybe send <@340869611903909888> the error outputted in the shell'
-        embed = discord.Embed(title=f':warning: **{title}**', description=str(error), color=discord.Colour.red())
+        embed = discord.Embed(title=f':warning: **{title}**', description=str(error.original), color=discord.Colour.red())
         await ctx.send(embed=embed)
         raise error
 

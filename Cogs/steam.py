@@ -1,3 +1,5 @@
+import json
+
 import discord
 from discord.ext import commands, tasks
 
@@ -40,7 +42,7 @@ class SteamCog(commands.Cog, name='Steam'):
                 embed = discord.Embed(color=color2)
                 embed.add_field(name='New Message:', value=self.bot.sbotresp, inline=False)
 
-            embed.set_footer(text=datetime.datetime.now().strftime('%H:%M:%S %d/%m/%Y'))
+            embed.set_footer(text=datetime.datetime.now().strftime('%H:%M:%S %d/%m/%Y'), icon_url=self.bot.user.avatar_url)
             await self.bot.get_user(self.bot.owner_id).send(embed=embed)
             if self.bot.usermessage != 0:
                 embed = discord.Embed(color=0xFFFF66)
@@ -523,6 +525,18 @@ class SteamCog(commands.Cog, name='Steam'):
                     return
                 else:
                     await ctx.send('Please try again with y/n')
+
+    @commands.command()
+    @commands.is_owner()
+    async def cashout(self, ctx):
+        listingsjson = json.loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
+        await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
+        for value in listingsjson:
+            command = f'{self.bot.updatem}{value["name"]}&intent=sell'
+            self.bot.client.get_user(self.bot.bot64id).send_message(command)
+            await ctx.send(command)
+            await asyncio.sleep(5)
+        await ctx.send('Completed the intent update')
 
 
 def setup(bot):
