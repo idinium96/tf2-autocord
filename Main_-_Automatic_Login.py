@@ -5,14 +5,16 @@ from steam import guard
 from steam.enums import EResult
 from steam.client import SteamClient
 
-from discord.ext import commands
-
 import json
+import discord
 
+from discord.ext import commands
 from sys import stderr
 from traceback import print_exc
 from threading import Thread
 from os import listdir
+from os.path import isfile, join
+
 
 preferences = json.loads(open('Login details/preferences.json', 'r').read())
 command_prefix = preferences["Command Prefix"]
@@ -26,18 +28,17 @@ bot.cli_login = False
 
 # cogs -----------------------------------------------------------------------------------------------------------------
 
-bot.initial_extensions = listdir('Cogs')  # getting the cog files in the "Cogs" folder and removing the none .py ones
+bot.initial_extensions = [f.replace('.py', '') for f in listdir("Cogs") if isfile(join("Cogs", f))]# getting the cog
+# files in the "Cogs" folder and removing the none .py ones
 
 if __name__ == '__main__':
     print(f'Extensions to be loaded are {bot.initial_extensions}')
     for extension in bot.initial_extensions:
-        if extension.endswith('.py'):
-            try:
-                bot.load_extension(f'Cogs.{extension[:-3]}')
-            except Exception as e:
-                print(f'Failed to load extension {extension} because {e}.', file=stderr)
-                print_exc()
-
+        try:
+            bot.load_extension(f'Cogs.{extension}')
+        except (discord.ClientException, ModuleNotFoundError):
+            print(f'Failed to load extension {extension}.', file=stderr)
+            print_exc()
 
 # threading ------------------------------------------------------------------------------------------------------------
 
