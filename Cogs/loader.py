@@ -9,13 +9,17 @@ import os
 
 from sys import argv, executable, stderr
 from datetime import datetime
+from io import StringIO
+from contextlib import redirect_stdout
+from textwrap import indent
 
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.2.3'
+    __version__ = '1.2.4'  # hey that's the same as d.py spooky
 
     def __init__(self, bot):
+        """Setting all of your bot vars to be used by other cogs/commands"""
         self.bot = bot
         self._last_result = None
         self.sessions = set()
@@ -62,6 +66,9 @@ class LoaderCog(commands.Cog, name='Loader'):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """Setting your status, printing your bot's id to send to me,
+        seeing if the bot was restarted and stored your number of trades,
+        finally checking if you are logged onto steam"""
         await self.bot.change_presence(activity=discord.Activity(
             name=f'{self.bot.owner_name}\'s trades | V{LoaderCog.__version__} | Command Prefix \"{self.bot.command_prefix}\"',
             type=discord.ActivityType.watching))
@@ -96,7 +103,7 @@ class LoaderCog(commands.Cog, name='Loader'):
 
         eg. `!reload loader`"""
         if 'Cogs.' not in extension:
-            extension = 'Cogs.' + extension.lower()
+            extension = f'Cogs.{extension.lower()}'
         if '.py' in extension:
             extension = extension[:-3]
         if extension == 'Cogs.all':
@@ -149,10 +156,26 @@ class LoaderCog(commands.Cog, name='Loader'):
     @commands.command(hidden=True, name='eval')
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
-        """Evaluates a code"""
-        import io
-        from contextlib import redirect_stdout
-        import textwrap
+        """This will evaluate your code-block if type some python code.
+        **PLEASE BE AWARE THIS IS A POTENTIALLY DANGEROUS COMMAND TO USE IF YOU DON'T KNOW WHAT YOU'RE DOING**
+
+        Input is interpreted as newline separated statements.
+        If the last statement is an expression, that is the return value.
+        Usable globals:
+          - `channel`: the channel the eval command was used in
+          - `author`: the author of the eval command
+          - `guild`: the guild that eval command was used in
+          - `message`: the message that was used to invoke the command eg. `!eval...`
+          - `client`: the SteamClient instance
+          - `bot`: the bot instance
+          - `discord`: the discord module
+          - `commands`: the discord.ext.commands module
+          - `ctx`: the invokation context
+          - `__import__`: the builtin `__import__` function
+
+        eg. `!eval` ```py
+        await ctx.send(f'Hello my name is {bot.user.name} :wave:. Type !help to see what I can do')```
+        """
 
         env = {
             'bot': self.bot,
@@ -162,15 +185,17 @@ class LoaderCog(commands.Cog, name='Loader'):
             'guild': ctx.guild,
             'message': ctx.message,
             'client': self.bot.client,
-            '_': self._last_result
+            'discord': discord,
+            'commands': commands,
+            '__import__': __import__,
         }
 
         env.update(globals())
 
         body = self.cleanup_code(body)
-        stdout = io.StringIO()
+        stdout = StringIO()
 
-        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
+        to_compile = f'async def func():\n{indent(body, "  ")}'
 
         try:
             exec(to_compile, env)
@@ -182,15 +207,18 @@ class LoaderCog(commands.Cog, name='Loader'):
             with redirect_stdout(stdout):
                 ret = await func()
         except Exception as e:
+            try:
+                await ctx.message.add_reaction('\U0000274c')
+            except:
+                pass
             value = stdout.getvalue()
             await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
         else:
             value = stdout.getvalue()
             try:
-                await ctx.message.add_reaction('\u2705')
+                await ctx.message.add_reaction('\U00002705')
             except:
                 pass
-
             if ret is None:
                 if value:
                     await ctx.send(f'```py\n{value}\n```')

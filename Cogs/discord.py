@@ -107,7 +107,6 @@ class DiscordCog(commands.Cog, name='Discord'):
     async def last(self, ctx, days: int = 7):
         """Used to get the last x days profit
 
-        :days <7>
         eg. `!last 7` (days has to be an integer)"""
         data = json.load(open('Login details/profit_graphing.json', 'r'))
         if days > len(data):
@@ -120,8 +119,7 @@ class DiscordCog(commands.Cog, name='Discord'):
                 try:
                     embed.add_field(name=f'{key}:', value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}'
                                                           f'** keys. Predicted profit **{value[2]}** keys. '
-                                                          f'Total trades **{value[3]}**',
-                                    inline=False)
+                                                          f'Total trades **{value[3]}**', inline=False)
                 except:
                     pass
             await ctx.send(embed=embed)
@@ -210,7 +208,6 @@ class DiscordCog(commands.Cog, name='Discord'):
     async def get(self, ctx, *, file=None):
         """Used to get files from your temp folder
 
-        :file <required>
         eg. `!get history` (if you don't type anything you can see the files you can request)"""
         if file is None:
             await ctx.send(f'You can request these `{self.acceptedfiles}`')
