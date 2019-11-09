@@ -109,27 +109,22 @@ class HelperCog(commands.Cog, name='Help'):
         else:
             emoji = '<:tf2autocord:624658299224326148>'
             color = self.bot.color
-
         all_cogs = '`, `'.join([c for c in self.bot.cogs])
 
         embed = discord.Embed(color=color)
         embed.add_field(name=f'The current loaded cogs are (`{all_cogs}`) :gear:',
-                        value='**tf2autocord:**: [Developed by](https://github.com/Gobot1234/tf2-autocord) '
-                              '<@340869611903909888>')
+                        value='\u200b')
         if page in all_cogs:
             embed.title = f'Help with `{page}\'s` commands {emoji}'
             embed.description = self.bot.cogs[page].__doc__
 
             for c in self.bot.get_cog(page).get_commands():
                 if await c.can_run(ctx):
-                    if len(c.signature) == 0:
+                    if not c.signature:
                         command = f'`{self.bot.command_prefix}{c.name}`'
                     else:
-                        if c.signature.startswith('<'):
-                            command = f'`{self.bot.command_prefix}{c.name} {c.signature}` this is a required arg don\'t type `<>` around it'
-                        if c.signature.startswith('['):
-                            command = f'`{self.bot.command_prefix}{c.name} {c.signature}` this isn\'t required arg don\'t type `[]` around it'
-                    if len(c.short_doc) == 0:
+                        command = f'`{self.bot.command_prefix}{c.name} {c.signature}`'
+                    if not c.short_doc:
                         message = 'There is no documentation for this command'
                     else:
                         message = c.short_doc
@@ -139,13 +134,13 @@ class HelperCog(commands.Cog, name='Help'):
             page_lo = page.lower()
             if page_lo in all_commands:
                 embed.title = f'Help with the `{self.bot.command_prefix}{self.bot.get_command(page_lo)}` command {emoji}'
-                if len(self.bot.get_command(page_lo).help) == 0:
+                if self.bot.get_command(page_lo).help is None:
                     message = 'There is no documentation for this command'
                 else:
                     message = self.bot.get_command(page_lo).help
                 embed.add_field(name='Documentation:', value=message)
 
-                if len(self.bot.get_command(page_lo).signature) != 0:
+                if self.bot.get_command(page_lo).signature:
                     args = self.bot.get_command(page_lo).signature
                     if args.startswith('<'):
                         embed.add_field(name='Arguments', value=f'`{args}` this is a required arg don\'t type `<>` around it')

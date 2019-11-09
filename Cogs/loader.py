@@ -153,7 +153,7 @@ class LoaderCog(commands.Cog, name='Loader'):
             await ctx.send(f'**Restarting the bot** {ctx.author.mention}, don\'t use this often')
             os.execv(executable, ['python'] + argv)
 
-    @commands.command(hidden=True, name='eval')
+    @commands.command(name='eval')
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
         """This will evaluate your code-block if type some python code.
@@ -163,15 +163,14 @@ class LoaderCog(commands.Cog, name='Loader'):
         If the last statement is an expression, that is the return value.
         Usable globals:
           - `channel`: the channel the eval command was used in
-          - `author`: the author of the eval command
-          - `guild`: the guild that eval command was used in
-          - `message`: the message that was used to invoke the command eg. `!eval...`
+          - `author`: the author of the eval command!
+          - `server`: the server that eval command was used in
+          - `message`: the message that was used to invoke the command (`!eval...`)
           - `client`: the SteamClient instance
           - `bot`: the bot instance
           - `discord`: the discord module
           - `commands`: the discord.ext.commands module
           - `ctx`: the invokation context
-          - `__import__`: the builtin `__import__` function
 
         eg. `!eval` ```py
         await ctx.send(f'Hello my name is {bot.user.name} :wave:. Type !help to see what I can do')```
@@ -187,7 +186,6 @@ class LoaderCog(commands.Cog, name='Loader'):
             'client': self.bot.client,
             'discord': discord,
             'commands': commands,
-            '__import__': __import__,
         }
 
         env.update(globals())
@@ -200,31 +198,38 @@ class LoaderCog(commands.Cog, name='Loader'):
         try:
             exec(to_compile, env)
         except Exception as e:
-            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
-
+            await ctx.message.add_reaction('\U0000274c')
+            embed = discord.Embed(title=f':x: {e.__class__.__name__}',
+                                  description=f'```py\n{traceback.format_exc()}{e}```',
+                                  color=discord.Colour.red())
+            return await ctx.send(embed=embed)
         func = env['func']
         try:
             with redirect_stdout(stdout):
                 ret = await func()
         except Exception as e:
-            try:
-                await ctx.message.add_reaction('\U0000274c')
-            except:
-                pass
+            await ctx.message.add_reaction('\U0000274c')
             value = stdout.getvalue()
-            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
+            await ctx.message.add_reaction('\U0000274c')
+            embed = discord.Embed(title=f':x: {e.__class__.__name__}',
+                                  description=f'```py\n{value}{traceback.format_exc()}{e}```',
+                                  color=discord.Colour.red())
+            return await ctx.send(embed=embed)
         else:
             value = stdout.getvalue()
-            try:
-                await ctx.message.add_reaction('\U00002705')
-            except:
-                pass
+            await ctx.message.add_reaction('\U00002705')
             if ret is None:
                 if value:
-                    await ctx.send(f'```py\n{value}\n```')
+                    embed = discord.Embed(title=f'Evaluation completed {ctx.author.name} :white_check_mark:',
+                                          color=self.bot.color)
+                    embed.add_field(name='Eval returned', value=f'```py\n{value}```')
+                    await ctx.send(embed=embed)
             else:
                 self._last_result = ret
-                await ctx.send(f'```py\n{value}{ret}\n```')
+                embed = discord.Embed(title=f'Evaluation completed {ctx.author.name} :white_check_mark:',
+                                      color=self.bot.color)
+                embed.add_field(name='Eval returned', value=f'```py\n{value}{ret}```')
+                await ctx.send(embed=embed)
 
 
 def setup(bot):

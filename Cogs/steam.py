@@ -6,7 +6,6 @@ import json
 
 from discord.ext import commands, tasks
 from os import remove
-from typing import Optional
 
 
 class SteamCog(commands.Cog, name='Steam'):
@@ -32,7 +31,7 @@ class SteamCog(commands.Cog, name='Steam'):
         await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
         while 1:
             choice = await self.bot.wait_for('message', check=self.check)
-            choice = choice.clean_content.lower()
+            choice = choice.content.lower()
 
             if choice == 'y' or choice == 'yes':
                 await ctx.send(f'Sent {mul} {mul2} to the bot {dscontent}')
@@ -110,6 +109,8 @@ class SteamCog(commands.Cog, name='Steam'):
     async def add(self, ctx):
         """Add is used to add items from your bot's classifieds
 
+        eg. `!add name The Team Captain`
+
         It allows the chaining of commands
         eg. `!add names This&intent=sell, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
@@ -133,6 +134,9 @@ class SteamCog(commands.Cog, name='Steam'):
     async def update(self, ctx):
         """Update is used to update items from your bot's classifieds
 
+        eg. `!update name The Team Captain`
+
+
         It allows the chaining of commands
         eg. `!update names This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
@@ -155,6 +159,9 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.is_owner()
     async def remove(self, ctx):
         """Remove is used to remove items from your bot's classifieds
+
+        eg. `!remove item The Team Captain`
+
 
         It allows the chaining of commands
         eg. `!remove items This&intent=bank, That, The other&quality=Strange`"""
@@ -216,6 +223,7 @@ class SteamCog(commands.Cog, name='Steam'):
         notgonethrough6 = True
         notgonethrough7 = True
         notgonethrough8 = True
+        escape = False
 
         scclist = '\n__You can change the:__\nPrice\nLimit\nQuality\nIntent\nCraftable\nAustralium\n' \
                   'Killstreak\nEffect\nAutopricing'
@@ -226,7 +234,7 @@ class SteamCog(commands.Cog, name='Steam'):
         response = 0
         while response == 0:
             choice = await self.bot.wait_for('message', check=self.check)
-            choice = choice.clean_content.lower()
+            choice = choice.content.lower()
 
             if choice == 'update' or choice == 'u' or choice == 'add' or choice == 'a' or choice == 'remove' or choice == 'r':
                 if choice == 'update' or choice == 'u':
@@ -237,42 +245,41 @@ class SteamCog(commands.Cog, name='Steam'):
                     do = 'remove'
                 await ctx.send(f'What item do you want to {do}?')
                 item_to_uar = await self.bot.wait_for('message', check=self.check)
-                item_to_uar = item_to_uar.clean_content
+                item_to_uar = item_to_uar.content
                 steamcommand = item_to_uar
 
                 if do == 'remove':
                     f'{self.bot.removem}{steamcommand}'
                 else:
                     await ctx.send('Want to add prefixes?\nType yes or no')
-                    response = 0
-                    while response == 0:
+                    while 1:
                         choice = await self.bot.wait_for('message', check=self.check)
-                        choice = choice.clean_content.lower()
+                        choice = choice.content.lower()
 
                         if choice == 'yes' or choice == 'y':
                             await ctx.send(scclist)
-                            while 1:
+                            while escape is False:
                                 prefix = await self.bot.wait_for('message', check=self.check)
-                                prefix = prefix.clean_content.lower()
+                                prefix = prefix.content.lower()
 
                                 if prefix == 'price' or prefix == 'p' and notgonethrough:  # buy price prefix
                                     await ctx.send('Buy price in refined metal')
                                     bp = await self.bot.wait_for('message', check=self.check)
-                                    bp = bp.clean_content.lower()
+                                    bp = bp.content.lower()
                                     buy1 = f'&buy_metal={bp}'
                                     await ctx.send('Buy price in keys')
                                     bp = await self.bot.wait_for('message', check=self.check)
-                                    bp = bp.clean_content.lower()
+                                    bp = bp.content.lower()
                                     buy2 = f'&buy_keys={bp}'
                                     steamcommand += f'{buy1}{buy2}'
 
                                     await ctx.send('Sell price in refined metal')
                                     sp = await self.bot.wait_for('message', check=self.check)
-                                    sp = sp.clean_content.lower()
+                                    sp = sp.content.lower()
                                     sell1 = f'&sell_metal={sp}'
                                     await ctx.send('Sell price in keys')
                                     sp = await self.bot.wait_for('message', check=self.check)
-                                    sp = sp.clean_content.lower()
+                                    sp = sp.content.lower()
                                     sell2 = f'&sell_keys={sp}'
                                     steamcommand += f'{sell1}{sell2}'
                                     scclist = scclist.replace('\nPrice', '')
@@ -283,7 +290,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                 elif prefix == 'limit' or prefix == 'l' and notgonethrough1:  # limit prefix
                                     await ctx.send('Max stock is')
                                     limit = await self.bot.wait_for('message', check=self.check)
-                                    limit = limit.clean_content.lower()
+                                    limit = limit.content.lower()
                                     steamcommand += f'&limit={limit}'
                                     scclist = scclist.replace('\nLimit', '')
                                     notgonethrough1 = False
@@ -294,7 +301,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                     await ctx.send(f'Quality (enter {qualities})')
                                     while 1:
                                         quality = await self.bot.wait_for('message', check=self.check)
-                                        quality = quality.clean_content.lower()
+                                        quality = quality.content.lower()
                                         if quality in qualities.replace(',', '').lower():
                                             if do == 'update':
                                                 steamcommand = f'{quality} {steamcommand}'
@@ -315,7 +322,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                     await ctx.send(f'Intent is to ({intents})')
                                     while 1:
                                         intent = await self.bot.wait_for('message', check=self.check)
-                                        intent = intent.clean_content.lower()
+                                        intent = intent.content.lower()
                                         if intent in intents.lower():
                                             steamcommand += f'&intent={intent}'
                                             break
@@ -330,7 +337,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                     await ctx.send('Is the item craftable?')
                                     while 1:
                                         craftable = await self.bot.wait_for('message', check=self.check)
-                                        craftable = craftable.clean_content.lower()
+                                        craftable = craftable.content.lower()
                                         if craftable == 't' or craftable == 'true' or craftable == 'y' or craftable == 'yes':
                                             if do == 'update':
                                                 craftable = 'Craftable'
@@ -355,7 +362,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                     await ctx.send('Is the item australium?')
                                     while 1:
                                         australium = await self.bot.wait_for('message', check=self.check)
-                                        australium = australium.clean_content.lower()
+                                        australium = australium.content.lower()
                                         if australium == 't' or australium == 'true' or australium == 'y' or australium == 'yes':
                                             if do == 'update':
                                                 australium = 'Strange Australium'
@@ -379,7 +386,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                         'Is the item killstreak (Killstreak (1), Specialized (2) or Professional (3))')
                                     while 1:
                                         killstreak = await self.bot.wait_for('message', check=self.check)
-                                        killstreak = killstreak.clean_content.lower()
+                                        killstreak = killstreak.content.lower()
                                         if killstreak == '1' or killstreak == 'k' or killstreak == 'killstreak' or killstreak == 'basic':
                                             if do == 'update':
                                                 steamcommand = f'Killstreak {steamcommand}'
@@ -408,7 +415,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                 elif prefix == 'effect' or prefix == 'e' and notgonethrough7:  # effect suffix
                                     await ctx.send('What is the unusual effect? E.g Burning Flames')
                                     suffix = await self.bot.wait_for('message', check=self.check)
-                                    effect = suffix.clean_content
+                                    effect = suffix.content
                                     if do == 'update':
                                         steamcommand = f'{effect}{steamcommand}'
                                     elif do == 'add':
@@ -422,7 +429,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                     await ctx.send('Is autoprice enabled?')
                                     while 1:
                                         suffix = await self.bot.wait_for('message', check=self.check)
-                                        autoprice = suffix.clean_content.lower()
+                                        autoprice = suffix.content.lower()
                                         if autoprice == 't' or autoprice == 'true' or autoprice == 'y' or autoprice == 'yes' or autoprice == 'f' or autoprice == 'false' or autoprice == 'n' or autoprice == 'no':
                                             steamcommand += f'&autoprice={autoprice}'
                                             break
@@ -436,10 +443,15 @@ class SteamCog(commands.Cog, name='Steam'):
                                     break
 
                                 elif prefix == 'escape' or prefix == 'esc':
-                                    break
+                                    escape = True
 
                                 else:
                                     await ctx.send('Try again this time with something in the list')
+                            if do == 'update':
+                                steamcommand = f'{self.bot.updatem}{steamcommand}'
+                            elif do == 'add':
+                                steamcommand = f'{self.bot.addm}{steamcommand}'
+                            break
 
                         elif choice == 'no' or choice == 'n':
                             if do == 'update':
@@ -460,7 +472,7 @@ class SteamCog(commands.Cog, name='Steam'):
             await ctx.send('Do you want to send the command to the bot?\nType yes or no')
             while 1:
                 choice = await self.bot.wait_for('message', check=self.check)
-                choice = choice.clean_content.lower()
+                choice = choice.content.lower()
 
                 if choice == 'yes' or choice == 'y':
                     await ctx.send("You have sent the bot a new command")
@@ -487,7 +499,7 @@ class SteamCog(commands.Cog, name='Steam'):
 
     @commands.command(aliases=['raw_add'])
     @commands.is_owner()
-    async def add_raw(self, ctx, *, ending: Optional = ' '):
+    async def add_raw(self, ctx, *, ending=''):
         """Add lots of items, very volatile `!add names` is much more likely to be stable"""
         await ctx.send('Paste all the items you want to add on a new line')
         file = await self.bot.wait_for('message', check=self.check)
