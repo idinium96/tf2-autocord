@@ -114,15 +114,17 @@ class DiscordCog(commands.Cog, name='Discord'):
         embed = Embed(title=f'Last {days} days profit', color=self.bot.color)
         for key, value in reversed(list(data.items())):
             try:
-                embed.add_field(name=f'{key}:',
+                embed.add_field(name=f'__**{key}:**__',
                                 value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}** keys. '
-                                      f'Predicted profit **{value[2]}** keys. Total trades **{value[3]}**', inline=False)
+                                      f'Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
+                                inline=False)
             except:
                 pass
-        if len(embed) > 6000:
+
+        if len(embed) <= 6000:
             await ctx.send(embed=embed)
         else:
-            await ctx.send('Please try fewer days')
+            await ctx.send('Please try fewer days as the message is too large to send')
 
     @commands.command()
     @commands.is_owner()
@@ -200,10 +202,12 @@ class DiscordCog(commands.Cog, name='Discord'):
     @commands.is_owner()
     async def donate(self, ctx):
         """Used to feel warm and fuzzy on the inside"""
-        embed = Embed(title='Want to donate?', description='[Trade link](https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2)', color=0x2e3bad)
+        embed = Embed(title='Want to donate?',
+                      description='[Trade link](https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2)',
+                      color=0x2e3bad)
         embed.set_thumbnail(
             url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.png?size=1024')
-        #embed.add_field(name='', value='')
+        # embed.add_field(name='', value='')
         embed.set_footer(text='Thank you for any donations')
         await ctx.send(embed=embed)
 

@@ -1,3 +1,4 @@
+from subprocess import PIPE, run
 from asyncio import TimeoutError
 from datetime import datetime
 from os import popen, system, getcwd
@@ -9,11 +10,12 @@ from .loader import LoaderCog
 
 
 class HelpCommand(commands.HelpCommand):
-    """Custom help command my ass"""
+    """The custom help command class for the bot"""
 
     def __init__(self):
         super().__init__(command_attrs={
-            'help': 'Shows help about the bot, a command, or a cog\n\neg. `!help Steam` (There should be 4 cogs and 27 commands)'
+            'help': 'Shows help about the bot, a command, or a cog\n\neg. `!help Steam` (There should be 4 cogs and '
+                    '27 commands) '
         })
 
     def get_command_signature(self, command):
@@ -258,13 +260,11 @@ class HelperCog(commands.Cog, name='Help'):
     @tasks.loop(hours=24)
     async def githubupdate(self):
         """A tasks loop to check if there has been an update to the GitHub repo"""
-        system(f'cd {getcwd()}')
-        updateable = popen('git checkout').read()
-        await self.bot.owner.send(updateable)
-        print(f'updateable = "{updateable}"')
-        if 'Your branch is up to date with' in updateable:
+        result = run([f'cd {getcwd()}\ngit checkout'], stdout=PIPE)
+        await self.bot.owner.send(f'updateable = "{result.stdout}"')
+        if 'Your branch is up to date with' in result.stdout:
             pass
-        elif 'fatal: not a git repository (or any of the parent directories): .git' in updateable:
+        elif 'fatal: not a git repository (or any of the parent directories): .git' in result.stdout:
             await self.bot.owner.send('This wasn\'t cloned from GitHub')
         else:
             await self.bot.owner.send(f'There is an update to the repo. Do you want to install it? (Type '
@@ -286,7 +286,8 @@ class HelperCog(commands.Cog, name='Help'):
             await ctx.send('This wasn\'t cloned from GitHub')
         else:
             await ctx.trigger_typing()
-            await ctx.send('Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
+            await ctx.send(
+                'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
 
     @commands.command()
     async def github(self, ctx):
@@ -368,8 +369,7 @@ class HelperCog(commands.Cog, name='Help'):
             embed = Embed(title=f':warning: **{title}**', description=str(error.original),
                           color=Colour.red())
             embed.add_field(name='\u200b',
-                            value='Please try again, and maybe send <@340869611903909888> '
-                                  'the error outputted in the shell')
+                            value='Please try again, and send <@340869611903909888> the error outputted in the shell')
             await ctx.send(embed=embed)
             raise error.original
         else:
@@ -382,3 +382,7 @@ class HelperCog(commands.Cog, name='Help'):
 
 def setup(bot):
     bot.add_cog(HelperCog(bot))
+
+
+def teardown():
+    HelperCog.githubupdate.stop()

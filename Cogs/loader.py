@@ -15,7 +15,7 @@ from discord.ext import commands
 
 class LoaderCog(commands.Cog, name='Loader'):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.2.5'  # hey that's the same as d.py spooky
+    __version__ = '1.3'  # hey that's the same as d.py spooky
 
     def __init__(self, bot):
         """Setting all of your bot vars to be used by other cogs/commands"""
@@ -124,13 +124,7 @@ class LoaderCog(commands.Cog, name='Loader'):
             self.bot.reload_extension(extension)
         except commands.ExtensionNotLoaded as e:
             await ctx.send(
-                f'**`ERROR:`** <:goodcross:626829085682827266> {ctx.author.name}, `{extension}` `{type(e).__name__}` - {e} hasn\'t been loaded\nI\'m going to load it now.')
-            try:
-                self.bot.load_extension(extension)
-            except Exception as e:
-                await ctx.send(f'**`ERROR:`** <:goodcross:626829085682827266> `{type(e).__name__}` - {e}')
-                print(f'Failed to load extension {extension}.', file=stderr)
-                print_exc()
+                f'**`ERROR:`** <:goodcross:626829085682827266> {ctx.author.name}, `{extension}` `{type(e).__name__}` - {e}')
         else:
             await ctx.send(f'**`SUCCESS`** <:tick:626829044134182923> {ctx.author.name}, `{extension}` has been reloaded')
 
@@ -146,6 +140,14 @@ class LoaderCog(commands.Cog, name='Loader'):
             open('trades.txt', 'w+').write(str(self.bot.trades))
             await ctx.send(f'**Restarting the bot** {ctx.author.mention}, don\'t use this often')
             execv(executable, ['python'] + argv)
+
+    @commands.command()
+    @commands.is_owner()
+    async def logout(self, ctx):
+        """It logs you out safely"""
+        await ctx.send('Logging out...')
+        await self.bot.client.logout()
+        await self.bot.user.close()
 
     @commands.command(name='eval')
     @commands.is_owner()
@@ -191,8 +193,8 @@ class LoaderCog(commands.Cog, name='Loader'):
             try:
                 exec(to_compile, env)
             except Exception as e:
-                await ctx.message.add_reaction('\U0000274c')
-                embed = Embed(title=f':x: {e.__class__.__name__}',
+                await ctx.message.add_reaction(':goodcross:626829085682827266')
+                embed = Embed(title=f'<:goodcross:626829085682827266> {e.__class__.__name__}',
                               description=f'```py\n{format_exc()}{e}```',
                               color=Colour.red())
                 return await ctx.send(embed=embed)
@@ -201,17 +203,16 @@ class LoaderCog(commands.Cog, name='Loader'):
                 with redirect_stdout(stdout):
                     ret = await func()
             except Exception as e:
-                await ctx.message.add_reaction('\U0000274c')
+                await ctx.message.add_reaction(':goodcross:626829085682827266')
                 value = stdout.getvalue()
-                await ctx.message.add_reaction('\U0000274c')
-                embed = Embed(title=f':x: {e.__class__.__name__}',
+                embed = Embed(title=f'<:goodcross:626829085682827266> {e.__class__.__name__}',
                               description=f'```py\n{value}{format_exc()}{e}```',
                               color=self.bot.color)
                 return await ctx.send(embed=embed)
             else:
                 value = stdout.getvalue()
-                await ctx.message.add_reaction('\U00002705')
-                embed = Embed(title=f'Evaluation completed {ctx.author.display_name} :white_check_mark:',
+                await ctx.message.add_reaction(':tick:626829044134182923')
+                embed = Embed(title=f'Evaluation completed {ctx.author.display_name} <:tick:626829044134182923>',
                               color=Colour.purple())
                 if ret is None:
                     if value:
