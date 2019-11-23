@@ -1,11 +1,10 @@
-import asyncio
+from asyncio import sleep
 from datetime import datetime
-
-import discord
-import json
-
-from discord.ext import commands, tasks
+from json import loads
 from os import remove
+
+from discord import Colour, Embed
+from discord.ext import commands, tasks
 
 
 class SteamCog(commands.Cog, name='Steam'):
@@ -19,31 +18,31 @@ class SteamCog(commands.Cog, name='Steam'):
     def check(self, m):
         return m.content and m.author.id == self.bot.owner_id
 
-    async def classifieds(self, ctx, name, ctype):
-        if ctype == 'list':
+    async def classifieds(self, ctx, name):
+        if isinstance(name, list):
             mul = 'these'
             mul2 = 'commands'
-            dscontent = str(name).replace('[', '`').replace(']', '`').replace(', ', '`, `')
-        elif ctype == 'str':
+            dscontent = "`, `".join([item for item in name])
+        elif isinstance(name, str):
             mul = 'this'
             mul2 = 'command'
-            dscontent = f'`{name}`'
-        await ctx.send(f'Do you want to send {mul} {dscontent} {mul2} to the bot?')
+            dscontent = name
+        await ctx.send(f'Do you want to send {mul} `{dscontent}` {mul2} to the bot?')
         while 1:
             choice = await self.bot.wait_for('message', check=self.check)
             choice = choice.content.lower()
 
             if choice == 'y' or choice == 'yes':
-                await ctx.send(f'Sent {mul} {mul2} to the bot {dscontent}')
+                await ctx.send(f'Sent {mul} {mul2} to the bot `{dscontent}`')
                 async with ctx.typing():
-                    if ctype == 'list':
+                    if isinstance(name, list):
                         for message in name:
-                            self.bot.client.get_user(self.bot.bot64id).send_message(message)
-                            await asyncio.sleep(5)
+                            self.bot.client.s_bot.send_message(message)
+                            await sleep(5)
 
-                    if ctype == 'str':
-                        self.bot.client.get_user(self.bot.bot64id).send_message(name)
-                        await asyncio.sleep(3)
+                    if isinstance(name, str):
+                        self.bot.client.s_bot.send_message(name)
+                        await sleep(3)
                 break
 
             elif choice == 'n' or choice == 'no':
@@ -61,32 +60,35 @@ class SteamCog(commands.Cog, name='Steam'):
             if 'accepted' in self.bot.sbotresp:
                 color2 = 0x5C7E10
             elif 'declined' in self.bot.sbotresp or 'canceled' in self.bot.sbotresp or 'invaliditems' in self.bot.sbotresp:
-                color2 = discord.Color.red()
+                color2 = Colour.red()
             else:
                 color2 = self.bot.color
 
             if 'view it here' in self.bot.sbotresp and 'https' in self.bot.sbotresp:
                 image = self.bot.sbotresp.split('here ', 1)
-                message = self.bot.sbotresp.replace(image[1], '')[:-1] + ':'
+                message = f'{self.bot.sbotresp.replace(image[1], "")[:-1]}:'
                 image = image[1]
-                embed = discord.Embed(color=color2)
+                embed = Embed(color=color2)
                 embed.add_field(name='Trade: ', value=message, inline=False)
                 embed.set_image(url=image)
             else:
-                embed = discord.Embed(color=color2)
+                embed = Embed(color=color2)
                 embed.add_field(name='New Message:', value=self.bot.sbotresp, inline=False)
 
             embed.set_footer(text=datetime.now().strftime('%H:%M:%S %d/%m/%Y'),
                              icon_url=self.bot.user.avatar_url)
-            await self.bot.get_user(self.bot.owner_id).send(embed=embed)
+            await self.bot.owner.send(embed=embed)
             if self.bot.usermessage != 0:
-                embed = discord.Embed(color=0xFFFF66)
+                embed = Embed(color=0xFFFF66)
                 embed.add_field(name='User Message:',
                                 value=f'You have a message from a user:\n{self.bot.usermessage}'
-                                      f'\nType {self.bot.command_prefix}acknowledged',
+                                      f'\nType {self.bot.prefix}acknowledged',
                                 inline=False)
-                await self.bot.get_user(self.bot.owner_id).send(embed=embed)
-                await asyncio.sleep(60)
+                self.bot.message = await self.bot.owner.send(embed=embed)
+                try:
+                    await self.bot.message.pin()
+                except:
+                    pass
             self.bot.sbotresp = 0
 
     @commands.is_owner()
@@ -107,7 +109,7 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def add(self, ctx):
-        """Add is used to add items from your bot's classifieds
+        """Add is used to add items from your bot's classifieds don't use an "=" between name and the item
 
         eg. `!add name The Team Captain`
 
@@ -115,24 +117,25 @@ class SteamCog(commands.Cog, name='Steam'):
         eg. `!add names This&intent=sell, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
 
     @add.command(name='name')
     async def a_name(self, ctx, *, name):
-        """Handles singular adds"""
+        """Handles singular classified additions"""
         name = f'{self.bot.addm}{name}'
-        await self.classifieds(ctx, name, ctype='str')
+        await self.classifieds(ctx, name)
 
     @add.command(name='names')
     async def a_names(self, ctx, *, name):
-        """Handles multiple adds"""
+        """Handles multiple classified additions"""
         name = name.split(',')
         name = [f'{self.bot.addm}{x.lstrip().rstrip()}' for x in name]
-        await self.classifieds(ctx, name, ctype='list')
+        await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def update(self, ctx):
-        """Update is used to update items from your bot's classifieds
+        """Update is used to update items from your bot's classifieds don't use an "=" between name and the item
 
         eg. `!update name The Team Captain`
 
@@ -141,24 +144,25 @@ class SteamCog(commands.Cog, name='Steam'):
         eg. `!update names This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
 
     @update.command(name='name')
     async def u_name(self, ctx, *, name):
         """Handles singular updates"""
         name = f'{self.bot.updatem}{name}'
-        await self.classifieds(ctx, name, ctype='str')
+        await self.classifieds(ctx, name)
 
     @update.command(name='names')
     async def u_names(self, ctx, *, name):
         """Handles multiple updates"""
         name = name.split(',')
         name = [f'{self.bot.updatem}{x.lstrip().rstrip()}' for x in name]
-        await self.classifieds(ctx, name, ctype='list')
+        await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def remove(self, ctx):
-        """Remove is used to remove items from your bot's classifieds
+        """Remove is used to remove items from your bot's classifieds don't use an "=" between item and the item to add
 
         eg. `!remove item The Team Captain`
 
@@ -167,27 +171,29 @@ class SteamCog(commands.Cog, name='Steam'):
         eg. `!remove items This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
+
 
     @remove.command(name='item')
     async def r_name(self, ctx, *, name):
         """Handles singular removals"""
         name = f'{self.bot.removem}{name}'
-        await self.classifieds(ctx, name, ctype='str')
+        await self.classifieds(ctx, name)
 
     @remove.command(name='items')
     async def r_names(self, ctx, *, name):
         """Handles multiple removals"""
         name = name.split(',')
         name = [f'{self.bot.removem}{x.lstrip().rstrip()}' for x in name]
-        await self.classifieds(ctx, name, ctype='list')
+        await self.classifieds(ctx, name)
 
     @commands.command()
     @commands.is_owner()
     async def profit(self, ctx):
         """Returns your bot's profit as it normally would"""
         async with ctx.typing():
-            self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.command_prefix}profit')
-            await asyncio.sleep(3)
+            self.bot.client.s_bot.send_message(f'{self.bot.prefix}profit')
+            await sleep(3)
 
     @commands.command()
     @commands.is_owner()
@@ -196,14 +202,14 @@ class SteamCog(commands.Cog, name='Steam'):
 
         eg. `!send !message 76561198248053954 Get on steam`"""
         async with ctx.typing():
-            self.bot.client.get_user(self.bot.bot64id).send_message(message)
+            self.bot.client.s_bot.send_message(message)
             await ctx.send(f"Sent `{message}` to the bot")
-            await asyncio.sleep(3)
+            await sleep(3)
 
     @commands.command(aliases=['bp'])
     async def backpack(self, ctx):
         """Get a link to your inventory and your bot's"""
-        embed = discord.Embed(title='\u200b', color=0x58788F)
+        embed = Embed(title='\u200b', color=0x58788F)
         embed.set_thumbnail(url='https://steamuserimages-a.akamaihd.net/ugc'
                                 '/44226880714734120/EE4DAE995040556E8013F583ACBA971846FA1E2B/')
         embed.add_field(name='Your backpack:', value=f'https://backpack.tf/profiles/{self.bot.client.user.steam_id}')
@@ -476,7 +482,7 @@ class SteamCog(commands.Cog, name='Steam'):
 
                 if choice == 'yes' or choice == 'y':
                     await ctx.send("You have sent the bot a new command")
-                    self.bot.client.get_user(self.bot.bot64id).send_message(steamcommand)
+                    self.bot.client.s_bot.send_message(steamcommand)
                     return
                 elif choice == 'no' or choice == 'n':
                     await ctx.send("You didn't send the command to the bot :(")
@@ -487,14 +493,14 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.command()
     @commands.is_owner()
     async def cashout(self, ctx):
-        """Want to cash-out all your listings?"""
-        listingsjson = json.loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
+        """Want to cash-out all your listings? Be warned this command is quite difficult to fux once you run it"""
+        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
         await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
         for value in listingsjson:
             command = f'{self.bot.updatem}{value["name"]}&intent=sell'
-            self.bot.client.get_user(self.bot.bot64id).send_message(command)
+            self.bot.client.s_bot.send_message(command)
             await ctx.send(command)
-            await asyncio.sleep(5)
+            await sleep(5)
         await ctx.send('Completed the intent update')
 
     @commands.command(aliases=['raw_add'])
@@ -508,8 +514,8 @@ class SteamCog(commands.Cog, name='Steam'):
 
         items = open(f'{self.bot.templocation}/raw_add_listings.txt', 'r').read().splitlines()
         for item in items:
-            self.bot.client.get_user(self.bot.bot64id).send_message(f'{self.bot.addm}{item}{ending}')
-            await asyncio.sleep(5)
+            self.bot.client.s_bot.send_message(f'{self.bot.addm}{item}{ending}')
+            await sleep(5)
         await ctx.send(f'Done adding {len(items)} items')
         remove(f'{self.bot.templocation}/raw_add_listings.txt')
 
