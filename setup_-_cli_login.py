@@ -4,8 +4,6 @@ import json
 print('This is the setup code for tf2-autocord')
 choice = 0
 while choice != 'yes':
-    DID = int(input(
-        "Discord ID:\nCopy this from yourself by turning on developer mode in appearance and right click and copy ID on yourself\n>>> "))
     BSID = int(input("Bot's Steam ID:\nThis is the 64 ID of your bot's steam account\n>>> "))
     ON = input("Owner Name:\nThis is your name, this will show up in your bot's status\n>>> ")
     CP = input(
@@ -15,7 +13,6 @@ while choice != 'yes':
         "Path to Temp:\nThis is for the !get command you need it in the format C:/Users/Nicklason/Desktop/all the code for the bots/temp\n>>> ")
 
     preferences = {
-        "Discord ID": DID,
         "Bot's Steam ID": BSID,
         "Owner Name": ON,
         "Command Prefix": CP,
