@@ -1,8 +1,10 @@
-from subprocess import PIPE, run
 from asyncio import TimeoutError
 from datetime import datetime
-from os import popen, system, getcwd
+from os import getcwd
+from subprocess import getoutput
 
+import discord
+from aiohttp import ClientSession
 from discord import Embed, Colour, errors
 from discord.ext import commands, tasks
 
@@ -260,15 +262,48 @@ class HelperCog(commands.Cog, name='Help'):
     @tasks.loop(hours=24)
     async def githubupdate(self):
         """A tasks loop to check if there has been an update to the GitHub repo"""
-        result = run([f'cd {getcwd()}\ngit checkout'], stdout=PIPE)
-        await self.bot.owner.send(f'updateable = "{result.stdout}"')
-        if 'Your branch is up to date with' in result.stdout:
+        result = getoutput(f'git checkout {getcwd()}')
+        owner = self.bot.owner
+        if 'Your branch is up to date with' in result:
             pass
-        elif 'fatal: not a git repository (or any of the parent directories): .git' in result.stdout:
-            await self.bot.owner.send('This wasn\'t cloned from GitHub')
+        elif result == 'fatal: not a git repository (or any of the parent directories): .git':
+            await owner.send(embed=Embed(
+                title='This version wasn\'t cloned from GitHub, which I advise as it allows for automatic updates',
+                description='It is as simple as typing `git clone '
+                            'https://github.com/Gobot1234/tf2-autocord.git Discord` '
+                            'into your command prompt of choice',
+                color=self.bot.color))
         else:
-            await self.bot.owner.send(f'There is an update to the repo. Do you want to install it? (Type '
-                                      f'{self.bot.prefix}updaterepo to install it)')
+            def check(m):
+                return m.content and m.channel == owner_dm.channel
+
+            async with ClientSession() as cs:
+                async with cs.get('https://api.github.com/repos/Gobot1234/tf2-autocord/commits') as r:
+                    res = await r.json()
+                    update_info = res[0]['commit']['message']
+                    if update_info == 'Add files via upload':
+                        update_info = 'I didn\'t provide any update info ¯\_(ツ)_/¯'
+
+            owner_dm = await owner.send(
+                embed=Embed(title='There has been an update to the repo. Do you want to install it?',
+                            description=f'__Update info is as follows:__\n```{update_info}```',
+                            color=self.bot.color))
+
+            choice = await self.bot.wait_for('message', check=check)
+            choice = choice.content.lower()
+            while 1:
+                if choice == 'yes' or choice == 'y':
+                    reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
+                    await owner.send(f'```bash\n{reset}```')
+                    update = getoutput(f'git pull {getcwd()}')
+                    await owner.send(f'```bash\n{update}```')
+                    break
+
+                elif choice == 'no' or choice == 'n':
+                    await owner.send('I won\'t update the version yet')
+                    break
+                else:
+                    await owner.send('Please try again with yes or no')
 
     @commands.command()
     @commands.is_owner()
@@ -277,26 +312,28 @@ class HelperCog(commands.Cog, name='Help'):
 
         This will overwrite any changes you have made locally"""
         await ctx.send('Attempting to update to the latest version of the code')
-        system(f'cd {getcwd()}')
-        system('git reset --hard HEAD')
-        updateable = popen('git pull').read()
-        if 'Already up to date.' in updateable:
+        result = getoutput(f'git checkout {getcwd()}')
+
+        if 'Already up to date.' in result:
             await ctx.send('No updates to be had?')
-        elif updateable == 'fatal: not a git repository (or any of the parent directories): .git':
+        elif result == 'fatal: not a git repository (or any of the parent directories): .git':
             await ctx.send('This wasn\'t cloned from GitHub')
         else:
             await ctx.trigger_typing()
             await ctx.send(
                 'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
+            reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
+            await ctx.send(f'```bash\n{reset}```')
+            update = getoutput(f'git pull {getcwd()}')
+            await ctx.send(f'```bash\n{update}```')
 
     @commands.command()
     async def github(self, ctx):
         """Shows the GitHub repo and some info about it"""
-        system(f'cd {getcwd()}')
-        updateable = popen('git checkout').read()
-        if 'Your branch is up to date with' in updateable:
+        result = getoutput(f'git checkout {getcwd()}')
+        if 'Your branch is up to date with' in result:
             emoji = '<:tick:626829044134182923>'
-        elif updateable == 'fatal: not a git repository (or any of the parent directories): .git':
+        elif result == 'fatal: not a git repository (or any of the parent directories): .git':
             emoji = 'This wasn\'t cloned from GitHub'
         else:
             emoji = '<:goodcross:626829085682827266>'

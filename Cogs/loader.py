@@ -35,7 +35,7 @@ class LoaderCog(commands.Cog, name='Loader'):
             pass
 
         preferences = json.loads(open('Login details/preferences.json', 'r').read())
-        bot.owner_id = int(preferences["Discord ID"])
+#        bot.owner_id = int(preferences["Discord ID"])
         bot.bot64id = int(preferences["Bot's Steam ID"])
         bot.prefix = preferences["Command Prefix"]
         bot.color = int(preferences["Embed Colour"], 16)
@@ -53,6 +53,12 @@ class LoaderCog(commands.Cog, name='Loader'):
         bot.addm = f'{bot.prefix}add name='
         bot.currenttime = datetime.now().strftime("%H:%M")
 
+        try:
+            self.bot.trades = int(open('trades.txt', 'r').read())
+            remove('trades.txt')
+        except:
+            pass
+
     def cleanup_code(self, content):
         """Automatically removes code blocks from the code."""
         # remove ```py\n```
@@ -67,7 +73,8 @@ class LoaderCog(commands.Cog, name='Loader'):
         """Setting your status, printing your bot's id to send to me,
         seeing if the bot was restarted and stored your number of trades,
         finally checking if you are logged onto steam"""
-        self.bot.owner = self.bot.get_user(self.bot.owner_id)
+        self.bot.owner = await self.bot.application_info()
+        self.bot.owner = self.bot.owner.owner
 
         await self.bot.change_presence(activity=Activity(
             name=f'{self.bot.owner.name}\'s trades | V{LoaderCog.__version__} | Command Prefix \"{self.bot.prefix}\"',
@@ -75,18 +82,9 @@ class LoaderCog(commands.Cog, name='Loader'):
         print('-' * 30)
         print(f'\033[92m{self.bot.user.name} is ready\033[92m')
         print(
-            f'Send this id: \033[95m"{self.bot.user.id}"\033[95m\033[92m to Gobot1234 to add your bot to the server to use the custom emojis)')
+            f'Send this id: \033[95m"{self.bot.user.id}"\033[95m\033[92m to Gobot1234 to add your bot to the server to use the custom emojis')
         print('This is: \033[95m' + f'Version {LoaderCog.__version__}\033[95m')
         self.bot.dsdone = True
-        try:
-            self.bot.trades = int(open('trades.txt', 'r').read())
-        except:
-            pass
-        await sleep(15)
-        try:
-            remove('trades.txt')
-        except:
-            pass
         while self.bot.logged_on is False:
             if self.bot.cli_login:
                 await self.bot.owner.send('You aren\'t currently logged into your Steam account\nTo do that type in '
@@ -146,8 +144,8 @@ class LoaderCog(commands.Cog, name='Loader'):
     async def logout(self, ctx):
         """It logs you out safely"""
         await ctx.send('Logging out...')
-        await self.bot.client.logout()
-        await self.bot.user.close()
+        self.bot.client.logout()
+        await self.bot.close()
 
     @commands.command(name='eval')
     @commands.is_owner()

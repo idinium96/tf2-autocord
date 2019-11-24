@@ -6,7 +6,7 @@ from platform import python_version
 
 import matplotlib.pyplot as plt
 from aiohttp import ClientSession
-from psutil import virtual_memory, cpu_stats
+from psutil import virtual_memory, cpu_percent
 from steam import __version__ as s_version
 
 from discord import Embed, File, __version__ as d_version, errors
@@ -253,7 +253,7 @@ class DiscordCog(commands.Cog, name='Discord'):
         embed.add_field(name="<:compram:622622385182474254> RAM Usage",
                         value=f'`{round(rawram[3] / 1024 ** 2)}` MB used / `{round(rawram[0] / 1024 ** 2)}` MB total | `{rawram[2]}`% used',
                         inline=True)
-        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_stats()}`%', inline=True)
+        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_percent()}`%', inline=True)
         embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version',
                         value=f'Version: `{LoaderCog.__version__}`. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
