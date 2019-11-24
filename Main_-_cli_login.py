@@ -1,12 +1,11 @@
 from gevent.monkey import patch_socket, patch_ssl
-
 patch_socket()
 patch_ssl()
 from steam.enums import EResult
 from steam.client import SteamClient
 
-import json
-import discord
+from json import loads
+from discord import ClientException
 
 from discord.ext import commands
 from sys import stderr
@@ -16,9 +15,9 @@ from os import listdir
 from os.path import isfile, join
 
 
-preferences = json.loads(open('Login details/preferences.json', 'r').read())
+preferences = loads(open('Login details/preferences.json', 'r').read())
 command_prefix = preferences["Command Prefix"]
-login = json.loads(open('Login details/sensitive details.json', 'r').read())
+login = loads(open('Login details/sensitive details.json', 'r').read())
 token = login["Bot Token"]
 
 bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), case_insensitive=True,
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     for extension in bot.initial_extensions:
         try:
             bot.load_extension(f'Cogs.{extension}')
-        except (discord.ClientException, ModuleNotFoundError):
+        except (ClientException, ModuleNotFoundError):
             print(f'Failed to load extension {extension}.', file=stderr)
             print_exc()
 
@@ -52,6 +51,8 @@ def steamside():
     while 1:
         if bot.dsdone is True:
             bot.client = SteamClient()
+            print(bot.client)
+
             print(f'\033[95m{"-" * 30}\033[95m')
             print(f'\033[95mSteam is now logging on\033[95m')
             bot.client.set_credential_location('Login Details/')  # where to store sentry files and other stuff  
@@ -100,12 +101,12 @@ def steamside():
                 raise SystemExit
             while 1:
                 try:
-                    bot.s_bot = bot.client.get_user(bot.bot64id)
+                    bot.client.s_bot = bot.client.get_user(bot.bot64id)
                     bot.client.run_forever()
                 except KeyboardInterrupt:
                     bot.client.logout()
                     print('Logging out')
 
 
-Thread(target=discordside()).start()
-Thread(target=steamside()).start()
+Thread(target=discordside).start()
+Thread(target=steamside).start()
