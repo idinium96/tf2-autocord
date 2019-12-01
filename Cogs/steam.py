@@ -7,7 +7,7 @@ from discord import Colour, Embed
 from discord.ext import commands, tasks
 
 
-class SteamCog(commands.Cog, name='Steam'):
+class Steam(commands.Cog):
     """Commands that are mainly owner restricted and only work if you are logged in to your steam account"""
 
     def __init__(self, bot):
@@ -16,7 +16,7 @@ class SteamCog(commands.Cog, name='Steam'):
         self.bot.trades = 0
 
     def check(self, m):
-        return m.content and m.author.id == self.bot.owner_id
+        return m.content and m.author == self.bot.owner
 
     async def classifieds(self, ctx, name):
         if isinstance(name, list):
@@ -110,9 +110,7 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.is_owner()
     async def add(self, ctx):
         """Add is used to add items from your bot's classifieds don't use an "=" between name and the item
-
         eg. `!add name The Team Captain`
-
         It allows the chaining of commands
         eg. `!add names This&intent=sell, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
@@ -129,17 +127,14 @@ class SteamCog(commands.Cog, name='Steam'):
     async def a_names(self, ctx, *, name):
         """Handles multiple classified additions"""
         name = name.split(',')
-        name = [f'{self.bot.addm}{x.lstrip().rstrip()}' for x in name]
+        name = [f'{self.bot.addm}{x.lstrip().strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def update(self, ctx):
         """Update is used to update items from your bot's classifieds don't use an "=" between name and the item
-
         eg. `!update name The Team Captain`
-
-
         It allows the chaining of commands
         eg. `!update names This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
@@ -156,35 +151,31 @@ class SteamCog(commands.Cog, name='Steam'):
     async def u_names(self, ctx, *, name):
         """Handles multiple updates"""
         name = name.split(',')
-        name = [f'{self.bot.updatem}{x.lstrip().rstrip()}' for x in name]
+        name = [f'{self.bot.updatem}{x.lstrip().strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def remove(self, ctx):
-        """Remove is used to remove items from your bot's classifieds don't use an "=" between item and the item to add
-
+        """Remove is used to remove items from your bot's classifieds don't use an "=" between item and the item
         eg. `!remove item The Team Captain`
-
-
         It allows the chaining of commands
         eg. `!remove items This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
             await ctx.send_help(ctx.command)
 
-
     @remove.command(name='item')
-    async def r_name(self, ctx, *, name):
+    async def r_item(self, ctx, *, name):
         """Handles singular removals"""
         name = f'{self.bot.removem}{name}'
         await self.classifieds(ctx, name)
 
     @remove.command(name='items')
-    async def r_names(self, ctx, *, name):
+    async def r_items(self, ctx, *, name):
         """Handles multiple removals"""
         name = name.split(',')
-        name = [f'{self.bot.removem}{x.lstrip().rstrip()}' for x in name]
+        name = [f'{self.bot.removem}{x.lstrip().strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.command()
@@ -199,7 +190,6 @@ class SteamCog(commands.Cog, name='Steam'):
     @commands.is_owner()
     async def send(self, ctx, *, message):
         """Send is used to send a message to the bot
-
         eg. `!send !message 76561198248053954 Get on steam`"""
         async with ctx.typing():
             self.bot.client.s_bot.send_message(message)
@@ -215,6 +205,35 @@ class SteamCog(commands.Cog, name='Steam'):
         embed.add_field(name='Your backpack:', value=f'https://backpack.tf/profiles/{self.bot.client.user.steam_id}')
         embed.add_field(name='Your bot\'s backpack', value=f'https://backpack.tf/profiles/{self.bot.bot64id}')
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def cashout(self, ctx):
+        """Want to cash-out all your listings? Be warned this command is quite difficult to fux once you run it"""
+        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
+        await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
+        for value in listingsjson:
+            command = f'{self.bot.updatem}{value["name"]}&intent=sell'
+            self.bot.client.s_bot.send_message(command)
+            await ctx.send(command)
+            await sleep(5)
+        await ctx.send('Completed the intent update')
+
+    @commands.command(aliases=['raw_add'])
+    @commands.is_owner()
+    async def add_raw(self, ctx, *, ending=''):
+        """Add lots of items, very volatile `!add names` is much more likely to be stable"""
+        await ctx.send('Paste all the items you want to add on a new line')
+        file = await self.bot.wait_for('message', check=self.check)
+        file = file.content
+        open(f'{self.bot.templocation}/raw_add_listings.txt', 'w+').write(file)
+
+        items = open(f'{self.bot.templocation}/raw_add_listings.txt', 'r').read().splitlines()
+        for item in items:
+            self.bot.client.s_bot.send_message(f'{self.bot.addm}{item}{ending}')
+            await sleep(5)
+        await ctx.send(f'Done adding {len(items)} items')
+        remove(f'{self.bot.templocation}/raw_add_listings.txt')
 
     @commands.command()
     @commands.is_owner()
@@ -333,7 +352,7 @@ class SteamCog(commands.Cog, name='Steam'):
                                             steamcommand += f'&intent={intent}'
                                             break
                                         else:
-                                            await ctx.send('Try again with a valid value (' + intents + ')')
+                                            await ctx.send(f'Try again with a valid value ({intents})')
                                     scclist = scclist.replace('\nIntent', '')
                                     notgonethrough3 = False
                                     await ctx.send(
@@ -490,39 +509,10 @@ class SteamCog(commands.Cog, name='Steam'):
                 else:
                     await ctx.send('Please try again with y/n')
 
-    @commands.command()
-    @commands.is_owner()
-    async def cashout(self, ctx):
-        """Want to cash-out all your listings? Be warned this command is quite difficult to fux once you run it"""
-        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
-        await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
-        for value in listingsjson:
-            command = f'{self.bot.updatem}{value["name"]}&intent=sell'
-            self.bot.client.s_bot.send_message(command)
-            await ctx.send(command)
-            await sleep(5)
-        await ctx.send('Completed the intent update')
-
-    @commands.command(aliases=['raw_add'])
-    @commands.is_owner()
-    async def add_raw(self, ctx, *, ending=''):
-        """Add lots of items, very volatile `!add names` is much more likely to be stable"""
-        await ctx.send('Paste all the items you want to add on a new line')
-        file = await self.bot.wait_for('message', check=self.check)
-        file = file.content
-        open(f'{self.bot.templocation}/raw_add_listings.txt', 'w+').write(file)
-
-        items = open(f'{self.bot.templocation}/raw_add_listings.txt', 'r').read().splitlines()
-        for item in items:
-            self.bot.client.s_bot.send_message(f'{self.bot.addm}{item}{ending}')
-            await sleep(5)
-        await ctx.send(f'Done adding {len(items)} items')
-        remove(f'{self.bot.templocation}/raw_add_listings.txt')
-
 
 def setup(bot):
-    bot.add_cog(SteamCog(bot))
+    bot.add_cog(Steam(bot))
 
 
 def teardown():
-    SteamCog.discordcheck.stop()
+    Steam.discordcheck.stop()

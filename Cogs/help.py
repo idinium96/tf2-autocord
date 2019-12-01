@@ -1,14 +1,13 @@
-from asyncio import TimeoutError
+from asyncio import TimeoutError, sleep
+from aiohttp import ClientSession
 from datetime import datetime
 from os import getcwd
 from subprocess import getoutput
 
-import discord
-from aiohttp import ClientSession
 from discord import Embed, Colour, errors
 from discord.ext import commands, tasks
 
-from .loader import LoaderCog
+from .loader import Loader
 
 
 class HelpCommand(commands.HelpCommand):
@@ -51,21 +50,9 @@ class HelpCommand(commands.HelpCommand):
         all_commands = [command.name for command in await self.filter_commands(bot.commands)]
         current_cog = bot.get_cog(self.all_cogs[page])
         cog_n = current_cog.qualified_name
+        color, emoji = bot.cog_color[cog_n]
 
-        if cog_n == 'Help':
-            color = bot.color
-            emoji = '<:tf2autocord:624658299224326148>'
-        elif cog_n == 'Discord':
-            color = 0x7289da
-            emoji = '<:discord:626486432793493540>'
-        elif cog_n == 'Steam':
-            color = 0x00adee
-            emoji = '<:steam:622621553800249364>'
-        else:
-            emoji = '<:tf2autocord:624658299224326148>'
-            color = bot.color
-
-        embed = Embed(title=f'Help with {current_cog.qualified_name} ({len(all_commands)} commands) {emoji}',
+        embed = Embed(title=f'Help with {cog_n} ({len(all_commands)} commands) {emoji}',
                       description=current_cog.description, color=color)
         embed.set_author(name=f'We are currently on page {page + 1}/{len(self.all_cogs)}',
                          icon_url=ctx.author.avatar_url)
@@ -75,7 +62,7 @@ class HelpCommand(commands.HelpCommand):
                     signature = self.get_command_signature(c)
                     description = self.get_command_description(c)
                     if c.parent:
-                        embed.add_field(name=f'╚╡`{signature[2:]}', value=description, inline=False)
+                        embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=True)
                     else:
                         embed.add_field(name=signature, value=description, inline=False)
         except:
@@ -155,19 +142,8 @@ class HelpCommand(commands.HelpCommand):
 
         cog_commands = [command for command in await self.filter_commands(cog.walk_commands())]
         cog_n = cog.qualified_name
+        color, emoji = bot.cog_color[cog_n]
 
-        if cog_n == 'Help':
-            color = bot.color
-            emoji = '<:tf2autocord:624658299224326148>'
-        elif cog_n == 'Discord':
-            color = 0x7289da
-            emoji = '<:discord:626486432793493540>'
-        elif cog_n == 'Steam':
-            color = 0x00adee
-            emoji = '<:steam:622621553800249364>'
-        else:
-            emoji = '<:tf2autocord:624658299224326148>'
-            color = bot.color
         embed = Embed(title=f'Help with {cog_n} ({len(cog_commands)} commands) {emoji}',
                       description=cog.description, color=color)
         embed.set_author(name=f'We are currently looking at the module {cog.qualified_name} and its commands',
@@ -178,7 +154,7 @@ class HelpCommand(commands.HelpCommand):
             aliases = self.get_command_aliases(c)
             description = self.get_command_description(c)
             if c.parent:
-                embed.add_field(name=f'╚╡`{signature[2:]}', value=description, inline=False)
+                embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=True)
             else:
                 embed.add_field(name=f'{signature} {aliases}',
                                 value=description, inline=False)
@@ -188,19 +164,9 @@ class HelpCommand(commands.HelpCommand):
     async def send_command_help(self, command):
         ctx = self.context
         bot = ctx.bot
+
         cog_n = command.cog.qualified_name
-        if cog_n == 'Help':
-            color = bot.color
-            emoji = '<:tf2autocord:624658299224326148>'
-        elif cog_n == 'Discord':
-            color = 0x7289da
-            emoji = '<:discord:626486432793493540>'
-        elif cog_n == 'Steam':
-            color = 0x00adee
-            emoji = '<:steam:622621553800249364>'
-        else:
-            emoji = '<:tf2autocord:624658299224326148>'
-            color = bot.color
+        color, emoji = bot.cog_color[cog_n]
 
         if await command.can_run(ctx):
             embed = Embed(title=f'Help with `{command.name}` {emoji}', color=color)
@@ -211,7 +177,7 @@ class HelpCommand(commands.HelpCommand):
             aliases = self.get_command_aliases(command)
 
             if command.parent:
-                embed.add_field(name=f'╚╡`{signature[2:]}', value=description, inline=False)
+                embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=False)
             else:
                 embed.add_field(name=f'{signature} {aliases}', value=description, inline=False)
             embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.')
@@ -244,10 +210,11 @@ class HelpCommand(commands.HelpCommand):
     async def command_not_found(self, string):
         embed = Embed(title='Error!', description=f'**Error 404:** Command or cog "{string}" not found ¯\_(ツ)_/¯',
                       color=Colour.red())
+        embed.add_field(name='The current loaded cogs are', value=f'(`{"`, `".join([cog for cog in self.context.bot.cogs])}`) :gear:')
         await self.context.send(embed=embed)
 
 
-class HelperCog(commands.Cog, name='Help'):
+class Help(commands.Cog):
     """Help yourself to do stuff with the bot's commands"""
 
     def __init__(self, bot):
@@ -262,16 +229,17 @@ class HelperCog(commands.Cog, name='Help'):
     @tasks.loop(hours=24)
     async def githubupdate(self):
         """A tasks loop to check if there has been an update to the GitHub repo"""
+        await self.bot.wait_until_ready()
         result = getoutput(f'git checkout {getcwd()}')
         owner = self.bot.owner
         if 'Your branch is up to date with' in result:
-            pass
+            return
         elif result == 'fatal: not a git repository (or any of the parent directories): .git':
             await owner.send(embed=Embed(
                 title='This version wasn\'t cloned from GitHub, which I advise as it allows for automatic updates',
                 description='It is as simple as typing `git clone '
                             'https://github.com/Gobot1234/tf2-autocord.git Discord` '
-                            'into your command prompt of choice',
+                            'into your command prompt of choice, although you need git to be installed',
                 color=self.bot.color))
         else:
             def check(m):
@@ -280,19 +248,23 @@ class HelperCog(commands.Cog, name='Help'):
             async with ClientSession() as cs:
                 async with cs.get('https://api.github.com/repos/Gobot1234/tf2-autocord/commits') as r:
                     res = await r.json()
-                    update_info = res[0]['commit']['message']
-                    if update_info == 'Add files via upload':
-                        update_info = 'I didn\'t provide any update info ¯\_(ツ)_/¯'
+                    version = res[0]['commit']['message']
+
+                async with cs.get(res[0]['comments_url']) as r:
+                    res = await r.json()
+                    comment = res[0] or 'I didn\'t provide any update info ¯\_(ツ)_/¯'
 
             owner_dm = await owner.send(
-                embed=Embed(title='There has been an update to the repo. Do you want to install it?',
-                            description=f'__Update info is as follows:__\n```{update_info}```',
+                embed=Embed(title=f'Version {version} has been pushed to the GitHub repo. Do you want to install it?',
+                            description=f'__Update info is as follows:__\n```{comment}```',
                             color=self.bot.color))
 
             choice = await self.bot.wait_for('message', check=check)
             choice = choice.content.lower()
             while 1:
                 if choice == 'yes' or choice == 'y':
+                    await owner.send(
+                        'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
                     reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
                     await owner.send(f'```bash\n{reset}```')
                     update = getoutput(f'git pull {getcwd()}')
@@ -304,6 +276,15 @@ class HelperCog(commands.Cog, name='Help'):
                     break
                 else:
                     await owner.send('Please try again with yes or no')
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.cog_color = {
+            'Discord': (Colour.blurple(), '<:discord:626486432793493540>'),
+            'Help': (self.bot.color, '<:tf2autocord:624658299224326148>'),
+            'Loader': (self.bot.color, '<:tf2autocord:624658299224326148>'),
+            'Steam': (0x00adee, '<:steam:622621553800249364>')
+        }
 
     @commands.command()
     @commands.is_owner()
@@ -339,7 +320,7 @@ class HelperCog(commands.Cog, name='Help'):
             emoji = '<:goodcross:626829085682827266>'
         embed = Embed(title='GitHub Repo Infomation', color=0x2e3bad)
         embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-        embed.add_field(name='Current Version', value=f'Version: {LoaderCog.__version__}. Up to date: {emoji}',
+        embed.add_field(name='Current Version', value=f'Version: {Loader.__version__}. Up to date: {emoji}',
                         inline=True)
         embed.add_field(name='GitHub Stats', value='https://github.com/Gobot1234/tf2-autocord/pulse')
         embed.add_field(name='Link to the repo', value='[Repository](https://github.com/Gobot1234/tf2-autocord)')
@@ -371,16 +352,35 @@ class HelperCog(commands.Cog, name='Help'):
             message = f'You are logged in as {self.bot.client.user.name}'
         else:
             message = 'You aren\'t logged into steam'
-        await ctx.send(f'Pong! {self.bot.user.name} is online. Latency is {round(self.bot.latency, 2)} ms. {message}')
+        await ctx.send(f'Pong! {self.bot.user.mention} is online. Latency is {round(self.bot.latency, 2)} ms. {message}')
 
     @commands.command()
-    async def uptime(self, ctx):
-        """See how long the bot has been online for"""
-        delta_uptime = datetime.utcnow() - self.bot.launch_time
-        hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        days, hours = divmod(hours, 24)
-        await ctx.send(f'{self.bot.user.mention} has been online for `{days}d, {hours}h, {minutes}m, {seconds}s`')
+    @commands.is_owner()
+    async def togpremium(self, ctx):
+        """Used to remind yourself when your bp.tf premium will run out"""
+        if self.bot.togglepremium == 0:
+            self.bot.togglepremium = 1
+            await ctx.send(
+                'Premium Alerts now toggled on (this will send you a message when 1 months and 29 days have gone past)')
+        elif self.bot.togglepremium == 1:
+            self.bot.togglepremium = 0
+            await ctx.send('Premium Alerts now toggled off')
+
+        while self.bot.togglepremium == 1:
+            await sleep(4654687)  # 2 months in seconds - 1 day = 4654687 seconds
+            await ctx.send('You may wish to renew your premium subscription')
+
+    @commands.command(aliases=['warm-my-insides'])
+    @commands.is_owner()
+    async def donate(self, ctx):
+        """Used to feel warm and fuzzy on the inside"""
+        embed = Embed(title='Want to donate?',
+                      description='[Trade link](https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2)',
+                      color=0x2e3bad)
+        embed.set_thumbnail(
+            url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.png?size=1024')
+        embed.set_footer(text='Thank you for any donations')
+        await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -418,8 +418,8 @@ class HelperCog(commands.Cog, name='Help'):
 
 
 def setup(bot):
-    bot.add_cog(HelperCog(bot))
+    bot.add_cog(Help(bot))
 
 
 def teardown():
-    HelperCog.githubupdate.stop()
+    Help.githubupdate.stop()

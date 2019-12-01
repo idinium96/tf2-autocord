@@ -1,8 +1,8 @@
-import json
 from asyncio import sleep
 from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
+from json import loads
 from os import remove, execv
 from platform import python_version
 from sys import argv, executable, stderr
@@ -13,17 +13,16 @@ from discord import Activity, ActivityType, Colour, Embed
 from discord.ext import commands
 
 
-class LoaderCog(commands.Cog, name='Loader'):
+class Loader(commands.Cog):
     """This cog just stores all of your variables nothing particularly interesting and a few commands for development"""
-    __version__ = '1.3'  # hey that's the same as d.py spooky
+    __version__ = '1.3.1'
 
     def __init__(self, bot):
         """Setting all of your bot vars to be used by other cogs/commands"""
         self.bot = bot
         self._last_result = None
-        self.sessions = set()
 
-        login = json.loads(open("Login details/sensitive details.json", "r").read())
+        login = loads(open("Login details/sensitive details.json", "r").read())
         bot.username = login["Username"]
         bot.password = login["Password"]
         try:
@@ -34,8 +33,7 @@ class LoaderCog(commands.Cog, name='Loader'):
         except:
             pass
 
-        preferences = json.loads(open('Login details/preferences.json', 'r').read())
-#        bot.owner_id = int(preferences["Discord ID"])
+        preferences = loads(open('Login details/preferences.json', 'r').read())
         bot.bot64id = int(preferences["Bot's Steam ID"])
         bot.prefix = preferences["Command Prefix"]
         bot.color = int(preferences["Embed Colour"], 16)
@@ -75,15 +73,13 @@ class LoaderCog(commands.Cog, name='Loader'):
         finally checking if you are logged onto steam"""
         self.bot.owner = await self.bot.application_info()
         self.bot.owner = self.bot.owner.owner
-
-        await self.bot.change_presence(activity=Activity(
-            name=f'{self.bot.owner.name}\'s trades | V{LoaderCog.__version__} | Command Prefix \"{self.bot.prefix}\"',
-            type=ActivityType.watching))
-        print('-' * 30)
-        print(f'\033[92m{self.bot.user.name} is ready\033[92m')
+        await self.bot.change_presence(
+            activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{Loader.__version__}',
+                              type=ActivityType.watching))
+        print(f'{"-" * 30}\n{self.bot.user.name} is ready')
         print(
-            f'Send this id: \033[95m"{self.bot.user.id}"\033[95m\033[92m to Gobot1234 to add your bot to the server to use the custom emojis')
-        print('This is: \033[95m' + f'Version {LoaderCog.__version__}\033[95m')
+            f'Send this id: "{self.bot.user.id}" to Gobot1234 to add your bot to the server to use the custom emojis')
+        print(f'This is: Version {Loader.__version__}')
         self.bot.dsdone = True
         while self.bot.logged_on is False:
             if self.bot.cli_login:
@@ -99,10 +95,7 @@ class LoaderCog(commands.Cog, name='Loader'):
         """You probably don't need to use this, however it can be used to reload a cog
 
         eg. `!reload loader`"""
-        if 'Cogs.' not in extension:
-            extension = f'Cogs.{extension.lower()}'
-        if '.py' in extension:
-            extension = extension[:-3]
+        extension = f'Cogs.{extension}'
         if extension == 'Cogs.all':
             async with ctx.typing():
                 reloaded = ''
@@ -131,7 +124,7 @@ class LoaderCog(commands.Cog, name='Loader'):
     async def restart(self, ctx):
         """Used to reset the bot
 
-        This won't work use this if you use `cli_login`, try not to use this"""
+        This won't work use this if you use `cli_login`, try not to use this as it can lead to memory shortages"""
         if self.bot.cli_login:
             await ctx.send('You really really shouldn\'t do this')
         else:
@@ -142,10 +135,12 @@ class LoaderCog(commands.Cog, name='Loader'):
     @commands.command()
     @commands.is_owner()
     async def logout(self, ctx):
-        """It logs you out safely"""
+        """Log your self out safely"""
+        open('trades.txt', 'w+').write(str(self.bot.trades))
         await ctx.send('Logging out...')
         self.bot.client.logout()
         await self.bot.close()
+        raise SystemExit
 
     @commands.command(name='eval')
     @commands.is_owner()
@@ -167,8 +162,7 @@ class LoaderCog(commands.Cog, name='Loader'):
           - `ctx`: the invokation context
 
         eg. `!eval` ```py
-        await ctx.send(f'Hello my name is {bot.user.name} :wave:. Type !help to see what I can do')```
-        """
+        await ctx.send(f'Hello my name is {bot.user.name} :wave:. Type !help to see what I can do')```"""
         async with ctx.typing():
             env = {
                 'bot': self.bot,
@@ -224,4 +218,5 @@ class LoaderCog(commands.Cog, name='Loader'):
 
 
 def setup(bot):
-    bot.add_cog(LoaderCog(bot))
+    bot.add_cog(Loader(bot))
+
