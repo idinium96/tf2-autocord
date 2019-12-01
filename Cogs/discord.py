@@ -156,13 +156,14 @@ class Discord(commands.Cog):
             data = load(open('Login details/profit_graphing.json', 'r'))
             if days > len(data) or days == 0:
                 days = len(data)
-
+            ignored = len(data) - days - 1
+            
             await self.gen_graph(days)
             file = File(self.location, filename="graph.png")
 
             embed = Embed(title=f'Last {days} days profit', color=self.bot.color)
             embed.set_image(url='attachment://graph.png')
-            for key, value in reversed(list(data.items())[len(data) - days:]):
+            for key, value in reversed(list(data.items())[ignored:]):
                 try:
                     embed.add_field(name=f'__**{key}:**__',
                                     value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}** keys. '
