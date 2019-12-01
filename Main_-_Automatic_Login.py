@@ -6,15 +6,17 @@ from steam.client import SteamClient
 from steam import guard
 
 from json import loads
-from discord import ClientException
-
-from discord.ext import commands
 from sys import stderr
 from traceback import print_exc
 from threading import Thread
 from os import listdir
 from os.path import isfile, join
+from logging import getLogger, DEBUG, Formatter, FileHandler
 
+from discord import ClientException
+from discord.ext import commands
+
+# setup ----------------------------------------------------------------------------------------------------------------
 
 preferences = loads(open('Login details/preferences.json', 'r').read())
 command_prefix = preferences["Command Prefix"]
@@ -25,23 +27,32 @@ bot = commands.Bot(command_prefix=commands.when_mentioned_or(command_prefix), ca
                    description='Used to manage your tf2automatic bot and send all of Steam messages through Discord')
 bot.cli_login = False
 
+# logging --------------------------------------------------------------------------------------------------------------
+
+bot.log = getLogger()
+bot.log.setLevel(DEBUG)
+handler = FileHandler(filename='tf2autocord.log', encoding='utf-8', mode='w')
+handler.setFormatter(Formatter('%(asctime)s : %(levelname)s : %(name)s | %(message)s'))
+bot.log.addHandler(handler)
+
 # cogs -----------------------------------------------------------------------------------------------------------------
 
 bot.initial_extensions = [f.replace('.py', '') for f in listdir("Cogs") if isfile(join("Cogs", f))]
 if __name__ == '__main__':
-    print(f'Extensions to be loaded are {bot.initial_extensions}')
+    bot.log.info(f'Extensions to be loaded are {bot.initial_extensions}')
     for extension in bot.initial_extensions:
         try:
             bot.load_extension(f'Cogs.{extension}')
         except (ClientException, ModuleNotFoundError):
-            print(f'Failed to load extension {extension}.', file=stderr)
+            bot.log.error(f'Failed to load extension {extension}.', file=stderr)
             print_exc()
 
 # threading ------------------------------------------------------------------------------------------------------------
 
 def discordside():
-    print(f'\033[95m{"-" * 30}\033[95m')
+    bot.log.info('-' * 30)
     print('Discord is logging on')
+    bot.log.info('Discord is logging on')
     while 1:
         bot.run(token)
 
@@ -50,34 +61,34 @@ def steamside():
     while 1:
         if bot.dsdone is True:
             bot.client = SteamClient()
-            print(f'\033[95m{"-" * 30}\033[95m')
-            print(f'\033[95mSteam is now logging on\033[95m')
+            print('Steam is now logging on')
+            bot.log.info('Steam is now logging on')
             bot.client.set_credential_location('Login Details/')  # where to store sentry files and other stuff  
 
             @bot.client.on('error')
             def handle_error(result):
-                print(f'\033[91mLogon result: {repr(result)}\033[91m')
+                bot.log.error(f'Logon result: {repr(result)}')
 
             @bot.client.on('connected')
             def handle_connected():
-                print(f'\033[92mConnected to: {bot.client.current_server_addr}\033[92m')
+                bot.log.info(f'Connected to: {bot.client.current_server_addr}')
 
             @bot.client.on('reconnect')
             def handle_reconnect(delay):
-                print(f'\033[94mReconnect in {delay}...\033[94m')
+                bot.log.info(f'Reconnect in {delay}...')
 
             @bot.client.on('disconnected')
             def handle_disconnect():
-                print(f'\033[93mDisconnected.\033[93m')
+                bot.log.warning('Disconnected.')
 
                 if bot.client.relogin_available:
-                    print('Reconnecting...')
+                    bot.log.info('Reconnecting...')
                     bot.client.reconnect(maxdelay=30)
 
             @bot.client.on('logged_on')
             def handle_after_logon():
                 bot.logged_on = True
-                print(f'\033[92mLogged on as: {bot.client.user.name}\033[92m')
+                bot.log.info(f'Logged on as: {bot.client.user.name}')
 
             @bot.client.on('chat_message')
             def handle_message(user, message_text):
@@ -92,18 +103,19 @@ def steamside():
                         else:
                             bot.sbotresp = message_text
 
-            SA = guard.SteamAuthenticator(bot.secrets).get_code()
-            result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
-            if result != EResult.OK:
-                print(f'\033[91mFailed to login: {repr(result)}\033[91m')
+            try:
+                SA = guard.SteamAuthenticator(bot.secrets).get_code()
+                result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
+                if result != EResult.OK:
+                    bot.log.fatal(f'Failed to login: {repr(result)}')
+                    raise SystemExit
+                bot.client.s_bot = bot.client.get_user(bot.bot64id)
+                bot.client.run_forever()
+            except KeyboardInterrupt:
+                bot.client.logout()
+                print('Logging out')
+                bot.log.info('Logging out')
                 raise SystemExit
-            while 1:
-                try:
-                    bot.s_bot = bot.client.get_user(bot.bot64id)
-                    bot.client.run_forever()
-                except KeyboardInterrupt:
-                    bot.client.logout()
-                    print('Logging out')
 
 
 Thread(target=discordside).start()
