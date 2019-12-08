@@ -104,7 +104,7 @@ setup(
         'Issue tracker': 'https://github.com/Gobot1234/tf2autocord/issues'
     },
 
-    install_requires=["discord.py", "steam", "psutil", "matplotlib"],
+    install_requires=["discord.py", "steam", "psutil", "matplotlib", "ago", "humanize"],
     python_requires='>=3.6.0',
     keywords='tf2autocord tf2automatic discord.py discord',
     scripts=['Cogs/discord.py', 'Cogs/steam.py', 'Cogs/help.py', 'Cogs/loader.py']
