@@ -92,15 +92,12 @@ def steamside():
             @bot.client.on('chat_message')
             def handle_message(user, message_text):
                 if user.steam_id == bot.bot64id:
-                    if 'view it here' not in message_text and 'marked as declined' in message_text:
-                        bot.trades += 1
+                    if 'from user' in message_text:
+                        bot.usermessage = message_text
+                    if bot.currenttime == '23:59' and "You've made" in message_text:
+                        bot.graphplots = message_text
                     else:
-                        if 'from user' in message_text:
-                            bot.usermessage = message_text
-                        if bot.currenttime == '23:59' and "You've made" in message_text:
-                            bot.graphplots = message_text
-                        else:
-                            bot.sbotresp = message_text
+                        bot.sbotresp = message_text
 
             try:
                 result = bot.client.cli_login(username=bot.username, password=bot.password)

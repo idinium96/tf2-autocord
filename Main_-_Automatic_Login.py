@@ -53,8 +53,12 @@ def discordside():
     bot.log.info('-' * 30)
     print('Discord is logging on')
     bot.log.info('Discord is logging on')
-    while 1:
+    try:
+        bot.dsdone = True
         bot.run(token)
+    except RuntimeError:
+        bot.log.info('Logging out')
+        raise SystemExit
 
 
 def steamside():
@@ -93,23 +97,21 @@ def steamside():
             @bot.client.on('chat_message')
             def handle_message(user, message_text):
                 if user.steam_id == bot.bot64id:
-                    if 'view it here' not in message_text and 'marked as declined' in message_text:
-                        bot.trades += 1
+                    if 'from user' in message_text:
+                        bot.usermessage = message_text
+                    if bot.currenttime == '23:59' and "You've made" in message_text:
+                        bot.graphplots = message_text
                     else:
-                        if 'from user' in message_text:
-                            bot.usermessage = message_text
-                        if bot.currenttime == '23:59' and "You've made" in message_text:
-                            bot.graphplots = message_text
-                        else:
-                            bot.sbotresp = message_text
+                        bot.sbotresp = message_text
 
+            SA = guard.SteamAuthenticator(bot.secrets).get_code()
+            result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
+            if result != EResult.OK:
+                bot.log.fatal(f'Failed to login: {repr(result)}')
+                raise SystemExit
+
+            bot.s_bot = bot.client.get_user(bot.bot64id)
             try:
-                SA = guard.SteamAuthenticator(bot.secrets).get_code()
-                result = bot.client.login(username=bot.username, password=bot.password, two_factor_code=SA)
-                if result != EResult.OK:
-                    bot.log.fatal(f'Failed to login: {repr(result)}')
-                    raise SystemExit
-                bot.client.s_bot = bot.client.get_user(bot.bot64id)
                 bot.client.run_forever()
             except KeyboardInterrupt:
                 bot.client.logout()
