@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+ 
 """
 MIT License
 Copyright (c) 2019 James H-B
@@ -93,7 +93,7 @@ print('Beginning to install necessary modules, please wait.')
 
 setup(
     name='tf2autocord',
-    version='1.3.1',
+    version='1.3.2',
     url='https://github.com/Gobot1234/tf2-autocord',
     license='MIT',
     author='James H-B',
