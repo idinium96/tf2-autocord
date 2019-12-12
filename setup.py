@@ -21,11 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from shutil import rmtree
-from os import mkdir, remove
+from os import remove
 from json import dumps
 from setuptools import setup
+from platform import python_version
+from .Cogs.loader import __version__
 
-print('This is the setup code for tf2-autocord\n\n')
+
+print(f'This is the setup code for tf2-autocord:\nYour python version is {python_version()}\ntf2autocord version is V{__version__()}\n\n')
 print('Do you have your main account\'s shared secret and client secret')
 automatic = input('>>> ').lstrip().lower()
 
@@ -108,27 +111,21 @@ setup(
     python_requires='>=3.6.0',
     keywords='tf2autocord tf2automatic discord.py discord',
     scripts=['Cogs/discord.py', 'Cogs/steam.py', 'Cogs/help.py', 'Cogs/loader.py']
-
 )
 
 print('Done downloading/updating appropriate modules\nAbout to make the login details directory')
-path = "Login details/"
+path = f'/Login details/'
 
-try:
-    mkdir(path)
-except OSError:
-    print(f"Creation of the directory {path} failed")
+rmtree('build')
+rmtree('dist')
+rmtree('tf2autocord.egg-info')
+if automatic:
+    remove('Main_-_cli_login.py')
 else:
-    rmtree('build')
-    rmtree('dist')
-    rmtree('tf2autocord.egg-info')
-    if automatic:
-        remove('Main_-_cli_login.py')
-    else:
-        remove('Main_-_Automatic_Login.py')
-    print(f"Successfully created the directory {path}")
-    open(f'{path}preferences.json', 'w+').write(dumps(preferences, indent=4))
-    open(f'{path}sensitive_details.json', 'w+').write(dumps(sensitives, indent=4))
-    open(f'{path}profit_graphing.json', 'w+').write(dumps('{}'))
-    print('Setup complete feel free to close this window')
-    remove('setup.py')
+    remove('Main_-_Automatic_Login.py')
+print(f"Successfully created the directory {path}")
+open(f'{path}preferences.json', 'w+').write(dumps(preferences, indent=4))
+open(f'{path}sensitive_details.json', 'w+').write(dumps(sensitives, indent=4))
+open(f'{path}profit_graphing.json', 'w+').write(dumps('{}'))
+print('Setup complete feel free to close this window')
+remove('setup.py')
