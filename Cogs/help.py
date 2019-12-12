@@ -1,13 +1,15 @@
 from asyncio import TimeoutError, sleep
+from time import perf_counter
+
 from aiohttp import ClientSession
 from datetime import datetime
 from os import getcwd
 from subprocess import getoutput
 
-from discord import Embed, Colour, errors
+from discord import Embed, Colour, errors, utils
 from discord.ext import commands, tasks
 
-from .loader import Loader
+from .loader import __version__
 
 
 class HelpCommand(commands.HelpCommand):
@@ -43,6 +45,47 @@ class HelpCommand(commands.HelpCommand):
         else:
             return command.help
 
+    async def command_callback(self, ctx, *, command=None):
+        await self.prepare_help_command(ctx, command)
+
+        if command is None:
+            mapping = self.get_bot_mapping()
+            return await self.send_bot_help(mapping)
+
+        # Check if it's a cog
+        cog = ctx.bot.get_cog(command.title())
+        if cog is not None:
+            return await self.send_cog_help(cog)
+
+        maybe_coro = utils.maybe_coroutine
+
+        # If it's not a cog then it's a command.
+        # Since we want to have detailed errors when someone
+        # passes an invalid subcommand, we need to walk through
+        # the command group chain ourselves.
+        keys = command.split(' ')
+        cmd = ctx.bot.all_commands.get(keys[0])
+        if cmd is None:
+            string = await maybe_coro(self.command_not_found, self.remove_mentions(keys[0]))
+            return await self.send_error_message(string)
+
+        for key in keys[1:]:
+            try:
+                found = cmd.all_commands.get(key)
+            except AttributeError:
+                string = await maybe_coro(self.subcommand_not_found, cmd, self.remove_mentions(key))
+                return await self.send_error_message(string)
+            else:
+                if found is None:
+                    string = await maybe_coro(self.subcommand_not_found, cmd, self.remove_mentions(key))
+                    return await self.send_error_message(string)
+                cmd = found
+
+        if isinstance(cmd, commands.Group):
+            return await self.send_group_help(cmd)
+        else:
+            return await self.send_command_help(cmd)
+
     async def bot_help_paginator(self, page: int):
         ctx = self.context
         bot = ctx.bot
@@ -74,6 +117,7 @@ class HelpCommand(commands.HelpCommand):
         bot = ctx.bot
         page = 0
         self.all_cogs = [cog for cog in bot.cogs]
+        self.all_cogs.sort()
 
         def check(reaction, user):
             return user == ctx.author
@@ -122,10 +166,10 @@ class HelpCommand(commands.HelpCommand):
                         value='`<...>` indicates a required argument,\n`[...]` indicates an optional argument.\n\n'
                               '**Don\'t however type these around your argument**')
                     embed.add_field(name='What do the emojis do:',
-                                    value=':arrow_backward: goes to the previous page\n'
-                                          ':arrow_forward: goes to the next page\n'
-                                          ':stop_button: stops the interactive pagination session\n'
-                                          ':information_source: shows this message')
+                                    value=':arrow_backward: Goes to the previous page\n'
+                                          ':arrow_forward: Goes to the next page\n'
+                                          ':stop_button: Deletes and closes this message\n'
+                                          ':information_source: Shows this message')
                     embed.set_author(name=f'You were on page {page + 1}/{len(self.all_cogs)} before',
                                      icon_url=ctx.author.avatar_url)
 
@@ -215,21 +259,19 @@ class HelpCommand(commands.HelpCommand):
 
 
 class Help(commands.Cog):
-    """Help yourself to do stuff with the bot's commands"""
+    """Help yourself to do stuff with the bot """
 
     def __init__(self, bot):
         self.bot = bot
         self.githubupdate.start()
         self.bot.launch_time = datetime.utcnow()
         self._original_help_command = bot.help_command
-        commands.HelpCommand.verify_checks = False
         bot.help_command = HelpCommand()
         bot.help_command.cog = self
 
     @tasks.loop(hours=24)
     async def githubupdate(self):
         """A tasks loop to check if there has been an update to the GitHub repo"""
-        await self.bot.wait_until_ready()
         result = getoutput(f'git checkout {getcwd()}')
         owner = self.bot.owner
         if 'Your branch is up to date with' in result:
@@ -282,8 +324,9 @@ class Help(commands.Cog):
         self.bot.cog_color = {
             'Discord': (Colour.blurple(), '<:discord:626486432793493540>'),
             'Help': (self.bot.color, '<:tf2autocord:624658299224326148>'),
-            'Loader': (self.bot.color, '<:tf2autocord:624658299224326148>'),
-            'Steam': (0x00adee, '<:steam:622621553800249364>')
+            'Loader': (self.bot.color, '<:tf2automatic:624658370447671297>'),
+            'Steam': (0x00adee, '<:steam:622621553800249364>'),
+            'Development': (self.bot.color, '<:tf2automatic:624658370447671297>')
         }
 
     @commands.command()
@@ -293,20 +336,20 @@ class Help(commands.Cog):
 
         This will overwrite any changes you have made locally"""
         await ctx.send('Attempting to update to the latest version of the code')
-        result = getoutput(f'git checkout {getcwd()}')
+        async with ctx.typing():
+            result = getoutput(f'git checkout {getcwd()}')
 
-        if 'Already up to date.' in result:
-            await ctx.send('No updates to be had?')
-        elif result == 'fatal: not a git repository (or any of the parent directories): .git':
-            await ctx.send('This wasn\'t cloned from GitHub')
-        else:
-            await ctx.trigger_typing()
-            await ctx.send(
-                'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
-            reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
-            await ctx.send(f'```bash\n{reset}```')
-            update = getoutput(f'git pull {getcwd()}')
-            await ctx.send(f'```bash\n{update}```')
+            if 'Already up to date.' in result:
+                await ctx.send('No updates to be had?')
+            elif result == 'fatal: not a git repository (or any of the parent directories): .git':
+                await ctx.send('This wasn\'t cloned from GitHub')
+            else:
+                await ctx.send(
+                    'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
+                reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
+                await ctx.send(f'```bash\n{reset}```')
+                update = getoutput(f'git pull {getcwd()}')
+                await ctx.send(f'```bash\n{update}```')
 
     @commands.command()
     async def github(self, ctx):
@@ -320,7 +363,7 @@ class Help(commands.Cog):
             emoji = '<:goodcross:626829085682827266>'
         embed = Embed(title='GitHub Repo Infomation', color=0x2e3bad)
         embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-        embed.add_field(name='Current Version', value=f'Version: {Loader.__version__}. Up to date: {emoji}',
+        embed.add_field(name='Current Version', value=f'Version: {__version__()}. Up to date: {emoji}',
                         inline=True)
         embed.add_field(name='GitHub Stats', value='https://github.com/Gobot1234/tf2-autocord/pulse')
         embed.add_field(name='Link to the repo', value='[Repository](https://github.com/Gobot1234/tf2-autocord)')
@@ -333,14 +376,14 @@ class Help(commands.Cog):
     async def suggest(self, ctx, *, suggestion):
         """Suggest a feature to <@340869611903909888>
 
-         eg. `!suggest update the repo`"""
+         eg. `!suggest update the repo` your bot needs to be in the tf2autcord server for this to work"""
         embed = Embed(color=0x2e3bad, description=suggestion)
         embed.set_author(name=f'Message from {ctx.author}')
         try:
             await self.bot.get_user(340869611903909888).send(embed=embed)
         except:
-            await ctx.send('I could not deliver your message. ¯\_(ツ)_/¯, probably as your bot '
-                           'isn\'t in the server send {self.bot.user.id} to <@340869611903909888>')
+            await ctx.send(f'I could not deliver your message. ¯\_(ツ)_/¯, probably as your bot isn\'t in the server '
+                           f'send {self.bot.user.id} to <@340869611903909888>')
         else:
             await ctx.send('I have delivered your message to <@340869611903909888> (I may be in contact), '
                            'this command is limited to working every 2 hours so you can\'t spam me')
@@ -348,16 +391,33 @@ class Help(commands.Cog):
     @commands.command()
     async def ping(self, ctx):
         """Check if your bot is online on both Steam and Discord"""
+        start = perf_counter()
+        await ctx.trigger_typing()
+        end = perf_counter()
+        t_duration = (end - start) * 1000
+
+        start = perf_counter()
+        m = await ctx.send(embed=Embed().set_author(name='Pong!'))
+        end = perf_counter()
+        m_duration = (end - start) * 1000
+
         if self.bot.client.logged_on:
-            message = f'You are logged in as {self.bot.client.user.name}'
+            message = f'<:tick:626829044134182923> You are logged in as: `{self.bot.client.user.name}`'
         else:
-            message = 'You aren\'t logged into steam'
-        await ctx.send(f'Pong! {self.bot.user.mention} is online. Latency is {round(self.bot.latency, 2)} ms. {message}')
+            message = '<:goodcross:626829085682827266> You aren\'t logged into steam'
+
+        embed = Embed(description=f'{self.bot.user.mention} is online. {message}', colour=self.bot.color)
+        embed.set_author(name='Pong!', icon_url=self.bot.user.avatar_url)
+        embed.add_field(name=f'Websocket latency is:', value=f'`{self.bot.latency:.2f}` ms.')
+        embed.add_field(name=f'Typing latency is:', value=f'`{t_duration:.2f}` ms.')
+        embed.add_field(name=f'Message latency is:', value=f'`{m_duration:.2f}` ms.')
+
+        await m.edit(embed=embed)
 
     @commands.command()
     @commands.is_owner()
     async def togpremium(self, ctx):
-        """Used to remind yourself when your bp.tf premium will run out"""
+        """Used to remind yourself when your bp.tf premium will run out, probably not very useful"""
         if self.bot.togglepremium == 0:
             self.bot.togglepremium = 1
             await ctx.send(
@@ -367,7 +427,7 @@ class Help(commands.Cog):
             await ctx.send('Premium Alerts now toggled off')
 
         while self.bot.togglepremium == 1:
-            await sleep(4654687)  # 2 months in seconds - 1 day = 4654687 seconds
+            await sleep((60 * 60 * 24 * 30 * 2) - (60 * 60 * 24))
             await ctx.send('You may wish to renew your premium subscription')
 
     @commands.command(aliases=['warm-my-insides'])
@@ -384,9 +444,7 @@ class Help(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        """The event triggered when an error is raised while invoking a command.
-        :ctx: Context
-        :error: Exception"""
+        """The event triggered when an error is raised while invoking a command"""
         if isinstance(error, commands.MissingRequiredArgument):
             title = 'Missing a required argument'
         elif isinstance(error, commands.CommandOnCooldown):
@@ -406,7 +464,7 @@ class Help(commands.Cog):
             embed = Embed(title=f':warning: **{title}**', description=str(error.original),
                           color=Colour.red())
             embed.add_field(name='\u200b',
-                            value='Please try again, and send <@340869611903909888> the error outputted in the shell')
+                            value='Please send <@340869611903909888> the error outputted in the shell and your log')
             await ctx.send(embed=embed)
             raise error.original
         else:

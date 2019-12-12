@@ -1,18 +1,18 @@
-import os
 from asyncio import sleep
 from aiohttp import ClientSession
 from datetime import datetime
 from json import load, dump
 from os import remove, getcwd
 from platform import python_version
-from psutil import virtual_memory, cpu_percent
+from psutil import Process, virtual_memory, cpu_percent
 from steam import __version__ as s_version
 from subprocess import getoutput
+from humanize import naturalsize
 
 from discord import Embed, File, __version__ as d_version, errors
 from discord.ext import commands, tasks
 
-from .loader import Loader
+from .loader import __version__ as l_version
 import matplotlib.pyplot as plt
 
 
@@ -21,10 +21,14 @@ class Discord(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.location = '/Login details/graph.png'
         self.profitgraphing.start()
+        self.process = Process()
         self.acceptedfiles = ('history', 'history.json', 'inventory', 'inventory.json', 'schema', 'schema.json',
                               'listings', 'listings.json')
-        self.location = '/Login details/graph.png'
+
+    async def cog_unload(self):
+        self.profitgraphing.cancel()
 
     async def gen_graph(self, points: int = None):
         data = load(open('Login details/profit_graphing.json', 'r'))
@@ -36,19 +40,20 @@ class Discord(commands.Cog):
         tod_values = []
         pred_values = []
 
-        for key in list(data.keys())[ignored:]:
-            date_values.append(key)
+        for date in list(data.keys())[ignored:]:  # plot x values
+            date_values.append(date)
 
-        for value in list(data.values())[ignored:]:  # Plot the x values
+        for value in list(data.values())[ignored:]:  # plot the y values
             tod_values.append(float(value[0]))
             tot_values.append(float(value[1]))
             try:
                 pred_values.append(float(value[2]))
             except IndexError:
                 pred_values.append(0)
-
-        # Plot the number in the list and set the line thickness.
-        plt.close()
+        size = (len(date_values) / 3, len(tod_values) / 4)
+        # plot the number in the list and set the line thickness.
+        plt.close()  # close the old session
+        plt.figure(figsize=size)
         plt.setp(plt.plot(date_values, tod_values, linewidth=3), color='blue')
         plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
         plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
@@ -68,14 +73,14 @@ class Discord(commands.Cog):
         days, hours = divmod(hours, 24)
         return f'`{days}d, {hours}h, {minutes}m, {seconds}s`'
 
-    @tasks.loop(seconds=5)
+    @tasks.loop(seconds=20)
     async def profitgraphing(self):
         """A task that at 23:59 will get your profit
         It will convert all your values to keys"""
         self.bot.currenttime = str(datetime.now().strftime("%H:%M"))
         if self.bot.currenttime == '23:59':
             date = datetime.today().strftime("%d-%m-%Y")
-            self.bot.client.s_bot.send_message(f'{self.bot.prefix}profit')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
             await sleep(2)
             async with ClientSession() as session:
                 async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
@@ -137,7 +142,7 @@ class Discord(commands.Cog):
 
                 graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
             else:
-                graphdata = [fixedtodprofit, fixedtotprofit, self.bot.trades]
+                graphdata = [fixedtodprofit, fixedtotprofit, 0, self.bot.trades]
 
             tempprofit = {date: graphdata}
             with open('Login details\profit_graphing.json') as f:
@@ -145,27 +150,28 @@ class Discord(commands.Cog):
                 data.update(tempprofit)
             with open('Login details\profit_graphing.json', 'w') as f:
                 dump(data, f, indent=4)
+            await sleep(120)
 
     @commands.command()
     @commands.is_owner()
-    async def last(self, ctx, days: int = 0):
+    async def last(self, ctx, days: int = None):
         """Used to get the last x days profit
 
         eg. `!last 7` (days has to be an integer)"""
         async with ctx.typing():
             data = load(open('Login details/profit_graphing.json', 'r'))
-            if days > len(data) or days == 0:
+            if days is None or days > len(data):
                 days = len(data)
-            ignored = len(data) - days - 1
-            
+            ignored = len(data) - days
+
             await self.gen_graph(days)
             file = File(self.location, filename="graph.png")
 
             embed = Embed(title=f'Last {days} days profit', color=self.bot.color)
             embed.set_image(url='attachment://graph.png')
-            for key, value in reversed(list(data.items())[ignored:]):
+            for date, value in reversed(list(data.items())[ignored:]):
                 try:
-                    embed.add_field(name=f'__**{key}:**__',
+                    embed.add_field(name=f'__**{date}:**__',
                                     value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}** keys. '
                                           f'Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
                                     inline=False)
@@ -175,17 +181,26 @@ class Discord(commands.Cog):
             if len(embed) <= 6000:
                 await ctx.send(embed=embed, file=file)
             else:
-                await ctx.send(f'Please try fewer days as the embed is too large to send, if you want the graph use the {self.bot.prefix}graph command')
-            remove(self.location)
+                await ctx.send(
+                    f'Please try fewer days as the embed is too large to send, if you want the graph use the {self.bot.prefix}graph command')
+        remove(self.location)
 
     @commands.command()
     @commands.is_owner()
-    async def graph(self, ctx, points: int = None):
+    async def graph(self, ctx, points: int = 0):
         """Used to generate a graph of all of your profit whilst using the bot"""
         async with ctx.typing():
+            len_points = len(load(open('Login details/profit_graphing.json', 'r')))
+            if points == 0 or points > len_points:
+                points = len_points
+            if points <= 1:
+                points = 3
             await self.gen_graph(points)
             file = File(self.location, filename="graph.png")
-            await ctx.send('Here is your graph:', file=file)
+            embed = Embed(title=f'Last {points} days profit',
+                          color=self.bot.color)
+            embed.set_image(url='attachment://graph.png')
+            await ctx.send(embed=embed, file=file)
         remove(self.location)
 
     @commands.command()
@@ -215,7 +230,7 @@ class Discord(commands.Cog):
             if '.json' in file:
                 filename = file
                 file = f'{self.bot.templocation}{file}'
-            elif '.json' not in file:
+            else:
                 filename = f'{file}.json'
                 file = f'{self.bot.templocation}{file}.json'
             file = File(file, filename=filename)
@@ -226,46 +241,42 @@ class Discord(commands.Cog):
     @commands.command(aliases=['about', 'stats', 'status'])
     async def info(self, ctx):
         """Get some interesting info about the bot"""
+        uptime = await self.get_uptime()
+        memory_usage = self.process.memory_full_info().uss
         rawram = virtual_memory()
         updateable = getoutput(f'git checkout {getcwd()}')
+
         if 'Your branch is up to date with' in updateable:
             emoji = '<:tick:626829044134182923>'
         elif 'not a git repository' in updateable:
-            emoji = ('This wasn\'t cloned from GitHub')
+            emoji = 'This wasn\'t cloned from GitHub'
         else:
             emoji = '<:goodcross:626829085682827266>'
-        uptime = await self.get_uptime()
-        embed = Embed(title="**tf2-autocord:** Developer - Gobot1234", colour=self.bot.color)
-        embed.set_thumbnail(url=ctx.bot.user.avatar_url)
-        embed.add_field(name="Commands loaded & Cogs loaded",
-                        value=f'`{(len([x for x in self.bot.commands]))}` commands loaded, `{len([x for x in self.bot.cogs])}` cogs loaded :gear:',
-                        inline=True)
+
+        embed = Embed(title="**tf2-autocord:** - System information",
+                      description=f'Commands loaded & Cogs loaded: `{len(self.bot.commands)}` commands loaded, '
+                                  f'`{len(self.bot.cogs)}` cogs loaded :gear:', colour=self.bot.color)
         embed.add_field(name="<:compram:622622385182474254> RAM Usage",
-                        value=f'`{round(rawram[3] / 1024 ** 2)}` MB used / `{round(rawram[0] / 1024 ** 2)}` MB total | `{rawram[2]}`% used',
-                        inline=True)
-        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_percent()}`%', inline=True)
-        embed.add_field(name=f'{self.bot.user.name} has been online for', value=uptime)
+                        value=f'Using `{naturalsize(rawram[3])}` / `{naturalsize(rawram[0])}` `{round(rawram[3] / rawram[0] * 100, 2)}`% '
+                              f'of your physical memory and `{naturalsize(memory_usage)}` of which unique to this process.')
+        embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_percent()}`% used')
+        embed.add_field(name=f'{self.bot.user.name} has been online for:', value=uptime)
         embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version',
-                        value=f'Version: `{Loader.__version__}`. Up to date: {emoji}')
+                        value=f'Version: `{l_version()}`. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
-                        value=f"Your command prefix is `{self.bot.prefix}`. "
-                              f"Type {self.bot.prefix}help to list the commands you can use",
-                        inline=False)
+                        value=f'Your command prefix is `{self.bot.prefix}`. Type {self.bot.prefix}help to list the '
+                              f'commands you can use')
         embed.add_field(name='<:tf2automatic:624658370447671297> About the bot',
                         value='It was coded in Python to help you manage your tf2automtic bot. DM me with any '
                               'suggestions or features you would like on this bot', inline=False)
         embed.add_field(name='<:dpy:622794044547792926> Discord.py Version',
-                        value=f'`{d_version}` works with versions 1.1+ of Discord.py and versions 3.5.4+ of Python',
-                        inline=True)
+                        value=f'`{d_version}` works with versions 1.1+ of Discord.py and versions 3.5.4+ of Python')
         embed.add_field(name='<:python:622621989474926622> Python Version',
-                        value=f'`{python_version()}` works with versions 3.6+ (uses f-strings)',
-                        inline=True)
+                        value=f'`{python_version()}` works with versions 3.6+ (uses f-strings)')
         embed.add_field(name='<:steam:622621553800249364> Steam Version',
-                        value=f'`{s_version}` works with versions 3.4+ of Python',
-                        inline=True)
-        embed.add_field(name='Join the help server :hugging:', value='[Here](https://discord.gg/S3eVmxD)')
+                        value=f'`{s_version}` works with versions 3.4+ of Python')
         embed.set_footer(text="If you need any help contact the creator of this code @Gobot1234#2435",
-                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.webp?size=1024')
+                         icon_url='https://cdn.discordapp.com/avatars/340869611903909888/9e3719ecc71ebfb3612ceccf02da4c7a.webp?size=1024')
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -277,7 +288,3 @@ class Discord(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Discord(bot))
-
-
-def teardown():
-    Discord.profitgraphing.stop()
