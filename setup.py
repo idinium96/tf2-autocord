@@ -25,10 +25,9 @@ from os import remove
 from json import dumps
 from setuptools import setup
 from platform import python_version
-from .Cogs.loader import __version__
 
 
-print(f'This is the setup code for tf2-autocord:\nYour python version is {python_version()}\ntf2autocord version is V{__version__()}\n\n')
+print(f'This is the setup code for tf2-autocord:\nYour python version is {python_version()}\n\n')
 print('Do you have your main account\'s shared secret and client secret')
 automatic = input('>>> ').lstrip().lower()
 
