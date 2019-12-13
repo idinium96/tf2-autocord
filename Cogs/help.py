@@ -116,7 +116,7 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         bot = ctx.bot
         page = 0
-        self.all_cogs = [cog for cog in bot.cogs]
+        self.all_cogs = bot.cogs
         self.all_cogs.sort()
 
         def check(reaction, user):
