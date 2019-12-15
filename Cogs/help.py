@@ -17,8 +17,8 @@ class HelpCommand(commands.HelpCommand):
 
     def __init__(self):
         super().__init__(command_attrs={
-            'help': 'Shows help about the bot, a command, or a cog\n\neg. `!help Steam` (There should be 4 cogs and '
-                    '27 commands) '
+            'help': 'Shows help about the bot, a command, or a cog\neg. `{prefix}help Steam` (There should be 4 cogs '
+                    'and 26 commands) '
         })
 
     def get_command_signature(self, command):
@@ -31,60 +31,19 @@ class HelpCommand(commands.HelpCommand):
         if len(command.aliases) == 0:
             return ''
         else:
-            return f'command aliases are [`{"`, `".join([alias for alias in command.aliases])}`]'
+            return f'command aliases are [`{"` | `".join([alias for alias in command.aliases])}`]'
 
     def get_command_description(self, command):
         if len(command.short_doc) == 0:
             return 'There is no documentation for this command currently'
         else:
-            return command.short_doc
+            return command.short_doc.format(prefix=self.clean_prefix)
 
     def get_full_command_description(self, command):
         if len(command.help) == 0:
             return 'There is no documentation for this command currently'
         else:
-            return command.help
-
-    async def command_callback(self, ctx, *, command=None):
-        await self.prepare_help_command(ctx, command)
-
-        if command is None:
-            mapping = self.get_bot_mapping()
-            return await self.send_bot_help(mapping)
-
-        # Check if it's a cog
-        cog = ctx.bot.get_cog(command.title())
-        if cog is not None:
-            return await self.send_cog_help(cog)
-
-        maybe_coro = utils.maybe_coroutine
-
-        # If it's not a cog then it's a command.
-        # Since we want to have detailed errors when someone
-        # passes an invalid subcommand, we need to walk through
-        # the command group chain ourselves.
-        keys = command.split(' ')
-        cmd = ctx.bot.all_commands.get(keys[0])
-        if cmd is None:
-            string = await maybe_coro(self.command_not_found, self.remove_mentions(keys[0]))
-            return await self.send_error_message(string)
-
-        for key in keys[1:]:
-            try:
-                found = cmd.all_commands.get(key)
-            except AttributeError:
-                string = await maybe_coro(self.subcommand_not_found, cmd, self.remove_mentions(key))
-                return await self.send_error_message(string)
-            else:
-                if found is None:
-                    string = await maybe_coro(self.subcommand_not_found, cmd, self.remove_mentions(key))
-                    return await self.send_error_message(string)
-                cmd = found
-
-        if isinstance(cmd, commands.Group):
-            return await self.send_group_help(cmd)
-        else:
-            return await self.send_command_help(cmd)
+            return command.help.format(prefix=self.clean_prefix)
 
     async def bot_help_paginator(self, page: int):
         ctx = self.context
@@ -116,7 +75,7 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         bot = ctx.bot
         page = 0
-        self.all_cogs = bot.cogs
+        self.all_cogs = [cog for cog in bot.cogs]
         self.all_cogs.sort()
 
         def check(reaction, user):
@@ -252,7 +211,7 @@ class HelpCommand(commands.HelpCommand):
         pass
 
     async def command_not_found(self, string):
-        embed = Embed(title='Error!', description=f'**Error 404:** Command or cog "{string}" not found ¯\_(ツ)_/¯',
+        embed = Embed(title='Error!', description=f'**Error 404:** Command or cog "{string}" not found cogs need to be in title case eg. `{self.clean_prefix}help Steam` ¯\_(ツ)_/¯',
                       color=Colour.red())
         embed.add_field(name='The current loaded cogs are', value=f'(`{"`, `".join([cog for cog in self.context.bot.cogs])}`) :gear:')
         await self.context.send(embed=embed)
@@ -376,7 +335,7 @@ class Help(commands.Cog):
     async def suggest(self, ctx, *, suggestion):
         """Suggest a feature to <@340869611903909888>
 
-         eg. `!suggest update the repo` your bot needs to be in the tf2autcord server for this to work"""
+         eg. `{prefix}suggest update the repo` your bot needs to be in the tf2autcord server for this to work"""
         embed = Embed(color=0x2e3bad, description=suggestion)
         embed.set_author(name=f'Message from {ctx.author}')
         try:

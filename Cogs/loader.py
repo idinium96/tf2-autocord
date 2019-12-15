@@ -1,15 +1,16 @@
 from asyncio import sleep
 from datetime import datetime
-from json import loads
 from os import remove, execv
 from sys import argv, executable
 
 from discord import Activity, ActivityType
 from discord.ext import commands
 
+from Login_details import preferences, sensitive_details
+
 
 def __version__():
-    return '1.3.2'
+    return '1.3.3'
 
 
 class Loader(commands.Cog):
@@ -19,23 +20,17 @@ class Loader(commands.Cog):
     def __init__(self, bot):
         """Setting all of your bot vars to be used by other cogs/commands"""
         self.bot = bot
-
-        login = loads(open("Login details/sensitive details.json", "r").read())
-        bot.username = login["Username"]
-        bot.password = login["Password"]
+        bot.username = sensitive_details.username
+        bot.password = sensitive_details.password
         try:
-            bot.secrets = {
-                "identity_secret": login["Identity Secret"],
-                "shared_secret": login["Shared Secret"]
-            }
-        except:
+            bot.secrets = sensitive_details.secrets
+        except AttributeError:
             pass
 
-        preferences = loads(open('Login details/preferences.json', 'r').read())
-        bot.bot64id = int(preferences["Bot's Steam ID"])
-        bot.prefix = preferences["Command Prefix"]
-        bot.color = int(preferences["Embed Colour"], 16)
-        bot.templocation = preferences["Path to Temp"]
+        bot.bot64id = preferences.bots_steam_id
+        bot.color = int(preferences.embed_colour, 16)
+        bot.templocation = preferences.path_to_temp
+        bot.prefix = preferences.command_prefix
 
         bot.sbotresp = 0
         bot.usermessage = 0
@@ -48,40 +43,32 @@ class Loader(commands.Cog):
         bot.removem = f'{bot.prefix}remove item='
         bot.addm = f'{bot.prefix}add name='
         bot.currenttime = datetime.now().strftime("%H:%M")
+        bot.first = True
 
-    @commands.Cog.listener()
-    async def on_ready(self):
+    async def async__init__(self):
         """Setting your status, printing your bot's id to send to me,
         seeing if the bot was restarted and stored your number of trades,
         finally checking if you are logged onto steam"""
-        self.bot.owner = await self.bot.application_info()
-        self.bot.owner = self.bot.owner.owner
-        await self.bot.change_presence(
-            activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__()}',
-                              type=ActivityType.watching))
+        info = await self.bot.application_info()
+        self.bot.owner = info.owner
+        await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__()}',
+                                                    type=ActivityType.watching))
         print(f'{"-" * 30}\n{self.bot.user.name} is ready')
-        print(
-            f'Send this id: "{self.bot.user.id}" to Gobot1234 to add your bot to the server to use the custom emojis')
+        print(f'Send this id: "{self.bot.user.id}" to Gobot1234 to add your bot to the server to use the custom emojis')
         print(f'This is: Version {__version__()}')
         while self.bot.logged_on is False:
             if self.bot.cli_login:
                 await self.bot.owner.send('You aren\'t currently logged into your Steam account\nTo do that type in '
-                                          'your 2FA code into the console.')
+                                     'your 2FA code into the console.')
             await sleep(60)
         print('-' * 30)
         try:
             self.bot.trades = int(open('trades.txt', 'r').read())
             channel = self.bot.get_channel(int(open('channel.txt', 'r').read()))
             if channel is not None:
-                m_count = 0
-                async for m in channel.history(limit=25):
-                    if m_count < 1:
-                        if m.author == self.bot.user:
-                            await m.delete()
-                            m_count += 1
-                    else:
-                        break
-
+                async for m in channel.history(limit=2):
+                    if m.author == self.bot.user:
+                        await m.delete()
                 await channel.send('Finished restarting...', delete_after=10)
             remove('channel.txt')
             remove('trades.txt')
@@ -89,6 +76,9 @@ class Loader(commands.Cog):
             pass
         await self.bot.owner.send('I\'m online both Steam and Discord dealing with your Steam messages')
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.async__init__()
 
     @commands.command()
     @commands.is_owner()

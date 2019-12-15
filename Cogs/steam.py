@@ -19,12 +19,15 @@ class Steam(commands.Cog):
     def check(self, m):
         return m.author == self.bot.owner
 
+    async def cog_unload(self):
+        self.discordcheck.cancel()
+
     async def classifieds(self, ctx, name):
         if isinstance(name, list):
             mul = 'these'
             mul2 = 'commands'
             dscontent = "`, `".join([item for item in name])
-        elif isinstance(name, str):
+        else:
             mul = 'this'
             mul2 = 'command'
             dscontent = name
@@ -52,7 +55,7 @@ class Steam(commands.Cog):
             else:
                 await ctx.send('Try Again')
 
-    @tasks.loop(seconds=3)
+    @tasks.loop(seconds=1)
     async def discordcheck(self):
         """The task that forwards messages from Steam to Discord"""
         sbotresp = self.bot.sbotresp
@@ -118,9 +121,9 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def add(self, ctx):
         """Add is used to add items from your bot's classifieds don't use an "=" between name and the item
-        eg. `!add name The Team Captain`
+        eg. `{prefix}add name The Team Captain`
         It allows the chaining of commands
-        eg. `!add names This&intent=sell, That, The other&quality=Strange`"""
+        eg. `{prefix}add names This&intent=sell, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
             await ctx.send_help(ctx.command)
@@ -135,16 +138,16 @@ class Steam(commands.Cog):
     async def a_names(self, ctx, *, name):
         """Handles multiple classified additions"""
         name = name.split(',')
-        name = [f'{self.bot.addm}{x.lstrip().strip()}' for x in name]
+        name = [f'{self.bot.addm}{x.strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def update(self, ctx):
         """Update is used to update items from your bot's classifieds don't use an "=" between name and the item
-        eg. `!update name The Team Captain`
+        eg. `{prefix}update name The Team Captain`
         It allows the chaining of commands
-        eg. `!update names This&intent=bank, That, The other&quality=Strange`"""
+        eg. `{prefix}update names This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
             await ctx.send_help(ctx.command)
@@ -159,16 +162,16 @@ class Steam(commands.Cog):
     async def u_names(self, ctx, *, name):
         """Handles multiple updates"""
         name = name.split(',')
-        name = [f'{self.bot.updatem}{x.lstrip().strip()}' for x in name]
+        name = [f'{self.bot.updatem}{x.strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
     async def remove(self, ctx):
         """Remove is used to remove items from your bot's classifieds don't use an "=" between item and the item
-        eg. `!remove item The Team Captain`
+        eg. `{prefix}remove item The Team Captain`
         It allows the chaining of commands
-        eg. `!remove items This&intent=bank, That, The other&quality=Strange`"""
+        eg. `{prefix}remove items This&intent=bank, That, The other&quality=Strange`"""
         if ctx.invoked_subcommand is None:
             await ctx.send('You need to pass in a type of refractory to perform')
             await ctx.send_help(ctx.command)
@@ -183,7 +186,7 @@ class Steam(commands.Cog):
     async def r_items(self, ctx, *, name):
         """Handles multiple removals"""
         name = name.split(',')
-        name = [f'{self.bot.removem}{x.lstrip().strip()}' for x in name]
+        name = [f'{self.bot.removem}{x.strip()}' for x in name]
         await self.classifieds(ctx, name)
 
     @commands.command()
@@ -198,7 +201,7 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def send(self, ctx, *, message):
         """Send is used to send a message to the bot
-        eg. `!send !message 76561198248053954 Get on steam`"""
+        eg. `{prefix}send {prefix}message 76561198248053954 Get on steam`"""
         async with ctx.typing():
             self.bot.s_bot.send_message(message)
             await ctx.send(f"Sent `{message}` to the bot")
@@ -231,7 +234,7 @@ class Steam(commands.Cog):
     @commands.command(aliases=['raw_add'])
     @commands.is_owner()
     async def add_raw(self, ctx, *, ending=''):
-        """Add lots of items, very volatile `!add names` is much more likely to be stable"""
+        """Add lots of items, very volatile `{prefix}add names` is much more likely to be stable"""
         await ctx.send('Paste all the items you want to add on a new line')
         file = await self.bot.wait_for('message', check=self.check)
         file = file.content

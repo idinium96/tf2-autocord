@@ -1,15 +1,16 @@
 from asyncio import sleep
 from aiohttp import ClientSession
 from datetime import datetime
+from humanize import naturalsize
 from json import load, dump
 from os import remove, getcwd
 from platform import python_version
 from psutil import Process, virtual_memory, cpu_percent
 from steam import __version__ as s_version
 from subprocess import getoutput
-from humanize import naturalsize
+from re import search
 
-from discord import Embed, File, __version__ as d_version, errors
+from discord import Embed, File, __version__ as d_version, errors, HTTPException
 from discord.ext import commands, tasks
 
 from .loader import __version__ as l_version
@@ -21,7 +22,7 @@ class Discord(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.location = '/Login details/graph.png'
+        self.location = 'Login_details\\graph.png'
         self.profitgraphing.start()
         self.process = Process()
         self.acceptedfiles = ('history', 'history.json', 'inventory', 'inventory.json', 'schema', 'schema.json',
@@ -30,41 +31,29 @@ class Discord(commands.Cog):
     async def cog_unload(self):
         self.profitgraphing.cancel()
 
-    async def gen_graph(self, points: int = None):
-        data = load(open('Login details/profit_graphing.json', 'r'))
+    def gen_graph(self, points: int = None):
+        data = load(open('Login_details/profit_graphing.json', 'r'))
         if points is None:
             points = len(data)
         ignored = len(data) - points
-        date_values = []
-        tot_values = []
-        tod_values = []
-        pred_values = []
+        date_values = [date for date in list(data.keys())[ignored:]]  # plot x values
+        tot_values = [float(value[0]) for value in list(data.values())[ignored:]]  # plot the y values
+        tod_values = [float(value[1]) for value in list(data.values())[ignored:]]
+        pre_values = [float(value[2]) for value in list(data.values())[ignored:]]
 
-        for date in list(data.keys())[ignored:]:  # plot x values
-            date_values.append(date)
-
-        for value in list(data.values())[ignored:]:  # plot the y values
-            tod_values.append(float(value[0]))
-            tot_values.append(float(value[1]))
-            try:
-                pred_values.append(float(value[2]))
-            except IndexError:
-                pred_values.append(0)
-        size = (len(date_values) / 3, len(tod_values) / 4)
         # plot the number in the list and set the line thickness.
         plt.close()  # close the old session
-        plt.figure(figsize=size)
         plt.setp(plt.plot(date_values, tod_values, linewidth=3), color='blue')
         plt.setp(plt.plot(date_values, tot_values, linewidth=3), color='orange')
-        plt.setp(plt.plot(date_values, pred_values, linewidth=3), color='green')
+        plt.setp(plt.plot(date_values, pre_values, linewidth=3), color='green')
 
         plt.title(f'A graph to show your bot\'s profit over the last {points} days', fontsize=16)
-        plt.xlabel("Date", fontsize=10)
-        plt.ylabel("Keys", fontsize=10)
+        plt.xlabel('Date', fontsize=10)
+        plt.ylabel('Keys', fontsize=10)
         plt.tick_params(axis='x', labelsize=8, rotation=90)
         plt.gca().legend(('Days profit', 'Total profit', 'Projected profit'))
         plt.tight_layout(h_pad=20, w_pad=20)
-        plt.savefig(self.location)
+        plt.savefig(self.location, format='png')
 
     async def get_uptime(self):
         delta_uptime = datetime.utcnow() - self.bot.launch_time
@@ -77,79 +66,44 @@ class Discord(commands.Cog):
     async def profitgraphing(self):
         """A task that at 23:59 will get your profit
         It will convert all your values to keys"""
-        self.bot.currenttime = str(datetime.now().strftime("%H:%M"))
-        if self.bot.currenttime == '23:59':
-            date = datetime.today().strftime("%d-%m-%Y")
+        self.bot.current_time = datetime.now().strftime("%d-%m-%Y %H:%M")
+        if self.bot.current_time.split()[1] == '23:59':
             self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
             await sleep(2)
             async with ClientSession() as session:
                 async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
                     response = await response.json()
-                    keyValue = response["sell"]["metal"]
+                    key_value = response["sell"]["metal"]
 
-            log = self.bot.graphplots.replace("You've made ", '')
-            log = log.replace(' if all items were sold).', '') if 'all' in log else log[:-1]
-            todprofit = log.split(' today')
-            fixedtodprofit = todprofit[0]
+            tod_profit = search(r'(made (.*?) today)', self.bot.graphplots).group(1)[5:-6]
+            tot_profit = search(r'(today, (.*?) in)', self.bot.graphplots).group(1)[7:-3]
+            try:
+                pred_profit = search(r'(\((.*?) more)', self.bot.graphplots).group(1)[1:-5]
+            except:
+                pred_profit = 0
 
-            totprofit = str(todprofit[1]).replace(']', '').replace('[', '')
-            if '(' in log:  # checks your total profit and if you have total profit
-                totprofit = totprofit[2:-5].split(' in total')
-            else:
-                totprofit = totprofit[2:].split(' in total')
-            if 'key' in fixedtodprofit or 'keys' in fixedtodprofit:  # converts 1st value to keys
-                fixedtodprofit = fixedtodprofit.split(' ')
-                minus = '-' if '-' in fixedtodprofit[0] else '-'
+            fixed = []
+            for to_fix in [tod_profit, tot_profit, pred_profit]:
+                if to_fix == 0:
+                    total = 0
+                elif ', ' in to_fix:
+                    to_fix = to_fix.split(', ')
+                    keys = int(to_fix[0][:-5]) if 'keys' in to_fix[0] else int(to_fix[0][:-4])
+                    multiplier = -1 if keys < 0 else 1
+                    ref = multiplier * float(to_fix[1][:-4])
+                    ref_keys = round(ref / key_value, 2)
+                    total = keys + ref_keys
+                else:
+                    ref = float(tod_profit[:-4])
+                    total = round(ref / key_value, 2)
+                fixed.append(total)
 
-                fixedtodprofit = round(float(fixedtodprofit[0]) + float(minus + fixedtodprofit[2]) / keyValue, 2)
-
-            else:
-                fixedtodprofit = fixedtodprofit.split(' ')
-                fixedtodprofit = round(float(fixedtodprofit[0]) / keyValue, 2)
-
-            if 'key' in totprofit[0] or 'keys' in totprofit[0]:  # converting 2nd
-                fixedtotprofit = totprofit[0].split(', ')
-                if 'keys' in fixedtotprofit[0]:
-                    fixedtotprofit[0] = fixedtotprofit[0][:-5]
-                elif 'key' in fixedtotprofit[0]:
-                    fixedtotprofit[0] = fixedtotprofit[0][:-3]
-                fixedtotprofit[1] = fixedtotprofit[1][:-4]
-
-                fixedtotprofit = round(float(fixedtotprofit[0]) + float(fixedtotprofit[1]) / keyValue, 2)
-            else:
-                fixedtotprofit = totprofit[0].split(', ')
-                fixedtotprofit = round(float(fixedtotprofit[0][:-4]) / keyValue, 2)
-            if 'more' in str(log):  # checks if you have predicted profit
-                predprofit = str(totprofit[1]).replace(' (', '').replace('[', '').replace(']', '').replace("'",
-                                                                                                           '')
-                fixedpredprofit = predprofit.split(', ')
-                if 'keys' in fixedpredprofit[0]:
-                    fixedpredprofit[0] = fixedpredprofit[0][:-5]
-                elif 'key' in fixedpredprofit[0]:
-                    fixedpredprofit[0] = fixedpredprofit[0][:-3]
-                elif 'ref' in fixedpredprofit[0]:
-                    fixedpredprofit[0] = fixedpredprofit[0][:-4]
-                try:
-                    if 'ref' in fixedpredprofit[1]:
-                        fixedpredprofit[1] = fixedpredprofit[1][:-4]
-                except:
-                    pass
-
-                try:
-                    fixedpredprofit = round(float(fixedpredprofit[0]) + float(fixedpredprofit[1]) / keyValue, 2)
-                except:
-                    fixedpredprofit = round(float(fixedpredprofit[0]) / keyValue, 2)
-
-                graphdata = [fixedtodprofit, fixedtotprofit, fixedpredprofit, self.bot.trades]
-            else:
-                graphdata = [fixedtodprofit, fixedtotprofit, 0, self.bot.trades]
-
-            tempprofit = {date: graphdata}
-            with open('Login details\profit_graphing.json') as f:
-                data = load(f)
-                data.update(tempprofit)
-            with open('Login details\profit_graphing.json', 'w') as f:
-                dump(data, f, indent=4)
+            tod_profit, tot_profit, pred_profit = fixed
+            graphdata = [tod_profit, tot_profit, pred_profit, self.bot.trades]
+            tempprofit = {self.bot.current_time.split()[0]: graphdata}
+            data = load(open('Login_details\\profit_graphing.json'))
+            data.update(tempprofit)
+            dump(data, open('Login_details\\profit_graphing.json', 'w'), indent=4)
             await sleep(120)
 
     @commands.command()
@@ -157,16 +111,13 @@ class Discord(commands.Cog):
     async def last(self, ctx, days: int = None):
         """Used to get the last x days profit
 
-        eg. `!last 7` (days has to be an integer)"""
+        eg. `{prefix}last 7` (days has to be an integer)"""
         async with ctx.typing():
-            data = load(open('Login details/profit_graphing.json', 'r'))
+            data = load(open('Login_details/profit_graphing.json', 'r'))
             if days is None or days > len(data):
                 days = len(data)
             ignored = len(data) - days
-
-            await self.gen_graph(days)
-            file = File(self.location, filename="graph.png")
-
+            self.gen_graph(days)
             embed = Embed(title=f'Last {days} days profit', color=self.bot.color)
             embed.set_image(url='attachment://graph.png')
             for date, value in reversed(list(data.items())[ignored:]):
@@ -175,33 +126,30 @@ class Discord(commands.Cog):
                                     value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}** keys. '
                                           f'Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
                                     inline=False)
-                except:
+                except IndexError:
                     pass
-
-            if len(embed) <= 6000:
-                await ctx.send(embed=embed, file=file)
-            else:
-                await ctx.send(
-                    f'Please try fewer days as the embed is too large to send, if you want the graph use the {self.bot.prefix}graph command')
-        remove(self.location)
+            f = File(self.location, filename="graph.png")
+            try:
+                await ctx.send(embed=embed, file=f)
+            except HTTPException:
+                await ctx.send(f'Please try fewer days as the embed is too large to send, '
+                               f'if you want the graph use the {self.bot.prefix}graph command')
 
     @commands.command()
     @commands.is_owner()
     async def graph(self, ctx, points: int = 0):
         """Used to generate a graph of all of your profit whilst using the bot"""
         async with ctx.typing():
-            len_points = len(load(open('Login details/profit_graphing.json', 'r')))
+            len_points = len(load(open('Login_details/profit_graphing.json', 'r')))
             if points == 0 or points > len_points:
                 points = len_points
             if points <= 1:
                 points = 3
-            await self.gen_graph(points)
-            file = File(self.location, filename="graph.png")
-            embed = Embed(title=f'Last {points} days profit',
-                          color=self.bot.color)
+            self.gen_graph(points)
+            embed = Embed(title=f'Last {points} days profit', color=self.bot.color)
             embed.set_image(url='attachment://graph.png')
-            await ctx.send(embed=embed, file=file)
-        remove(self.location)
+            f = File(self.location, filename="graph.png")
+            await ctx.send(embed=embed, file=f)
 
     @commands.command()
     @commands.is_owner()
@@ -221,7 +169,7 @@ class Discord(commands.Cog):
     async def get(self, ctx, *, file=None):
         """Used to get files from your temp folder
 
-        eg. `!get history` (if you don't type anything you can see the files you can request)"""
+        eg. `{prefix}get history` (if you don't type anything you can see the files you can request)"""
         if file is None:
             return await ctx.send(f'You can request these files `{self.acceptedfiles}`')
         file = file.lower()
@@ -237,6 +185,16 @@ class Discord(commands.Cog):
             await ctx.send('Here you go, don\'t do anything naughty with it.', file=file)
         else:
             await ctx.send('I\'m sorry you can request that file')
+
+    @commands.command()
+    async def classifieds(self, ctx):
+        """Check your number of listings and get a easy read version of them in a text file"""
+        file = load(open(f'{self.bot.templocation}/listings.json', 'r'))
+        listings = '\n'.join([listing['name'] for listing in file])
+        open('listings.txt', 'w+').write(listings)
+        f = File("listings.txt", filename="listings.txt")
+        remove('listings.txt')
+        await ctx.send(f'You have {len(file)} listings, view them here:', file=f)
 
     @commands.command(aliases=['about', 'stats', 'status'])
     async def info(self, ctx):
