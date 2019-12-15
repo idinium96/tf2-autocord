@@ -1,0 +1,6 @@
+discord.py
+steam
+psutil
+matplotlib
+ago
+humanize
