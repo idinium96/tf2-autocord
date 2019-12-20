@@ -1,12 +1,10 @@
 from asyncio import TimeoutError, sleep
-from time import perf_counter
-
-from aiohttp import ClientSession
 from datetime import datetime
 from os import getcwd
 from subprocess import getoutput
+from time import perf_counter
 
-from discord import Embed, Colour, errors, utils
+from discord import Embed, Colour, errors
 from discord.ext import commands, tasks
 
 from .loader import __version__
@@ -18,80 +16,65 @@ class HelpCommand(commands.HelpCommand):
     def __init__(self):
         super().__init__(command_attrs={
             'help': 'Shows help about the bot, a command, or a cog\neg. `{prefix}help Steam` (There should be 4 cogs '
-                    'and 26 commands) '
+                    'and 25 commands)'
         })
 
     def get_command_signature(self, command):
-        if len(command.signature) == 0:
+        """Method to return a commands name and signature"""
+        if not command.signature and not command.parent:  # checking if it has no args and isn't a subcommand
             return f'`{self.clean_prefix}{command.name}`'
-        else:
+        if command.signature and not command.parent:  # checking if it has args and isn't a subcommand
             return f'`{self.clean_prefix}{command.name}` `{command.signature}`'
+        if not command.signature and command.parent:  # checking if it has no args and is a subcommand
+            return f'`{command.name}`'
+        else:  # else assume it has args a signature and is a subcommand
+            return f'`{command.name}` `{command.signature}`'
 
-    def get_command_aliases(self, command):
-        if len(command.aliases) == 0:
+    def get_command_aliases(self, command):  # this is a custom written method along with all the others below this
+        """Method to return a commands aliases"""
+        if not command.aliases:  # check if it has any aliases
             return ''
         else:
             return f'command aliases are [`{"` | `".join([alias for alias in command.aliases])}`]'
 
     def get_command_description(self, command):
-        if len(command.short_doc) == 0:
+        """Method to return a commands short doc/brief"""
+        if not command.short_doc:  # check if it has any brief
             return 'There is no documentation for this command currently'
         else:
             return command.short_doc.format(prefix=self.clean_prefix)
 
-    def get_full_command_description(self, command):
-        if len(command.help) == 0:
+    def get_command_help(self, command):
+        """Method to return a commands full description/doc string"""
+        if not command.help:  # check if it has any brief or doc string
             return 'There is no documentation for this command currently'
         else:
             return command.help.format(prefix=self.clean_prefix)
-
-    async def bot_help_paginator(self, page: int):
-        ctx = self.context
-        bot = ctx.bot
-
-        all_commands = [command.name for command in await self.filter_commands(bot.commands)]
-        current_cog = bot.get_cog(self.all_cogs[page])
-        cog_n = current_cog.qualified_name
-        color, emoji = bot.cog_color[cog_n]
-
-        embed = Embed(title=f'Help with {cog_n} ({len(all_commands)} commands) {emoji}',
-                      description=current_cog.description, color=color)
-        embed.set_author(name=f'We are currently on page {page + 1}/{len(self.all_cogs)}',
-                         icon_url=ctx.author.avatar_url)
-        try:
-            for c in current_cog.walk_commands():
-                if await c.can_run(ctx) and c.hidden is False:
-                    signature = self.get_command_signature(c)
-                    description = self.get_command_description(c)
-                    if c.parent:
-                        embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=True)
-                    else:
-                        embed.add_field(name=signature, value=description, inline=False)
-        except:
-            pass
-        return embed
 
     async def send_bot_help(self, mapping):
         ctx = self.context
         bot = ctx.bot
         page = 0
-        self.all_cogs = [cog for cog in bot.cogs]
-        self.all_cogs.sort()
+        cogs = [cog for cog in bot.cogs]
+        cogs.sort()
 
-        def check(reaction, user):
-            return user == ctx.author
+        def check(reaction, user):  # check who is reacting to the message
+            return user == ctx.author and help_embed.id == reaction.message.id
 
-        embed = await self.bot_help_paginator(page)
-        help_embed = await ctx.send(embed=embed)
-        await help_embed.add_reaction('\U000025c0')
-        await help_embed.add_reaction('\U000023f9')
-        await help_embed.add_reaction('\U000025b6')
-        await help_embed.add_reaction('\U00002139')
+        embed = await self.bot_help_paginator(page, cogs)
+        help_embed = await ctx.send(embed=embed)  # sends the first help page
+
+        reactions = ('\N{BLACK LEFT-POINTING TRIANGLE}',
+                     '\N{BLACK RIGHT-POINTING TRIANGLE}',
+                     '\N{BLACK SQUARE FOR STOP}',
+                     '\N{INFORMATION SOURCE}')  # add reactions to the message
+        bot.loop.create_task(self.bot_help_paginator_reactor(help_embed, reactions))
+        # this allows the bot to carry on setting up the help command
 
         while 1:
             try:
-                reaction, user = await bot.wait_for('reaction_add', timeout=30, check=check)
-            except TimeoutError:
+                reaction, user = await bot.wait_for('reaction_add', timeout=60, check=check)  # checks message reactions
+            except TimeoutError:  # session has timed out
                 try:
                     await help_embed.clear_reactions()
                 except errors.Forbidden:
@@ -99,29 +82,29 @@ class HelpCommand(commands.HelpCommand):
                 break
             else:
                 try:
-                    await help_embed.remove_reaction(str(reaction.emoji), ctx.author)
+                    await help_embed.remove_reaction(str(reaction.emoji), ctx.author)  # remove the reaction
                 except errors.Forbidden:
                     pass
-                if str(reaction.emoji) == '◀':
+
+                if str(reaction.emoji) == '◀':  # go to the previous page
                     page -= 1
-                    if page == -1:
-                        page = len(self.all_cogs) - 1
-                    embed = await self.bot_help_paginator(page)
+                    if page == -1:  # check whether to go to the final page
+                        page = len(cogs) - 1
+                    embed = await self.bot_help_paginator(page, cogs)
                     await help_embed.edit(embed=embed)
-
-                elif str(reaction.emoji) == '▶':
+                elif str(reaction.emoji) == '▶':  # go to the next page
                     page += 1
-                    if page == len(self.all_cogs):
+                    if page == len(cogs):  # check whether to go to the first page
                         page = 0
-                    embed = await self.bot_help_paginator(page)
+                    embed = await self.bot_help_paginator(page, cogs)
                     await help_embed.edit(embed=embed)
 
-                elif str(reaction.emoji) == 'ℹ':
-                    all_cogs = '`, `'.join([cog for cog in self.all_cogs])
+                elif str(reaction.emoji) == 'ℹ':  # show information help
+                    all_cogs = '`, `'.join([cog for cog in cogs])
                     embed = Embed(title=f'Help with {bot.user.name}\'s commands', description=bot.description,
                                   color=bot.color)
                     embed.add_field(
-                        name=f'Currently you have {len([cog for cog in self.all_cogs])} cogs loaded, which are (`{all_cogs}`) :gear:',
+                        name=f'Currently you have {len(bot.cogs)} cogs loaded, which are (`{all_cogs}`) :gear:',
                         value='`<...>` indicates a required argument,\n`[...]` indicates an optional argument.\n\n'
                               '**Don\'t however type these around your argument**')
                     embed.add_field(name='What do the emojis do:',
@@ -129,58 +112,79 @@ class HelpCommand(commands.HelpCommand):
                                           ':arrow_forward: Goes to the next page\n'
                                           ':stop_button: Deletes and closes this message\n'
                                           ':information_source: Shows this message')
-                    embed.set_author(name=f'You were on page {page + 1}/{len(self.all_cogs)} before',
+                    embed.set_author(name=f'You were on page {page + 1}/{len(bot.cogs)} before',
                                      icon_url=ctx.author.avatar_url)
-
-                    embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.')
+                    embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.',
+                                     icon_url=ctx.bot.user.avatar_url)
                     await help_embed.edit(embed=embed)
 
-                elif str(reaction.emoji) == '⏹':
+                elif str(reaction.emoji) == '⏹':  # delete the message and break from the wait_for
                     await help_embed.delete()
                     break
 
-    async def send_cog_help(self, cog):
+    async def bot_help_paginator_reactor(self, message, reactions):
+        for reaction in reactions:
+            await message.add_reaction(reaction)
+
+    async def bot_help_paginator(self, page: int, cogs: list):
         ctx = self.context
         bot = ctx.bot
+        all_commands = [command for command in
+                        await self.filter_commands(bot.commands)]  # filter the commands the user can use
+        cog = bot.get_cog(cogs[page])  # get the current cog
+        color, emoji = bot.cog_color[cog.qualified_name]
 
-        cog_commands = [command for command in await self.filter_commands(cog.walk_commands())]
-        cog_n = cog.qualified_name
-        color, emoji = bot.cog_color[cog_n]
+        embed = Embed(title=f'Help with {cog.qualified_name} ({len(all_commands)} commands) {emoji}',
+                      description=cog.description, color=color)
+        embed.set_author(name=f'We are currently on page {page + 1}/{len(cogs)}', icon_url=ctx.author.avatar_url)
+        for c in cog.walk_commands():
+            if await c.can_run(ctx) and not c.hidden:
+                signature = self.get_command_signature(c)
+                description = self.get_command_description(c)
+                if c.parent:  # it is a sub-command
+                    embed.add_field(name=signature, value=description)
+                else:
+                    embed.add_field(name=signature, value=description, inline=False)
+        embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.',
+                         icon_url=ctx.bot.user.avatar_url)
+        return embed
 
-        embed = Embed(title=f'Help with {cog_n} ({len(cog_commands)} commands) {emoji}',
+    async def send_cog_help(self, cog):
+        ctx = self.context
+        cog_commands = [command for command in await self.filter_commands(cog.walk_commands())]  # get commands
+        color, emoji = ctx.bot.cog_color[cog.qualified_name]
+        embed = Embed(title=f'Help with {cog.qualified_name} ({len(cog_commands)} commands) {emoji}',
                       description=cog.description, color=color)
         embed.set_author(name=f'We are currently looking at the module {cog.qualified_name} and its commands',
                          icon_url=ctx.author.avatar_url)
-        _commands = [c for c in cog_commands if await c.can_run(ctx) and c.hidden is False]
-        for c in _commands:
+        for c in cog_commands:
             signature = self.get_command_signature(c)
             aliases = self.get_command_aliases(c)
             description = self.get_command_description(c)
             if c.parent:
-                embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=True)
+                embed.add_field(name=signature, value=description)
             else:
                 embed.add_field(name=f'{signature} {aliases}',
                                 value=description, inline=False)
-        embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.')
+        embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.',
+                         icon_url=ctx.bot.user.avatar_url)
         await ctx.send(embed=embed)
 
     async def send_command_help(self, command):
         ctx = self.context
-        bot = ctx.bot
-
-        cog_n = command.cog.qualified_name
-        color, emoji = bot.cog_color[cog_n]
+        color, emoji = ctx.bot.cog_color[command.cog.qualified_name]
 
         if await command.can_run(ctx):
             embed = Embed(title=f'Help with `{command.name}` {emoji}', color=color)
-            embed.set_author(name=f'We are currently looking at the {cog_n} cog and its command {command.name}',
-                             icon_url=ctx.author.avatar_url)
+            embed.set_author(
+                name=f'We are currently looking at the {command.cog.qualified_name} cog and its command {command.name}',
+                icon_url=ctx.author.avatar_url)
             signature = self.get_command_signature(command)
-            description = self.get_full_command_description(command)
+            description = self.get_command_help(command)
             aliases = self.get_command_aliases(command)
 
             if command.parent:
-                embed.add_field(name=f'╚╡**`{signature[2:]}**', value=description, inline=False)
+                embed.add_field(name=signature, value=description, inline=False)
             else:
                 embed.add_field(name=f'{signature} {aliases}', value=description, inline=False)
             embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.')
@@ -190,7 +194,8 @@ class HelpCommand(commands.HelpCommand):
         ctx = self.context
         bot = ctx.bot
 
-        embed = Embed(title=f'Help with `{group.name}`', color=bot.color)
+        embed = Embed(title=f'Help with `{group.name}`', description=bot.get_command(group.name).help,
+                      color=bot.color)
         embed.set_author(
             name=f'We are currently looking at the {group.cog.qualified_name} cog and its command {group.name}',
             icon_url=ctx.author.avatar_url)
@@ -201,7 +206,7 @@ class HelpCommand(commands.HelpCommand):
                 aliases = self.get_command_aliases(command)
 
                 if command.parent:
-                    embed.add_field(name=f'╚╡`{signature[2:]}', value=description, inline=False)
+                    embed.add_field(name=signature, value=description, inline=False)
                 else:
                     embed.add_field(name=f'{signature} {aliases}', value=description, inline=False)
         embed.set_footer(text=f'Use "{self.clean_prefix}help <command>" for more info on a command.')
@@ -211,9 +216,11 @@ class HelpCommand(commands.HelpCommand):
         pass
 
     async def command_not_found(self, string):
-        embed = Embed(title='Error!', description=f'**Error 404:** Command or cog "{string}" not found cogs need to be in title case eg. `{self.clean_prefix}help Steam` ¯\_(ツ)_/¯',
+        embed = Embed(title='Error!',
+                      description=f'**Error 404:** Command or cog "{string}" not found ¯\_(ツ)_/¯',
                       color=Colour.red())
-        embed.add_field(name='The current loaded cogs are', value=f'(`{"`, `".join([cog for cog in self.context.bot.cogs])}`) :gear:')
+        embed.add_field(name='The current loaded cogs are',
+                        value=f'(`{"`, `".join([cog for cog in self.context.bot.cogs])}`) :gear:')
         await self.context.send(embed=embed)
 
 
@@ -227,6 +234,9 @@ class Help(commands.Cog):
         self._original_help_command = bot.help_command
         bot.help_command = HelpCommand()
         bot.help_command.cog = self
+
+    def cog_unload(self):
+        self.githubupdate.cancel()
 
     @tasks.loop(hours=24)
     async def githubupdate(self):
@@ -246,7 +256,7 @@ class Help(commands.Cog):
             def check(m):
                 return m.content and m.channel == owner_dm.channel
 
-            async with ClientSession() as cs:
+            async with self.bot.session as cs:
                 async with cs.get('https://api.github.com/repos/Gobot1234/tf2-autocord/commits') as r:
                     res = await r.json()
                     version = res[0]['commit']['message']
@@ -356,7 +366,7 @@ class Help(commands.Cog):
         t_duration = (end - start) * 1000
 
         start = perf_counter()
-        m = await ctx.send(embed=Embed().set_author(name='Pong!'))
+        m = await ctx.send(embed=Embed(color=self.bot.color).set_author(name='Pong!'))
         end = perf_counter()
         m_duration = (end - start) * 1000
 
@@ -393,9 +403,8 @@ class Help(commands.Cog):
     @commands.is_owner()
     async def donate(self, ctx):
         """Used to feel warm and fuzzy on the inside"""
-        embed = Embed(title='Want to donate?',
-                      description='[Trade link](https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2)',
-                      color=0x2e3bad)
+        embed = Embed(title='Want to donate?', color=0x2e3bad)
+        embed.description = '[Trade link](https://steamcommunity.com/tradeoffer/new/?partner=287788226&token=NBewyDB2)'
         embed.set_thumbnail(
             url='https://cdn.discordapp.com/avatars/340869611903909888/6acc10b4cba4f29d3c54e38d412964cb.png?size=1024')
         embed.set_footer(text='Thank you for any donations')
@@ -436,7 +445,3 @@ class Help(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Help(bot))
-
-
-def teardown():
-    Help.githubupdate.stop()

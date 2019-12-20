@@ -1,8 +1,8 @@
 from asyncio import sleep
-from aiohttp import ClientSession
 from datetime import datetime
 from humanize import naturalsize
 from json import load, dump
+from math import floor
 from os import remove, getcwd
 from platform import python_version
 from psutil import Process, virtual_memory, cpu_percent
@@ -10,10 +10,11 @@ from steam import __version__ as s_version
 from subprocess import getoutput
 from re import search
 
-from discord import Embed, File, __version__ as d_version, errors, HTTPException
-from discord.ext import commands, tasks
+from discord import Embed, File, __version__ as d_version, HTTPException
+from discord.ext import commands, tasks, buttons
 
 from .loader import __version__ as l_version
+import ago
 import matplotlib.pyplot as plt
 
 
@@ -28,7 +29,7 @@ class Discord(commands.Cog):
         self.acceptedfiles = ('history', 'history.json', 'inventory', 'inventory.json', 'schema', 'schema.json',
                               'listings', 'listings.json')
 
-    async def cog_unload(self):
+    def cog_unload(self):
         self.profitgraphing.cancel()
 
     def gen_graph(self, points: int = None):
@@ -70,10 +71,9 @@ class Discord(commands.Cog):
         if self.bot.current_time.split()[1] == '23:59':
             self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
             await sleep(2)
-            async with ClientSession() as session:
-                async with session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
-                    response = await response.json()
-                    key_value = response["sell"]["metal"]
+            async with self.bot.session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
+                response = await response.json()
+                key_value = response["sell"]["metal"]
 
             tod_profit = search(r'(made (.*?) today)', self.bot.graphplots).group(1)[5:-6]
             tot_profit = search(r'(today, (.*?) in)', self.bot.graphplots).group(1)[7:-3]
@@ -118,22 +118,17 @@ class Discord(commands.Cog):
                 days = len(data)
             ignored = len(data) - days
             self.gen_graph(days)
-            embed = Embed(title=f'Last {days} days profit', color=self.bot.color)
-            embed.set_image(url='attachment://graph.png')
-            for date, value in reversed(list(data.items())[ignored:]):
-                try:
-                    embed.add_field(name=f'__**{date}:**__',
-                                    value=f'Days profit **{value[0]}** keys. Total profit **{value[1]}** keys. '
-                                          f'Predicted profit **{value[2]}** keys. Total trades **{value[3]}**',
-                                    inline=False)
-                except IndexError:
-                    pass
+
+            last = buttons.Paginator(title=f'Last {days} days profit', colour=self.bot.color, embed=True, timeout=90,
+                                     use_defaults=True, length=10,
+                                     entries=[f'__**{date}**__ - Days profit **{value[0]}** keys. Total profit '
+                                              f'**{value[1]}** keys. Predicted profit **{value[2]}** keys. '
+                                              f'Total trades **{value[3]}**' for date, value in
+                                              reversed(list(data.items())[ignored:])])
+
+            await last.start(ctx)
             f = File(self.location, filename="graph.png")
-            try:
-                await ctx.send(embed=embed, file=f)
-            except HTTPException:
-                await ctx.send(f'Please try fewer days as the embed is too large to send, '
-                               f'if you want the graph use the {self.bot.prefix}graph command')
+            await ctx.send(file=f)
 
     @commands.command()
     @commands.is_owner()
@@ -150,19 +145,6 @@ class Discord(commands.Cog):
             embed.set_image(url='attachment://graph.png')
             f = File(self.location, filename="graph.png")
             await ctx.send(embed=embed, file=f)
-
-    @commands.command()
-    @commands.is_owner()
-    async def acknowledged(self, ctx):
-        """Used to acknowledge a user message
-
-        This is so user messages don't get lost in the channel history"""
-        self.bot.usermessage = 0
-        try:
-            await self.bot.message.unpin()
-        except errors.Forbidden:
-            pass
-        await ctx.send('Acknowledged the user\'s message')
 
     @commands.command(aliases=['gimme'])
     @commands.is_owner()
@@ -193,8 +175,9 @@ class Discord(commands.Cog):
         listings = '\n'.join([listing['name'] for listing in file])
         open('listings.txt', 'w+').write(listings)
         f = File("listings.txt", filename="listings.txt")
-        remove('listings.txt')
         await ctx.send(f'You have {len(file)} listings, view them here:', file=f)
+        sleep(10)
+        remove('listings.txt')
 
     @commands.command(aliases=['about', 'stats', 'status'])
     async def info(self, ctx):
@@ -242,6 +225,36 @@ class Discord(commands.Cog):
         """See how long the bot has been online for"""
         uptime = await self.get_uptime()
         await ctx.send(f'{self.bot.user.mention} has been online for {uptime}')
+
+    def unix_parse(self, time):
+        return datetime.utcfromtimestamp(time)
+
+    @commands.command()
+    async def history(self, ctx, days: int = 30):
+        _sorted = {}
+        file = load(open(f'{self.bot.templocation}/history.json', 'r'))
+        try:
+            black_list = open('Login_details/blacklist', 'r').read().splitlines()
+        except FileNotFoundError:
+            black_list = []
+
+        for trade in file.values():
+            try:
+                if trade['time_sold'] + 60 * 60 * 24 * days > datetime.utcnow().timestamp():
+                    if trade['time_sold'] and trade['name'] not in black_list:
+                        profit = trade['bought'] - trade['sold']
+
+                        human_time_to_sell = ago.human(
+                            self.unix_parse(trade['time_bought']) - self.unix_parse(trade['time_sold']))
+                        _sorted[profit] = [trade['name'], human_time_to_sell]
+            except KeyError:
+                pass
+        checker = buttons.Paginator(title='History checker', colour=self.bot.color, embed=True, timeout=90, use_defaults=True,
+                                    entries=[f'**{index}.** {trade[1][0]}, was sold {trade[1][1]} for '
+                                             f'{floor((trade[0] / 9) * 100) / 100 if trade[0] > 0 else -1 * floor(abs(trade[0]) / 9 * 100) / 100} '
+                                             f'ref {"profit" if trade[0] > 0 else "loss"}' for index, trade in
+                                             enumerate(sorted(_sorted.items(), reverse=True), start=1)], length=10)
+        await checker.start(ctx)
 
 
 def setup(bot):
