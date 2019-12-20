@@ -94,11 +94,12 @@ class Steam(commands.Cog):
                 trade_num = findall(r'\d+', sbotresp)[0]
                 message = f'{sbotresp.replace(image_url, "")[:-1]}:'.replace(f"#{trade_num}", "")
 
-                embed = Embed(color=color, timestamp=datetime.now(), description=message)
+                embed = Embed(color=color, timestamp=datetime.now())
                 if trader:
                     message.replace(f'({trader_id})', f'from {trader.name}, which')
                     embed.set_author(name=f'Trade from: {trader.name}', url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
+                embed.description = message 
                 embed.set_image(url=image_url)
                 embed.set_footer(text=f'Trade #{trade_num}', icon_url=self.bot.user.avatar_url)
 
