@@ -10,7 +10,7 @@ from steam import __version__ as s_version
 from subprocess import getoutput
 from re import search
 
-from discord import Embed, File, __version__ as d_version, HTTPException
+from discord import Embed, File, __version__ as d_version
 from discord.ext import commands, tasks, buttons
 
 from .loader import __version__ as l_version
@@ -117,7 +117,7 @@ class Discord(commands.Cog):
             if days is None or days > len(data):
                 days = len(data)
             ignored = len(data) - days
-            self.gen_graph(days)
+            await self.bot.loop.run_in_executor(None, self.gen_graph, days)
 
             last = buttons.Paginator(title=f'Last {days} days profit', colour=self.bot.color, embed=True, timeout=90,
                                      use_defaults=True, length=10,
@@ -140,7 +140,7 @@ class Discord(commands.Cog):
                 points = len_points
             if points <= 1:
                 points = 3
-            self.gen_graph(points)
+            await self.bot.loop.run_in_executor(None, self.gen_graph, points)
             embed = Embed(title=f'Last {points} days profit', color=self.bot.color)
             embed.set_image(url='attachment://graph.png')
             f = File(self.location, filename="graph.png")
@@ -176,7 +176,7 @@ class Discord(commands.Cog):
         open('listings.txt', 'w+').write(listings)
         f = File("listings.txt", filename="listings.txt")
         await ctx.send(f'You have {len(file)} listings, view them here:', file=f)
-        sleep(10)
+        await sleep(10)
         remove('listings.txt')
 
     @commands.command(aliases=['about', 'stats', 'status'])
@@ -185,7 +185,7 @@ class Discord(commands.Cog):
         uptime = await self.get_uptime()
         memory_usage = self.process.memory_full_info().uss
         rawram = virtual_memory()
-        updateable = getoutput(f'git checkout {getcwd()}')
+        updateable = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
 
         if 'Your branch is up to date with' in updateable:
             emoji = '<:tick:626829044134182923>'
@@ -203,7 +203,7 @@ class Discord(commands.Cog):
         embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_percent()}`% used')
         embed.add_field(name=f'{self.bot.user.name} has been online for:', value=uptime)
         embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version',
-                        value=f'Version: `{l_version()}`. Up to date: {emoji}')
+                        value=f'Version: `{l_version}`. Up to date: {emoji}')
         embed.add_field(name=':exclamation:Command prefix',
                         value=f'Your command prefix is `{self.bot.prefix}`. Type {self.bot.prefix}help to list the '
                               f'commands you can use')

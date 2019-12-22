@@ -8,13 +8,12 @@ from discord.ext import commands
 from Login_details import preferences, sensitive_details
 
 
-def __version__():
-    return '1.4'
+__version__ = '1.4.1'
+__author__ = 'Gobot1234#2435'
 
 
 class Loader(commands.Cog):
-    """This cog just stores all of your variables nothing particularly interesting and the commands to restart the
-    bot"""
+    """This cog just stores all of your variables nothing particularly interesting and the commands to restart the bot"""
 
     def __init__(self, bot):
         """Setting all of your bot vars to be used by other cogs/commands"""
@@ -34,7 +33,7 @@ class Loader(commands.Cog):
         bot.updatem = f'{bot.prefix}update name='
         bot.removem = f'{bot.prefix}remove item='
         bot.addm = f'{bot.prefix}add name='
-        bot.currenttime = datetime.now().strftime("%H:%M")
+        bot.currenttime = datetime.now().strftime("%d-%m-%Y %H:%M")
         bot.first = True
 
     async def async__init__(self):
@@ -44,11 +43,11 @@ class Loader(commands.Cog):
         if self.bot.first:
             info = await self.bot.application_info()
             self.bot.owner = info.owner
-            await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__()}',
+            await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__}',
                                                         type=ActivityType.watching))
             print(f'{"-" * 30}\n{self.bot.user.name} is ready')
-            print(f'Send this id: "{self.bot.user.id}" to Gobot1234 to add your bot to the server to use the custom emojis')
-            print(f'This is: Version {__version__()}')
+            print(f'Send this id: "{self.bot.user.id}" to {__author__} to add your bot to the server to use the custom emojis')
+            print(f'This is: Version {__version__}')
             while self.bot.logged_on is False:
                 if self.bot.cli_login:
                     await self.bot.owner.send('You aren\'t currently logged into your Steam account\nTo do that type '
@@ -76,12 +75,13 @@ class Loader(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def logout(self, ctx):
-        """Log yourself out safely"""
-        open('channel.txt', 'w+').write(str(ctx.channel.id))
-        open('trades.txt', 'w+').write(str(self.bot.trades))
-        self.bot.session.close()
+        """Logout the bot safely"""
         await ctx.send('Logging out...')
         self.bot.client.logout()
+        open('channel.txt', 'w+').write(str(ctx.channel.id))
+        open('trades.txt', 'w+').write(str(self.bot.trades))
+        self.bot.client = None
+        await self.bot.session.close()
         await self.bot.close()
         raise SystemExit
 

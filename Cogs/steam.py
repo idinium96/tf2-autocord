@@ -15,6 +15,7 @@ class Steam(commands.Cog):
         self.bot = bot
         self.discordcheck.start()
         self.bot.trades = 0
+        self.first = True
 
     def check(self, m):
         return m.author == self.bot.owner
@@ -60,52 +61,44 @@ class Steam(commands.Cog):
     async def discordcheck(self):
         """The task that forwards messages from Steam to Discord"""
         if self.bot.usermessage != 0:
-            embed = Embed(color=Colour.dark_gold())
-            self.bot.messager = self.bot.client.get_user(int(findall(r'\d+', self.bot.usermessage)[0]))
-            if self.bot.messager:
-                embed.set_author(name=f'Message from {self.bot.messager.name}', url=self.bot.messager.steam_id.community_url,
-                                 icon_url=self.bot.messager.get_avatar_url())
-            embed.add_field(name='User Message:',
-                            value=f'You have a message from a user:\n{self.bot.usermessage.split(":", 1)[1]}'
-                                  f'\nType {self.bot.prefix}acknowledged', inline=False)
-            self.bot.message = await self.bot.owner.send(embed=embed)
-            try:
-                await self.bot.message.pin()
-            except HTTPException:
-                pass
+            self.first = True
+            self.user_message.cancel()
             self.user_message.start()
         elif self.bot.sbotresp != 0:
             sbotresp = self.bot.sbotresp
-            if 'Received offer' in sbotresp:
+            message = sbotresp
+            if sbotresp.startswith('Received offer') or sbotresp.startswith('Sent offer'):
                 self.bot.trades += 1
+
                 if 'view it here' not in sbotresp and 'marked as declined' in sbotresp:
                     return
-            if 'accepted' in sbotresp:
-                color = 0x5C7E10
-            elif 'declined' in sbotresp or 'canceled' in sbotresp or 'invaliditems' in sbotresp:
-                color = Colour.red()
-            else:
-                color = self.bot.color
+                if 'accepted' in sbotresp:
+                    color = 0x5C7E10
+                else:
+                    color = Colour.red()
+                embed = Embed(color=color)
+                if 'view it here' in sbotresp and 'https' in sbotresp:
+                    image_url = sbotresp.split('here ', 1)[1]
+                    message = f'{sbotresp.replace(image_url, "")[:-1]}:'
+                    embed.set_image(url=image_url)
 
-            if 'view it here' in sbotresp and 'https' in sbotresp:
-                image_url = sbotresp.split('here ', 1)[1]
-                trader_id = int(findall(r'\d+', sbotresp)[1])
+                ids = findall(r'\d+', sbotresp)
+                trade_num = ids[0]
+                trader_id = int(ids[1])
                 trader = self.bot.client.get_user(trader_id)
-                trade_num = findall(r'\d+', sbotresp)[0]
-                message = f'{sbotresp.replace(image_url, "")[:-1]}:'.replace(f"#{trade_num}", "")
-
-                embed = Embed(color=color, timestamp=datetime.now())
-                if trader:
-                    message.replace(f'({trader_id})', f'from {trader.name}, which')
-                    embed.set_author(name=f'Trade from: {trader.name}', url=trader.steam_id.community_url,
+                message = message.replace(f" #{trade_num}", "")
+                if trader is not None:
+                    message = message.replace(f'offer ({trader_id}) is now ',
+                                              f'{"an offer to" if sbotresp.startswith("Sent") else "an offer from"} {trader.name}, which has now been ')
+                    embed.set_author(name=f'Trade {"to" if sbotresp.startswith("Sent") else "from"}: {trader.name}',
+                                     url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
-                embed.description = message 
-                embed.set_image(url=image_url)
-                embed.set_footer(text=f'Trade #{trade_num}', icon_url=self.bot.user.avatar_url)
-
+                embed.description = message
+                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")}',
+                                 icon_url=self.bot.user.avatar_url)
             else:
-                embed = Embed(color=color, timestamp=datetime.now(), description=sbotresp)
-                embed.set_footer(text='New Message', icon_url=self.bot.user.avatar_url)
+                embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
+                embed.set_footer(text=datetime.now().strftime('%c'), icon_url=self.bot.user.avatar_url)
             await self.bot.owner.send(embed=embed)
             self.bot.sbotresp = 0
 
@@ -117,9 +110,15 @@ class Steam(commands.Cog):
                              url=self.bot.messager.steam_id.community_url,
                              icon_url=self.bot.messager.get_avatar_url())
         embed.add_field(name='User Message:',
-                        value=f'You have a message from a user:\n{self.bot.usermessage.split(":", 1)[1]}'
-                              f'\nType {self.bot.prefix}acknowledged', inline=False)
+                        value=f'You have a message from a user:\n> {self.bot.usermessage.split(":", 1)[1]}'
+                              f'\nType {self.bot.prefix}acknowledged if you have dealt with this', inline=False)
         self.bot.message = await self.bot.owner.send(embed=embed)
+        if self.first:
+            try:
+                await self.bot.message.pin()
+            except HTTPException:
+                pass
+            self.first = False
 
     @commands.command()
     @commands.is_owner()
@@ -222,13 +221,13 @@ class Steam(commands.Cog):
         name = [f'{self.bot.removem}{x.strip()}' for x in name]
         await self.classifieds(ctx, name)
 
-    @commands.command()
+    @commands.command(aliases=['p'])
     @commands.is_owner()
     async def profit(self, ctx):
         """Returns your bot's profit as it normally would"""
         async with ctx.typing():
             self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
-            await sleep(3)
+            await sleep(5)
 
     @commands.command()
     @commands.is_owner()
@@ -254,16 +253,16 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def cashout(self, ctx):
         """Want to cash-out all your listings? Be warned this command is quite difficult to fix once you run it"""
-        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r'))
+        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
         await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
         for value in listingsjson:
             command = f'{self.bot.updatem}{value["name"]}&intent=sell'
             self.bot.s_bot.send_message(command)
             await ctx.send(command)
-            await sleep(5)
+            await sleep(3)
         await ctx.send('Completed the intent update')
 
-    @commands.command(aliases=['raw_add'])
+    @commands.command(aliases=['raw_add', 'add-raw', 'raw-add'])
     @commands.is_owner()
     async def add_raw(self, ctx, *, ending=''):
         """Add lots of items, very volatile `{prefix}add names` is much more likely to be stable"""

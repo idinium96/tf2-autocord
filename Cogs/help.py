@@ -241,14 +241,16 @@ class Help(commands.Cog):
     @tasks.loop(hours=24)
     async def githubupdate(self):
         """A tasks loop to check if there has been an update to the GitHub repo"""
-        result = getoutput(f'git checkout {getcwd()}')
+        await self.bot.wait_until_ready()
+        result = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
         owner = self.bot.owner
         if 'Your branch is up to date with' in result:
             return
         elif result == 'fatal: not a git repository (or any of the parent directories): .git':
             await owner.send(embed=Embed(
-                title='This version wasn\'t cloned from GitHub, which I advise as it allows for automatic updates',
-                description='It is as simple as typing `git clone '
+                title='<:goodcross:626829085682827266> This version wasn\'t cloned from GitHub, which I advise as it '
+                      'allows for automatic updates',
+                description='Installing is as simple as typing `git clone '
                             'https://github.com/Gobot1234/tf2-autocord.git Discord` '
                             'into your command prompt of choice, although you need git to be installed',
                 color=self.bot.color))
@@ -267,8 +269,7 @@ class Help(commands.Cog):
 
             owner_dm = await owner.send(
                 embed=Embed(title=f'Version {version} has been pushed to the GitHub repo. Do you want to install it?',
-                            description=f'__Update info is as follows:__\n```{comment}```',
-                            color=self.bot.color))
+                            description=f'__Update info is as follows:__\n```{comment}```', color=self.bot.color))
 
             choice = await self.bot.wait_for('message', check=check)
             choice = choice.content.lower()
@@ -276,9 +277,9 @@ class Help(commands.Cog):
                 if choice == 'yes' or choice == 'y':
                     await owner.send(
                         'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
-                    reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
+                    reset = await self.bot.loop.run_in_executor(None, getoutput, f'cd {getcwd()} & git reset --hard HEAD')
                     await owner.send(f'```bash\n{reset}```')
-                    update = getoutput(f'git pull {getcwd()}')
+                    update = await self.bot.loop.run_in_executor(None, getoutput, f'git pull {getcwd()}')
                     await owner.send(f'```bash\n{update}```')
                     break
 
@@ -303,27 +304,33 @@ class Help(commands.Cog):
     async def updaterepo(self, ctx):
         """Used to update to the newest version of the code
 
-        This will overwrite any changes you have made locally"""
+        This will overwrite any changes you have made locally to any cogs"""
         await ctx.send('Attempting to update to the latest version of the code')
         async with ctx.typing():
-            result = getoutput(f'git checkout {getcwd()}')
+            result = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
 
             if 'Already up to date.' in result:
                 await ctx.send('No updates to be had?')
             elif result == 'fatal: not a git repository (or any of the parent directories): .git':
-                await ctx.send('This wasn\'t cloned from GitHub')
+                await self.bot.owner.send(embed=Embed(
+                    title='<:goodcross:626829085682827266> This version wasn\'t cloned from GitHub, which I advise as '
+                          'it allows for automatic updates',
+                    description='Instealling is as simple as typing `git clone '
+                                'https://github.com/Gobot1234/tf2-autocord.git Discord` '
+                                'into your command prompt of choice, although you need git to be installed',
+                    color=self.bot.color))
             else:
                 await ctx.send(
                     'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
-                reset = getoutput(f'cd {getcwd()} & git reset --hard HEAD')
+                reset = await self.bot.loop.run_in_executor(None, getoutput, f'cd {getcwd()} & git reset --hard HEAD')
                 await ctx.send(f'```bash\n{reset}```')
-                update = getoutput(f'git pull {getcwd()}')
+                update = await self.bot.loop.run_in_executor(None, getoutput, f'git pull {getcwd()}')
                 await ctx.send(f'```bash\n{update}```')
 
     @commands.command()
     async def github(self, ctx):
         """Shows the GitHub repo and some info about it"""
-        result = getoutput(f'git checkout {getcwd()}')
+        result = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
         if 'Your branch is up to date with' in result:
             emoji = '<:tick:626829044134182923>'
         elif result == 'fatal: not a git repository (or any of the parent directories): .git':
@@ -332,7 +339,7 @@ class Help(commands.Cog):
             emoji = '<:goodcross:626829085682827266>'
         embed = Embed(title='GitHub Repo Infomation', color=0x2e3bad)
         embed.set_thumbnail(url='https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png')
-        embed.add_field(name='Current Version', value=f'Version: {__version__()}. Up to date: {emoji}',
+        embed.add_field(name='Current Version', value=f'Version: {__version__}. Up to date: {emoji}',
                         inline=True)
         embed.add_field(name='GitHub Stats', value='https://github.com/Gobot1234/tf2-autocord/pulse')
         embed.add_field(name='Link to the repo', value='[Repository](https://github.com/Gobot1234/tf2-autocord)')
