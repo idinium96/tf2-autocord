@@ -277,7 +277,7 @@ class Development(commands.Cog):
         pass
 
     @git.command()
-    async def push(self, ctx, version=__version__, *, commit_msg='None given'):
+    async def push(self, ctx, version=f'V.{__version__}', *, commit_msg='None given'):
         await ctx.message.add_reaction('\U000023f3')
         add = await self.bot.loop.run_in_executor(None, getoutput, 'git add .')
         commit = await self.bot.loop.run_in_executor(None, getoutput, f'git commit -m "{version}" -m "{commit_msg}"')
