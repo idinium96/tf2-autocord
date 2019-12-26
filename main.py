@@ -111,7 +111,7 @@ class AutoCord(Bot):
                                           two_factor_code=SA)
 
         if result != EResult.OK:
-            bot.log.fatal('Failed to login: %s', repr(result))
+            bot.log.fatal(f'Failed to login: {repr(result)}')
             raise SystemExit
         bot.client.run_forever()
 
