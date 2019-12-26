@@ -279,12 +279,13 @@ class Development(commands.Cog):
     @git.command()
     async def push(self, ctx, version=__version__, *, commit_msg='None given'):
         await ctx.message.add_reaction('\U000023f3')
-        add = await self.bot.loop.run_in_executor(None, getoutput, f'git add .')
+        add = await self.bot.loop.run_in_executor(None, getoutput, 'git add .')
         commit = await self.bot.loop.run_in_executor(None, getoutput, f'git commit -m "{version}" -m "{commit_msg}"')
-        push = await self.bot.loop.run_in_executor(None, getoutput, f'git push')
-        if not push.endswith('Everything up-to-date'):
-            pass
-        await ctx.message.add_reaction(':tick:626829044134182923')
+        push = await self.bot.loop.run_in_executor(None, getoutput, 'git push')
+        if 'error: failed' in push:
+            await ctx.message.add_reaction(':goodcross:626829085682827266')
+        else:
+            await ctx.message.add_reaction(':tick:626829044134182923')
         out = buttons.Paginator(title=f'GitHub push output', colour=self.bot.color, embed=True, timeout=90,
                                 entries=[f'**Add:** {add}', f'**Commit:** {commit}', f'**Push:** {push}'])
         await out.start(ctx)

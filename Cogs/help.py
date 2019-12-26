@@ -248,7 +248,7 @@ class Help(commands.Cog):
             return
         elif result == 'fatal: not a git repository (or any of the parent directories): .git':
             await owner.send(embed=Embed(
-                title='<:goodcross:626829085682827266> This version wasn\'t cloned from GitHub, which I advise as it '
+                title=':goodcross:626829085682827266 This version wasn\'t cloned from GitHub, which I advise as it '
                       'allows for automatic updates',
                 description='Installing is as simple as typing `git clone '
                             'https://github.com/Gobot1234/tf2-autocord.git Discord` '
