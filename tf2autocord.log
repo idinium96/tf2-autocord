@@ -1,0 +1,8 @@
+2019-12-26 02:31:12,545 - tf2autocord - INFO - Extensions to be loaded are ['dev', 'discord', 'help', 'loader', 'steam']
+2019-12-26 02:31:26,655 - tf2autocord - INFO - Completed loading extensions
+2019-12-26 02:31:26,655 - tf2autocord - INFO - Discord is logging on
+2019-12-26 02:31:26,656 - tf2autocord - INFO - ------------------------------
+2019-12-26 02:31:26,695 - tf2autocord - INFO - Steam is now logging on
+2019-12-26 02:31:26,776 - tf2autocord - INFO - Using automatic
+2019-12-26 02:31:27,758 - tf2autocord - INFO - Connected to: ('162.254.196.83', 27018)
+2019-12-26 02:31:29,791 - tf2autocord - INFO - Logged on as: Gobot1234
