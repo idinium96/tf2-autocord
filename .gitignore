@@ -1,5 +1,7 @@
+*.log
+*.pyc
+
 Login_details/
-tf2autocord.log
 
 Cogs/__pycache__
 Cogs/dev.py
