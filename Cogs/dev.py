@@ -281,7 +281,7 @@ class Development(commands.Cog):
         await ctx.message.add_reaction('\U000023f3')
         add = await self.bot.loop.run_in_executor(None, getoutput, 'git add .')
         commit = await self.bot.loop.run_in_executor(None, getoutput, f'git commit -m "{version}" -m "{commit_msg}"')
-        push = await self.bot.loop.run_in_executor(None, getoutput, 'git push --force')
+        push = await self.bot.loop.run_in_executor(None, getoutput, 'git push')
         if 'error: failed' in push:
             await ctx.message.add_reaction(':goodcross:626829085682827266')
         else:
