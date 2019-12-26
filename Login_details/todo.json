@@ -1,0 +1,20 @@
+[
+    "improve !embed for more fields and error handling",
+    "[Add maths commands](https://discordapp.com/channels/363789104795746305/572114353826955266/652187449975504910)",
+    "Move the content args in !user and !server to the embed title and the time since joining",
+    "Learn Regex: [Regex 101](https://regex101.com), [Visual](https://debuggex.com)",
+    "[Use buttons to paginate entries for !t and epic bot](https://github.com/EvieePy/buttons)",
+    "add todo support to Epic Bot",
+    "add autoresponder to Epic Bot",
+    "fix voting system with the nominate system implemented and a better args order",
+    "?tag subclass context",
+    "check user messages get pinned and acknowledged works",
+    "add random api support to epic bot",
+    "Epic bot custom join and leave messages",
+    "move everything to one file based off try: except: in loader",
+    "Lewis owes \u00a36 and zayn never gave back orange highlighter",
+    "allow server backups to be made",
+    "[Do some sql stuff silly](https://discordapp.com/channels/336642139381301249/448285120634421278/658291488962379776)",
+    "reaction roles to epic bot",
+    "[\ud83e\udd14](https://discordapp.com/channels/336642139381301249/381963689470984203/659460586920345618)"
+]
