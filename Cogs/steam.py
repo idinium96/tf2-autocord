@@ -286,7 +286,7 @@ class Steam(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def scc(self, ctx):
-        """Scc is a worse version of Hackerino's command generator tool"""
+        """SCC - Steam Command Creator is a worse version of Hackerino's command generator tool"""
         ngt1, ngt2, ngt3, ngt4, ngt5, ngt6, ngt7, ngt8, ngt9 = True
         escape = False
 
