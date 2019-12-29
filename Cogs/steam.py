@@ -266,17 +266,22 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def add_raw(self, ctx, *, ending=''):
         """Add lots of items, very volatile `{prefix}add names` is much more likely to be stable"""
-        await ctx.send('Paste all the items you want to add on a new line')
+        await ctx.send('Paste all the items you want to add on a new line, or attach a text file')
         file = await self.bot.wait_for('message', check=self.check)
-        file = file.content
-        open(f'{self.bot.templocation}/raw_add_listings.txt', 'w+').write(file)
-
-        items = open(f'{self.bot.templocation}/raw_add_listings.txt', 'r').read().splitlines()
+        if file.content:
+            items = file.content.splitlines()
+        elif file.attachments:
+            items = await file.attachments[0].read()
+            items = items.decode().splitlines()
+        else:
+            return await ctx.send('What did you send?')
         for item in items:
             self.bot.s_bot.send_message(f'{self.bot.addm}{item}{ending}')
             await sleep(5)
         await ctx.send(f'Done adding {len(items)} items')
-        remove(f'{self.bot.templocation}/raw_add_listings.txt')
+        if file.attachments:
+            await sleep(10)
+            remove(f'{self.bot.templocation}/raw_add_listings.txt')
 
     @commands.command()
     @commands.is_owner()
