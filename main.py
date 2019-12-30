@@ -9,7 +9,7 @@ from traceback import print_exc
 from time import sleep
 
 from discord import ClientException
-from discord.ext.commands import Bot, when_mentioned_or, Cog
+from discord.ext.commands import Bot, when_mentioned_or
 from steam.enums import EResult
 from steam.client import SteamClient
 from steam import guard
@@ -19,9 +19,11 @@ from Login_details import preferences, sensitive_details
 class AutoCord(Bot):
     def __init__(self):
         super().__init__(command_prefix=when_mentioned_or(preferences.command_prefix), case_insensitive=True,
-                         description='Used to manage your tf2automatic bot and send all of Steam messages through Discord')
+                         description='**tf2-autocord** is a Discord bot that manages your tf2automatic bot. As it '
+                                     'sends your Steam messages through Discord by logging into to your Steam '
+                                     'account, then it will then monitor Steam chat messages from tf2automatic then '
+                                     'send them to your Discord bot.')
 
-    @Cog.listener()
     async def on_connect(self):
         bot.dsdone = True
 
@@ -39,6 +41,8 @@ class AutoCord(Bot):
         ch.setFormatter(formatter)
         bot.log.addHandler(fh)
         bot.log.addHandler(ch)
+        bot.log.info('Discord is logging on')
+        bot.log.info('-' * 30)
 
         bot.initial_extensions = [f[:-3] for f in listdir('Cogs') if isfile(join('Cogs', f))]
         print(f'Extensions to be loaded are {bot.initial_extensions}')
@@ -99,12 +103,13 @@ class AutoCord(Bot):
                     bot.sbotresp = message_text
 
         if preferences.cli_login:
-            bot.log.info('Using cli_login')
+            bot.log.info('Logging in using cli_login')
             result = bot.client.cli_login(username=sensitive_details.username, password=sensitive_details.password)
         else:
-            bot.log.info('Using automatic')
+            bot.log.info('Logging in using automatic')
             SA = guard.SteamAuthenticator(sensitive_details.secrets).get_code()
-            result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password, two_factor_code=SA)
+            result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
+                                      two_factor_code=SA)
             if result == EResult.TwoFactorCodeMismatch:
                 sleep(2)
                 result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
@@ -115,12 +120,9 @@ class AutoCord(Bot):
             raise SystemExit
         bot.client.run_forever()
 
-
     def run(self, bot):
         print('Discord is logging on')
         bot.loop.run_until_complete(bot.setup(bot))
-        bot.log.info('Discord is logging on')
-        bot.log.info('-' * 30)
         try:
             bot.steam = bot.loop.run_in_executor(None, self.steam_start, bot)
             bot.launch_time = datetime.utcnow()
@@ -133,6 +135,7 @@ class AutoCord(Bot):
             bot.client = None
         finally:
             raise SystemExit
+
 
 if __name__ == '__main__':
     bot = AutoCord()
