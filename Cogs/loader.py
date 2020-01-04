@@ -20,7 +20,7 @@ class Loader(commands.Cog):
         self.bot = bot
         bot.bot64id = preferences.bots_steam_id
         bot.color = int(preferences.embed_colour, 16)
-        bot.templocation = preferences.path_to_temp
+        bot.files = preferences.files
         bot.prefix = preferences.command_prefix
 
         bot.sbotresp = 0
