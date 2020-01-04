@@ -26,9 +26,9 @@ class HelpCommand(commands.HelpCommand):
         if command.signature and not command.parent:  # checking if it has args and isn't a subcommand
             return f'`{self.clean_prefix}{command.name}` `{command.signature}`'
         if not command.signature and command.parent:  # checking if it has no args and is a subcommand
-            return f'`{command.name}`'
+            return f'**╚╡**`{command.name}`'
         else:  # else assume it has args a signature and is a subcommand
-            return f'`{command.name}` `{command.signature}`'
+            return f'**╚╡**`{command.name}` `{command.signature}`'
 
     def get_command_aliases(self, command):  # this is a custom written method along with all the others below this
         """Method to return a commands aliases"""
