@@ -67,20 +67,13 @@ class Steam(commands.Cog):
         elif self.bot.sbotresp != 0:
             sbotresp = self.bot.sbotresp
             message = sbotresp
-            if sbotresp.startswith('Received offer') or sbotresp.startswith('Sent offer'):
+            if sbotresp.startswith('Trade '):
                 self.bot.trades += 1
-
-                if 'view it here' not in sbotresp and 'marked as declined' in sbotresp:
-                    return
                 if 'accepted' in sbotresp:
                     color = 0x5C7E10
                 else:
                     color = Colour.red()
                 embed = Embed(color=color)
-                if 'view it here' in sbotresp and 'https' in sbotresp:
-                    image_url = sbotresp.split('here ', 1)[1]
-                    message = f'{sbotresp.replace(image_url, "")[:-1]}:'
-                    embed.set_image(url=image_url)
 
                 ids = findall(r'\d+', sbotresp)
                 trade_num = ids[0]
@@ -88,9 +81,12 @@ class Steam(commands.Cog):
                 trader = self.bot.client.get_user(trader_id)
                 message = message.replace(f" #{trade_num}", "")
                 if trader is not None:
-                    message = message.replace(f'offer ({trader_id}) is now ',
-                                              f'{"an offer to" if sbotresp.startswith("Sent") else "an offer from"} {trader.name}, which has now been ')
-                    embed.set_author(name=f'Trade {"to" if sbotresp.startswith("Sent") else "from"}: {trader.name}',
+                    message = message.replace(f'Trade with {trader_id} is',
+                                              f'A trade with {trader.name} has been marked as')
+                    message = message.replace('Summary:', '\n__Summary:__\n')
+                    message = message.replace('Asked:', '• **Asked:**')
+                    message = message.replace('Offered:', '• **Offered:**')
+                    embed.set_author(name=f'Trade from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message

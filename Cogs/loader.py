@@ -8,7 +8,7 @@ from discord.ext import commands
 from Login_details import preferences, sensitive_details
 
 
-__version__ = '1.4.1'
+__version__ = '1.5'
 __author__ = 'Gobot1234#2435'
 
 
@@ -31,7 +31,7 @@ class Loader(commands.Cog):
         bot.trades = 0
 
         bot.updatem = f'{bot.prefix}update name='
-        bot.removem = f'{bot.prefix}remove item='
+        bot.removem = f'{bot.prefix}remove name='
         bot.addm = f'{bot.prefix}add name='
         bot.currenttime = datetime.now().strftime("%d-%m-%Y %H:%M")
         bot.first = True
