@@ -13,8 +13,8 @@ class Steam(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.steam = bot.steam
         self.discordcheck.start()
-        self.bot.trades = 0
         self.first = True
 
     def check(self, m):
@@ -60,15 +60,13 @@ class Steam(commands.Cog):
     @tasks.loop(seconds=1)
     async def discordcheck(self):
         """The task that forwards messages from Steam to Discord"""
-        if self.bot.usermessage != 0:
-            self.first = True
+        if self.bot.user_message != 0:
             self.user_message.cancel()
             self.user_message.start()
         elif self.bot.sbotresp != 0:
             sbotresp = self.bot.sbotresp
             message = sbotresp
             if sbotresp.startswith('Trade '):
-                self.bot.trades += 1
                 if 'accepted' in sbotresp:
                     color = 0x5C7E10
                 else:
@@ -78,14 +76,14 @@ class Steam(commands.Cog):
                 ids = findall(r'\d+', sbotresp)
                 trade_num = ids[0]
                 trader_id = int(ids[1])
-                trader = self.bot.client.get_user(trader_id)
+                trader = self.steam.get_user(trader_id)
                 message = message.replace(f" #{trade_num}", "")
                 if trader is not None:
                     message = message.replace(f'Trade with {trader_id} is',
                                               f'A trade with {trader.name} has been marked as')
-                    message = message.replace('Summary:', '\n__Summary:__\n')
-                    message = message.replace('Asked:', '• **Asked:**')
-                    message = message.replace('Offered:', '• **Offered:**')
+                    message = message.replace('Summary:', '\n__Summary:__')
+                    message = message.replace('Asked:', '- **Asked:**')
+                    message = message.replace('Offered:', '- **Offered:**')
                     embed.set_author(name=f'Trade from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
@@ -106,7 +104,7 @@ class Steam(commands.Cog):
                              url=self.bot.messager.steam_id.community_url,
                              icon_url=self.bot.messager.get_avatar_url())
         embed.add_field(name='User Message:',
-                        value=f'You have a message from a user:\n> {self.bot.usermessage.split(":", 1)[1]}'
+                        value=f'You have a message from a user:\n> {self.bot.user_message.split(":", 1)[1]}'
                               f'\nType {self.bot.prefix}acknowledged if you have dealt with this', inline=False)
         self.bot.message = await self.bot.owner.send(embed=embed)
         if self.first:
@@ -129,21 +127,6 @@ class Steam(commands.Cog):
         except HTTPException:
             pass
         await ctx.send('Acknowledged the user\'s message')
-
-    @commands.is_owner()
-    @commands.command(aliases=['reconnect', 'logged_on', 'online'])
-    async def relogin(self, ctx):
-        """Attempt to reconnect to Steam if you logged out"""
-        if self.bot.client.logged_on:
-            await ctx.send(f'You are already logged in as {self.bot.client.user.name}')
-        else:
-            await ctx.send("Reconnecting...")
-            async with ctx.typing():
-                if self.bot.client.relogin_available:
-                    self.bot.client.reconnect(maxdelay=30)
-                    await ctx.send('Reconnected to Steam')
-                else:
-                    await ctx.send('Try again later or restart the program')
 
     @commands.group(invoke_without_command=True)
     @commands.is_owner()
@@ -239,7 +222,7 @@ class Steam(commands.Cog):
     async def backpack(self, ctx):
         """Get a link to your inventory and your bot's"""
         embed = Embed(title='Backpack.tf', url='https://backpack.tf/',
-                      description=f'[Your backpack](https://backpack.tf/profiles/{self.bot.client.user.steam_id})\n'
+                      description=f'[Your backpack](https://backpack.tf/profiles/{self.steam.user.steam_id})\n'
                                   f'[Your bot\'s backpack](https://backpack.tf/profiles/{self.bot.bot64id})',
                       color=0x58788F)
         embed.set_thumbnail(url='https://backpack.tf/images/tf-icon.png')
@@ -249,7 +232,7 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def cashout(self, ctx):
         """Want to cash-out all your listings? Be warned this command is quite difficult to fix once you run it"""
-        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
+        listingsjson = loads(open(f'{self.bot.files}/listings.json', 'r').read())
         await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
         for value in listingsjson:
             command = f'{self.bot.updatem}{value["name"]}&intent=sell'
@@ -277,7 +260,7 @@ class Steam(commands.Cog):
         await ctx.send(f'Done adding {len(items)} items')
         if file.attachments:
             await sleep(10)
-            remove(f'{self.bot.templocation}/raw_add_listings.txt')
+            remove(f'{self.bot.files}/raw_add_listings.txt')
 
     @commands.command()
     @commands.is_owner()

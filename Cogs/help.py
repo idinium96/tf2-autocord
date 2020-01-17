@@ -229,11 +229,13 @@ class Help(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.githubupdate.start()
-        self.bot.launch_time = datetime.utcnow()
+        self.steam = bot.steam
+
         self._original_help_command = bot.help_command
         bot.help_command = HelpCommand()
         bot.help_command.cog = self
+
+        self.githubupdate.start()
 
     def cog_unload(self):
         self.githubupdate.cancel()
@@ -277,7 +279,8 @@ class Help(commands.Cog):
                 if choice == 'yes' or choice == 'y':
                     await owner.send(
                         'Updating from the latest GitHub push\nYou will need to restart for the update to take effect')
-                    reset = await self.bot.loop.run_in_executor(None, getoutput, f'cd {getcwd()} & git reset --hard HEAD')
+                    reset = await self.bot.loop.run_in_executor(None, getoutput,
+                                                                f'cd {getcwd()} & git reset --hard HEAD')
                     await owner.send(f'```bash\n{reset}```')
                     update = await self.bot.loop.run_in_executor(None, getoutput, f'git pull {getcwd()}')
                     await owner.send(f'```bash\n{update}```')
@@ -377,8 +380,8 @@ class Help(commands.Cog):
         end = perf_counter()
         m_duration = (end - start) * 1000
 
-        if self.bot.client.logged_on:
-            message = f'<:tick:626829044134182923> You are logged in as: `{self.bot.client.user.name}`'
+        if self.steam.logged_on:
+            message = f'<:tick:626829044134182923> You are logged in as: `{self.steam.user.name}`'
         else:
             message = '<:goodcross:626829085682827266> You aren\'t logged into steam'
 
@@ -389,22 +392,6 @@ class Help(commands.Cog):
         embed.add_field(name=f'Message latency is:', value=f'`{m_duration:.2f}` ms.')
 
         await m.edit(embed=embed)
-
-    @commands.command()
-    @commands.is_owner()
-    async def togpremium(self, ctx):
-        """Used to remind yourself when your bp.tf premium will run out, probably not very useful"""
-        if self.bot.togglepremium == 0:
-            self.bot.togglepremium = 1
-            await ctx.send(
-                'Premium Alerts now toggled on (this will send you a message when 1 months and 29 days have gone past)')
-        elif self.bot.togglepremium == 1:
-            self.bot.togglepremium = 0
-            await ctx.send('Premium Alerts now toggled off')
-
-        while self.bot.togglepremium == 1:
-            await sleep((60 * 60 * 24 * 30 * 2) - (60 * 60 * 24))
-            await ctx.send('You may wish to renew your premium subscription')
 
     @commands.command(aliases=['warm-my-insides'])
     @commands.is_owner()
