@@ -29,7 +29,6 @@ class AutoCord(Bot):
 
     async def setup(self, bot):
         bot.dsdone = False
-        # create logger with 'spam_application'
         bot.log = getLogger('tf2autocord')
         bot.log.setLevel(DEBUG)
         fh = FileHandler(filename='tf2autocord.log', encoding='utf-8', mode='w')
@@ -60,79 +59,82 @@ class AutoCord(Bot):
     def steam_start(self, bot):
         print('Steam is now logging on')
         bot.log.info('Steam is now logging on')
-        bot.client = SteamClient()
-        bot.client.set_credential_location('Login_details')  # where to store sentry files and other stuff  
+        bot.steam = SteamClient()
+        bot.steam.set_credential_location('Login_details')  # where to store sentry files and other stuff  
 
-        @bot.client.on('error')
+        @bot.steam.on('error')
         def handle_error(result):
             bot.log.error(f'Logon result: {repr(result)}')
 
-        @bot.client.on('connected')
+        @bot.steam.on('connected')
         def handle_connected():
-            bot.log.info(f'Connected to: {bot.client.current_server_addr}')
+            bot.log.info(f'Connected to: {bot.steam.current_server_addr}')
 
-        @bot.client.on('reconnect')
+        @bot.steam.on('reconnect')
         def handle_reconnect(delay):
-            if bot.client is None:
+            if bot.steam is None:
                 raise SystemExit
             bot.log.info(f'Reconnect in {delay}...')
 
-        @bot.client.on('disconnected')
+        @bot.steam.on('disconnected')
         def handle_disconnect():
             bot.log.warning('Disconnected.')
-            if bot.client is None:
+            if bot.steam is None:
                 raise SystemExit
-            if bot.client.relogin_available:
+            if bot.steam.relogin_available:
                 bot.log.info('Reconnecting...')
-                bot.client.reconnect(maxdelay=30)
+                bot.steam.reconnect(maxdelay=30)
 
-        @bot.client.on('logged_on')
+        @bot.steam.on('logged_on')
         def handle_after_logon():
-            bot.s_bot = bot.client.get_user(bot.bot64id)
+            bot.s_bot = bot.steam.get_user(bot.bot64id)
             bot.logged_on = True
-            bot.log.info(f'Logged on as: {bot.client.user.name}')
+            bot.log.info(f'Logged on as: {bot.steam.user.name}')
 
-        @bot.client.on('chat_message')
+        @bot.steam.on('chat_message')
         def handle_message(user, message_text):
             if user.steam_id == bot.bot64id:
                 if message_text.startswith('Message from'):
-                    bot.usermessage = message_text
-                elif bot.current_time.split()[1] == '23:59' and "You've made" in message_text:
-                    bot.graphplots = message_text
+                    bot.user_message = message_text
+                elif bot.current_time.split()[1] == '23:59' \
+                        and message_text.startswith("You've made") \
+                        or message_text.startswith("Trades today"):
+                    bot.daily = message_text
+
                 else:
                     bot.sbotresp = message_text
 
         if preferences.cli_login:
             bot.log.info('Logging in using cli_login')
-            result = bot.client.cli_login(username=sensitive_details.username, password=sensitive_details.password)
+            result = bot.steam.cli_login(username=sensitive_details.username, password=sensitive_details.password)
         else:
             bot.log.info('Logging in using automatic')
             SA = guard.SteamAuthenticator(sensitive_details.secrets).get_code()
-            result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
+            result = bot.steam.login(username=sensitive_details.username, password=sensitive_details.password,
                                       two_factor_code=SA)
             if result == EResult.TwoFactorCodeMismatch:
                 sleep(2)
-                result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
+                result = bot.steam.login(username=sensitive_details.username, password=sensitive_details.password,
                                           two_factor_code=SA)
 
         if result != EResult.OK:
             bot.log.fatal(f'Failed to login: {repr(result)}')
             raise SystemExit
-        bot.client.run_forever()
+        bot.steam.run_forever()
 
     def run(self, bot):
         print('Discord is logging on')
         bot.loop.run_until_complete(bot.setup(bot))
         try:
-            bot.steam = bot.loop.run_in_executor(None, self.steam_start, bot)
+            bot._steam = bot.loop.run_in_executor(None, self.steam_start, bot)
             bot.launch_time = datetime.utcnow()
             super().run(sensitive_details.token)
         except RuntimeError:
             bot.log.info('Logging out')
-            bot.client = None
+            bot.steam = None
         except KeyboardInterrupt:
             bot.log.info('Logging out')
-            bot.client = None
+            bot.steam = None
         finally:
             raise SystemExit
 
