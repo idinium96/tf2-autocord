@@ -9,13 +9,13 @@ from discord.ext import commands, tasks
 
 
 class Steam(commands.Cog):
-    """Commands that are mainly owner restricted and only work if you are logged in to your steam account"""
+    """Commands that are mainly owner restricted and only work if you are logged in to your Steam account"""
 
     def __init__(self, bot):
         self.bot = bot
-        self.steam = bot.steam
-        self.discordcheck.start()
         self.first = True
+
+        self.discordcheck.start()
 
     def check(self, m):
         return m.author == self.bot.owner
@@ -60,13 +60,14 @@ class Steam(commands.Cog):
     @tasks.loop(seconds=1)
     async def discordcheck(self):
         """The task that forwards messages from Steam to Discord"""
-        if self.bot.user_message != 0:
+        if self.bot.usermessage != 0:
             self.user_message.cancel()
             self.user_message.start()
         elif self.bot.sbotresp != 0:
             sbotresp = self.bot.sbotresp
             message = sbotresp
             if sbotresp.startswith('Trade '):
+                self.bot.trades += 1
                 if 'accepted' in sbotresp:
                     color = 0x5C7E10
                 else:
@@ -76,7 +77,7 @@ class Steam(commands.Cog):
                 ids = findall(r'\d+', sbotresp)
                 trade_num = ids[0]
                 trader_id = int(ids[1])
-                trader = self.steam.get_user(trader_id)
+                trader = self.bot.client.get_user(trader_id)
                 message = message.replace(f" #{trade_num}", "")
                 if trader is not None:
                     message = message.replace(f'Trade with {trader_id} is',
@@ -90,10 +91,11 @@ class Steam(commands.Cog):
                 embed.description = message
                 embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")}',
                                  icon_url=self.bot.user.avatar_url)
+                await self.bot.channel.send(embed=embed)
             else:
                 embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
                 embed.set_footer(text=datetime.now().strftime('%c'), icon_url=self.bot.user.avatar_url)
-            await self.bot.owner.send(embed=embed)
+                await self.bot.owner.send(embed=embed)
             self.bot.sbotresp = 0
 
     @tasks.loop(minutes=30)
@@ -120,8 +122,9 @@ class Steam(commands.Cog):
         """Used to acknowledge a user message
 
         This is so user messages don't get lost in the channel history"""
-        self.bot.usermessage = 0
+        self.bot.user_message = 0
         self.user_message.stop()
+        self.first = True
         try:
             await self.bot.message.unpin()
         except HTTPException:
@@ -222,7 +225,7 @@ class Steam(commands.Cog):
     async def backpack(self, ctx):
         """Get a link to your inventory and your bot's"""
         embed = Embed(title='Backpack.tf', url='https://backpack.tf/',
-                      description=f'[Your backpack](https://backpack.tf/profiles/{self.steam.user.steam_id})\n'
+                      description=f'[Your backpack](https://backpack.tf/profiles/{self.bot.client.user.steam_id})\n'
                                   f'[Your bot\'s backpack](https://backpack.tf/profiles/{self.bot.bot64id})',
                       color=0x58788F)
         embed.set_thumbnail(url='https://backpack.tf/images/tf-icon.png')
@@ -232,7 +235,7 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def cashout(self, ctx):
         """Want to cash-out all your listings? Be warned this command is quite difficult to fix once you run it"""
-        listingsjson = loads(open(f'{self.bot.files}/listings.json', 'r').read())
+        listingsjson = loads(open(f'{self.bot.templocation}/listings.json', 'r').read())
         await ctx.send(f'Cashing out {len(listingsjson)} items, this may take a while')
         for value in listingsjson:
             command = f'{self.bot.updatem}{value["name"]}&intent=sell'
@@ -260,7 +263,7 @@ class Steam(commands.Cog):
         await ctx.send(f'Done adding {len(items)} items')
         if file.attachments:
             await sleep(10)
-            remove(f'{self.bot.files}/raw_add_listings.txt')
+            remove(f'{self.bot.templocation}/raw_add_listings.txt')
 
     @commands.command()
     @commands.is_owner()
@@ -474,7 +477,9 @@ class Steam(commands.Cog):
                                     while 1:
                                         suffix = await self.bot.wait_for('message', check=self.check)
                                         autoprice = suffix.content.lower()
-                                        if autoprice == 't' or autoprice == 'true' or autoprice == 'y' or autoprice == 'yes' or autoprice == 'f' or autoprice == 'false' or autoprice == 'n' or autoprice == 'no':
+                                        if autoprice == 't' or autoprice == 'true' or autoprice == 'y' \
+                                                or autoprice == 'yes' or autoprice == 'f' or autoprice == 'false' \
+                                                or autoprice == 'n' or autoprice == 'no':
                                             steamcommand += f'&autoprice={autoprice}'
                                             break
                                         else:
