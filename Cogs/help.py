@@ -1,4 +1,4 @@
-om asyncio import TimeoutError, sleep
+from asyncio import TimeoutError, sleep
 from datetime import datetime
 from os import getcwd
 from subprocess import getoutput
