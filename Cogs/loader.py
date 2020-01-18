@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from Login_details import preferences, sensitive_details
 
 
-__version__ = '1.5.2'
+__version__ = '1.5.3'
 __author__ = 'Gobot1234#2435'
 
 
@@ -19,16 +19,14 @@ class Loader(commands.Cog):
     def __init__(self, bot):
         """Setting all of your bot vars to be used by other cogs/commands"""
         self.bot = bot
-        self.steam = bot.steam
         bot.bot64id = preferences.bots_steam_id
         bot.color = int(preferences.embed_colour, 16)
         bot.files = preferences.files
         bot.prefix = preferences.command_prefix
 
         bot.sbotresp = 0
-        bot.usermessage = 0
+        bot.user_message = 0
         bot.logged_on = 0
-        bot.togglepremium = 0
         bot.dsdone = 0
 
         bot.updatem = f'{bot.prefix}update name='
@@ -36,7 +34,6 @@ class Loader(commands.Cog):
         bot.addm = f'{bot.prefix}add name='
         bot.currenttime = datetime.now().strftime("%d-%m-%Y %H:%M")
         bot.first = True
-        self.check_if_logged_in.start()
 
     def cog_unload(self):
         self.check_if_logged_in.cancel()
@@ -71,12 +68,13 @@ class Loader(commands.Cog):
             except FileNotFoundError:
                 pass
             await self.bot.channel.send('I\'m online both Steam and Discord dealing with your Steam messages')
+            await sleep(60)
 
     @tasks.loop(minutes=30)
     async def check_if_logged_in(self):
-        if not self.steam.logged_on:
+        if not self.bot.client.logged_on:
             self.bot.log.info('Automatically restarting as I have been logged out of Steam')
-            self.steam = None
+            self.bot.client = None
             await self.bot.session.close()
             await self.bot.close()
             raise SystemExit
