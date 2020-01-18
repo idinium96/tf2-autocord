@@ -67,7 +67,6 @@ class Steam(commands.Cog):
             sbotresp = self.bot.sbotresp
             message = sbotresp
             if sbotresp.startswith('Trade '):
-                self.bot.trades += 1
                 if 'accepted' in sbotresp:
                     color = 0x5C7E10
                 else:
