@@ -59,39 +59,39 @@ class AutoCord(Bot):
     def steam_start(self, bot):
         print('Steam is now logging on')
         bot.log.info('Steam is now logging on')
-        bot.steam = SteamClient()
-        bot.steam.set_credential_location('Login_details')  # where to store sentry files and other stuff  
+        bot.client = SteamClient()
+        bot.client.set_credential_location('Login_details')  # where to store sentry files and other stuff  
 
-        @bot.steam.on('error')
+        @bot.client.on('error')
         def handle_error(result):
             bot.log.error(f'Logon result: {repr(result)}')
 
-        @bot.steam.on('connected')
+        @bot.client.on('connected')
         def handle_connected():
-            bot.log.info(f'Connected to: {bot.steam.current_server_addr}')
+            bot.log.info(f'Connected to: {bot.client.current_server_addr}')
 
-        @bot.steam.on('reconnect')
+        @bot.client.on('reconnect')
         def handle_reconnect(delay):
-            if bot.steam is None:
+            if bot.client is None:
                 raise SystemExit
             bot.log.info(f'Reconnect in {delay}...')
 
-        @bot.steam.on('disconnected')
+        @bot.client.on('disconnected')
         def handle_disconnect():
             bot.log.warning('Disconnected.')
-            if bot.steam is None:
+            if bot.client is None:
                 raise SystemExit
-            if bot.steam.relogin_available:
+            if bot.client.relogin_available:
                 bot.log.info('Reconnecting...')
-                bot.steam.reconnect(maxdelay=30)
+                bot.client.reconnect(maxdelay=30)
 
-        @bot.steam.on('logged_on')
+        @bot.client.on('logged_on')
         def handle_after_logon():
-            bot.s_bot = bot.steam.get_user(bot.bot64id)
+            bot.s_bot = bot.client.get_user(bot.bot64id)
             bot.logged_on = True
-            bot.log.info(f'Logged on as: {bot.steam.user.name}')
+            bot.log.info(f'Logged on as: {bot.client.user.name}')
 
-        @bot.steam.on('chat_message')
+        @bot.client.on('chat_message')
         def handle_message(user, message_text):
             if user.steam_id == bot.bot64id:
                 if message_text.startswith('Message from'):
@@ -106,21 +106,21 @@ class AutoCord(Bot):
 
         if preferences.cli_login:
             bot.log.info('Logging in using cli_login')
-            result = bot.steam.cli_login(username=sensitive_details.username, password=sensitive_details.password)
+            result = bot.client.cli_login(username=sensitive_details.username, password=sensitive_details.password)
         else:
             bot.log.info('Logging in using automatic')
             SA = guard.SteamAuthenticator(sensitive_details.secrets).get_code()
-            result = bot.steam.login(username=sensitive_details.username, password=sensitive_details.password,
+            result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
                                       two_factor_code=SA)
             if result == EResult.TwoFactorCodeMismatch:
                 sleep(2)
-                result = bot.steam.login(username=sensitive_details.username, password=sensitive_details.password,
+                result = bot.client.login(username=sensitive_details.username, password=sensitive_details.password,
                                           two_factor_code=SA)
 
         if result != EResult.OK:
             bot.log.fatal(f'Failed to login: {repr(result)}')
             raise SystemExit
-        bot.steam.run_forever()
+        bot.client.run_forever()
 
     def run(self, bot):
         print('Discord is logging on')
@@ -131,10 +131,10 @@ class AutoCord(Bot):
             super().run(sensitive_details.token)
         except RuntimeError:
             bot.log.info('Logging out')
-            bot.steam = None
+            bot.client = None
         except KeyboardInterrupt:
             bot.log.info('Logging out')
-            bot.steam = None
+            bot.client = None
         finally:
             raise SystemExit
 
