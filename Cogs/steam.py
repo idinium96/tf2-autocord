@@ -60,7 +60,7 @@ class Steam(commands.Cog):
     @tasks.loop(seconds=1)
     async def discordcheck(self):
         """The task that forwards messages from Steam to Discord"""
-        if self.bot.usermessage != 0:
+        if self.bot.user_message != 0:
             self.user_message.cancel()
             self.user_message.start()
         elif self.bot.sbotresp != 0:
