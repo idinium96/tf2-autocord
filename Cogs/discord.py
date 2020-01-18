@@ -24,9 +24,9 @@ class Discord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.location = 'Login_details\\graph.png'
-        self.profitgraphing.start()
-        self.process = Process()
         self.accepted_files = ('pricelist', 'pricelist.json', 'polldata', 'polldata.json')
+
+        self.profitgraphing.start()
 
     def cog_unload(self):
         self.profitgraphing.cancel()
@@ -70,18 +70,16 @@ class Discord(commands.Cog):
         if self.bot.current_time.split()[1] == '23:59':
             self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
             await sleep(2)
-            async with self.bot.session.get('https://api.prices.tf/items/5021;6?src=bptf') as r:
-                r = await r.json()
-                key_value = r["sell"]["metal"]
+            async with self.bot.session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
+                response = await response.json()
+                key_value = response["sell"]["metal"]
 
-            tod_profit = search(r'(made (.*?) today)', self.bot.daily).group(1)[5:-6]
-            tot_profit = search(r'(today, (.*?) in)', self.bot.daily).group(1)[7:-3]
+            tod_profit = search(r'(made (.*?) today)', self.bot.graphplots).group(1)[5:-6]
+            tot_profit = search(r'(today, (.*?) in)', self.bot.graphplots).group(1)[7:-3]
             try:
-                pred_profit = search(r'(\((.*?) more)', self.bot.daily).group(1)[1:-5]
+                pred_profit = search(r'(\((.*?) more)', self.bot.graphplots).group(1)[1:-5]
             except:
                 pred_profit = 0
-
-            self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
 
             fixed = []
             for to_fix in [tod_profit, tot_profit, pred_profit]:
@@ -99,14 +97,11 @@ class Discord(commands.Cog):
                     total = round(ref / key_value, 2)
                 fixed.append(total)
 
-            if self.daily.startswith("You've made"):
-                await sleep(5)
-            trades = int(self.daily.split(': ')[1])
-
             tod_profit, tot_profit, pred_profit = fixed
-            graph_data = [tod_profit, tot_profit, pred_profit, trades]
+            graphdata = [tod_profit, tot_profit, pred_profit, self.bot.trades]
+            tempprofit = {self.bot.current_time.split()[0]: graphdata}
             data = load(open('Login_details\\profit_graphing.json'))
-            data[self.bot.current_time.split()[0]] = graph_data
+            data.update(tempprofit)
             dump(data, open('Login_details\\profit_graphing.json', 'w'), indent=4)
             await sleep(120)
 
@@ -157,7 +152,7 @@ class Discord(commands.Cog):
 
         eg. `{prefix}get history` (if you don't type anything you can see the files you can request)"""
         if file is None:
-            return await ctx.send(f'You can request these files `{self.acceptedfiles}`')
+            return await ctx.send(f'You can request these files `{self.accepted_files}`')
         file = file.lower()
         if file in self.accepted_files:
             file = f'/{file}'
@@ -175,7 +170,7 @@ class Discord(commands.Cog):
     @commands.command()
     async def classifieds(self, ctx):
         """Check your number of listings and get a easy read version of them in a text file"""
-        file = load(open(f'{self.bot.files}/listings.json', 'r'))
+        file = load(open(f'{self.bot.files}/pricelist.json', 'r'))
         listings = '\n'.join([listing['name'] for listing in file])
         open('listings.txt', 'w+').write(listings)
         f = File("listings.txt", filename="listings.txt")
@@ -187,7 +182,6 @@ class Discord(commands.Cog):
     async def info(self, ctx):
         """Get some interesting info about the bot"""
         uptime = await self.get_uptime()
-        memory_usage = self.process.memory_full_info().uss
         rawram = virtual_memory()
         updateable = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
 
@@ -202,8 +196,7 @@ class Discord(commands.Cog):
                       description=f'Commands loaded & Cogs loaded: `{len(self.bot.commands)}` commands loaded, '
                                   f'`{len(self.bot.cogs)}` cogs loaded :gear:', colour=self.bot.color)
         embed.add_field(name="<:compram:622622385182474254> RAM Usage",
-                        value=f'Using `{naturalsize(rawram[3])}` / `{naturalsize(rawram[0])}` `{round(rawram[3] / rawram[0] * 100, 2)}`% '
-                              f'of your physical memory and `{naturalsize(memory_usage)}` of which unique to this process.')
+                        value=f'Using `{naturalsize(rawram[3])}` / `{naturalsize(rawram[0])}` `{round(rawram[3] / rawram[0] * 100, 2)}`%')
         embed.add_field(name="<:cpu:622621524418887680> CPU Usage", value=f'`{cpu_percent()}`% used')
         embed.add_field(name=f'{self.bot.user.name} has been online for:', value=uptime)
         embed.add_field(name='<:tf2autocord:624658299224326148> tf2-autocord Version',
@@ -253,8 +246,7 @@ class Discord(commands.Cog):
                         _sorted[profit] = [trade['name'], human_time_to_sell]
             except KeyError:
                 pass
-        checker = buttons.Paginator(title='History checker', colour=self.bot.color, embed=True, timeout=90,
-                                    use_defaults=True,
+        checker = buttons.Paginator(title='History checker', colour=self.bot.color, embed=True, timeout=90, use_defaults=True,
                                     entries=[f'**{index}.** {trade[1][0]}, was sold {trade[1][1]} for '
                                              f'{floor((trade[0] / 9) * 100) / 100 if trade[0] > 0 else -1 * floor(abs(trade[0]) / 9 * 100) / 100} '
                                              f'ref {"profit" if trade[0] > 0 else "loss"}' for index, trade in
