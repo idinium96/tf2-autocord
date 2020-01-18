@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from discord import Embed, File, __version__ as d_version
 from discord.ext import commands, tasks, buttons
 from humanize import naturalsize
-from psutil import Process, virtual_memory, cpu_percent
+from psutil import virtual_memory, cpu_percent
 from steam import __version__ as s_version
 
 from .loader import __version__ as l_version
