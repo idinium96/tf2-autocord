@@ -135,6 +135,12 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
 
+            elif sbotresp.startswith('🧾There is '):
+                if 'can review' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+
             elif sbotresp.startswith('❌There are '):
                 if 'no active offers' in sbotresp:
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
