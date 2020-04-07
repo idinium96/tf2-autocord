@@ -100,8 +100,9 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                 elif 'waiting for review' in sbotresp:
+                    ownerID = self.bot.Guild.owner_id
                     embed = Embed(color=self.bot.color)
-                    ownerID = str(self.bot.Guild.owner_id)
+                    
                     ids = findall(r'\d+', sbotresp)
                     offer_num = ids[0]
                     trader_id = int(ids[1])
