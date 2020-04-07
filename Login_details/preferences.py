@@ -16,3 +16,5 @@ files = '/home/ubuntu/tf2bot/MaiBot/files/zudin100'
 channel_id_live_trades = 666807591892025388
 channel_id_trades_statistic = 681141901835239451
 channel_id_offer_review = 696875976918827028
+channel_id_polldata = 697107665075044453
+channel_id_pricelist = 697113570315337831
