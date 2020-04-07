@@ -151,7 +151,7 @@ class Discord(commands.Cog):
     async def classifieds(self, ctx):
         """Check your number of listings and get a easy read version of them in a text file"""
         file = load(open(f'{self.bot.files}/pricelist.json', 'r'))
-        listings = '\n'.join([listing['name'] for listing in file])
+        listings = '\n'.join([listing['sku'] for listing in file])
         open('listings.txt', 'w+').write(listings)
         f = File("listings.txt", filename="listings.txt")
         await ctx.send(f'You have {len(file)} listings, view them here:', file=f)
