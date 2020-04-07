@@ -44,7 +44,9 @@ class Loader(commands.Cog):
         finally checking if you are logged onto steam"""
         if self.bot.first:
             self.bot.owner = (await self.bot.application_info()).owner
-            self.bot.channel = self.bot.get_channel(preferences.channel_id) or self.bot.owner
+            self.bot.channel_live_trades = self.bot.get_channel(preferences.channel_id_live_trades) or self.bot.owner
+            self.bot.channel_trades_statistic = self.bot.get_channel(preferences.channel_id_trades_statistic) or self.bot.owner
+            self.bot.channel_offer_review = self.bot.get_channel(preferences.channel_id_offer_review) or self.bot.owner
             await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__}',
                                                              type=ActivityType.watching))
             print('-' * 30, f'\n{self.bot.user.name} is ready')
