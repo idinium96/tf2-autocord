@@ -4,6 +4,8 @@
 bots_steam_id = 76561198053911511
 # Your command prefix can either be ! ? . or / as they are used by tf2automatic
 command_prefix = '!'
+# Your Discord user ID
+owner_id = 527868979600031765
 # Change this to either True or False, based on if you have your steam secrets
 cli_login = False
 # A hex colour cant have the # at the start eg. 2E3BAD
