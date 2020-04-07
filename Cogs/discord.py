@@ -26,10 +26,10 @@ class Discord(commands.Cog):
         self.location = 'Login_details\\graph.png'
         self.accepted_files = ('pricelist', 'pricelist.json', 'polldata', 'polldata.json')
 
-        self.profitgraphing.start()
+        self.statsAndpolldata.start()
 
     def cog_unload(self):
-        self.profitgraphing.cancel()
+        self.statsAndpolldata.cancel()
 
     def gen_graph(self, points: int = None):
         plt.close()  # close the old session
