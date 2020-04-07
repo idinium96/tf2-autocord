@@ -1,5 +1,5 @@
 *.log
 *.pyc
 
-Login_details/
+Login_details/sensitive_details.py
 Cogs/dev.py
