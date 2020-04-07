@@ -67,9 +67,9 @@ class Discord(commands.Cog):
         """A task that at every 6 hours will get trade statistic
         It will convert all your values to keys"""
         if self.bot.current_time.split()[1] in ['23:59', '05:59', '11:59', '17:59']:
-        	self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
             await sleep(60)
-
+    
     @commands.command()
     @commands.is_owner()
     async def last(self, ctx, days: int = None):
