@@ -122,6 +122,7 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
+                    await self.bot.channel_offer_review.send('@IdiNium')
                 
             elif sbotresp.startswith('All trades '):
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
