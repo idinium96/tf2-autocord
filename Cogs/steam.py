@@ -101,7 +101,7 @@ class Steam(commands.Cog):
                     await self.bot.owner.send(embed=embed)
                 else:
                     embed = Embed(color=self.bot.color)
-                    myid = '<@527868979600031765>'
+                    myid = '@527868979600031765'
                     ids = findall(r'\d+', sbotresp)
                     offer_num = ids[0]
                     trader_id = int(ids[1])
@@ -122,7 +122,7 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-                    await self.bot.send_message(message.channel_offer_review, ' ' % myid)
+                    await self.bot.send_message(channel_offer_review, '- ' % myid)
                 
             elif sbotresp.startswith('All trades '):
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
