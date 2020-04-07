@@ -69,7 +69,6 @@ class Loader(commands.Cog):
                 remove('channel.txt')
             except FileNotFoundError:
                 pass
-            await self.bot.channel.send('I\'m online both Steam and Discord dealing with your Steam messages')
             await sleep(60)
 
     @tasks.loop(minutes=30)
