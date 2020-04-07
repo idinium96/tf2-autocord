@@ -101,7 +101,7 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                 else:
                     embed = Embed(color=self.bot.color)
-                    
+                    ownerID = self.bot.owner_id
                     ids = findall(r'\d+', sbotresp)
                     offer_num = ids[0]
                     trader_id = int(ids[1])
@@ -122,7 +122,7 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-                    await self.bot.channel_offer_review.send('<@!527868979600031765>, check this!')
+                    await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
                 
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
