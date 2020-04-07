@@ -16,3 +16,5 @@ files = '/home/ubuntu/tf2bot/NezukoBot/files/idin30'
 channel_id_live_trades = 666807591892025388
 channel_id_trades_statistic = 681141901835239451
 channel_id_offer_review = 696875947391057970
+channel_id_polldata = 697107665075044453
+channel_id_pricelist = 697113570315337831

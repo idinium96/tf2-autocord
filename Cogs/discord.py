@@ -26,10 +26,10 @@ class Discord(commands.Cog):
         self.location = 'Login_details\\graph.png'
         self.accepted_files = ('pricelist', 'pricelist.json', 'polldata', 'polldata.json')
 
-        self.profitgraphing.start()
+        self.statsAndpolldata.start()
 
     def cog_unload(self):
-        self.profitgraphing.cancel()
+        self.statsAndpolldata.cancel()
 
     def gen_graph(self, points: int = None):
         plt.close()  # close the old session
@@ -63,12 +63,25 @@ class Discord(commands.Cog):
         return f'`{days}d, {hours}h, {minutes}m, {seconds}s`'
 
     @tasks.loop(seconds=20)
-    async def profitgraphing(self):
-        """A task that at every 6 hours will get trade statistic"""
+    async def statsAndpolldata(self):
+        """A task that at every 6 hours UTC will get trade statistic and
+        send the polldata.json and pricelist file as backup every 00:01 and 00:02 UTC, respectively"""
         self.bot.current_time = datetime.now().strftime("%d-%m-%Y %H:%M")
         if self.bot.current_time.split()[1] in ['23:59', '05:59', '11:59', '17:59']:
             self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
             await sleep(60)
+        elif self.bot.current_time.split()[1] == '00:01':
+            botname = self.bot.user.name
+            file = f'{self.bot.files}/polldata.json'
+            file = File(file, filename=f'polldata-{botname}-{datetime.now().strftime("%Y%m%d%H%M")}.json')
+            await self.bot.channel_polldata.send(f'{botname}\'s Daily polldata backup', file=file)
+            await sleep(20)
+        elif self.bot.current_time.split()[1] == '00:02':
+            botname = self.bot.user.name
+            file = f'{self.bot.files}/pricelist.json'
+            file = File(file, filename=f'pricelist-{botname}-{datetime.now().strftime("%Y%m%d%H%M")}.json')
+            await self.bot.channel_pricelist.send(f'{botname}\'s Daily pricelist backup', file=file)
+            await sleep(20)
     
     @commands.command()
     @commands.is_owner()
