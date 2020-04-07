@@ -7,6 +7,7 @@ from re import findall
 from discord import Colour, Embed, HTTPException
 from discord.ext import commands, tasks
 
+from Login_details import preferences
 
 class Steam(commands.Cog):
     """Commands that are mainly owner restricted and only work if you are logged in to your Steam account"""
@@ -101,7 +102,7 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                 else:
                     embed = Embed(color=self.bot.color)
-                    ownerID = self.bot.owner_id
+                    ownerID = preferences.owner_id
                     ids = findall(r'\d+', sbotresp)
                     offer_num = ids[0]
                     trader_id = int(ids[1])
