@@ -273,7 +273,7 @@ class Steam(commands.Cog):
             await ctx.send(f"Sent `{message}` to the bot")
             await sleep(3)
 
-        @commands.command()
+    @commands.command()
     @commands.is_owner()
     async def accepttrade(self, ctx, *, offerID):
         """accept trade offer that is in review
