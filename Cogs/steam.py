@@ -99,7 +99,7 @@ class Steam(commands.Cog):
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-                else:
+                elif 'waiting for review' in sbotresp:
                     embed = Embed(color=self.bot.color)
                     ownerID = str(self.bot.Guild.owner_id)
                     ids = findall(r'\d+', sbotresp)
@@ -308,11 +308,11 @@ class Steam(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def trades(self, ctx, *, offerID):
+    async def trades(self, ctx):
         """check active trade offers that are in review
-        eg. `{prefix}trade <offerID>`"""
+        eg. `{prefix}trades`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}trades {offerID}')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
             await sleep(3)
 
     @commands.command(aliases=['bp'])
