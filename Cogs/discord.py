@@ -75,13 +75,13 @@ class Discord(commands.Cog):
             file = f'{self.bot.files}/polldata.json'
             file = File(file, filename=f'polldata-{botname}-{datetime.now().strftime("%Y%m%d%H%M")}.json')
             await self.bot.channel_polldata.send(f'{botname}\'s Daily polldata backup', file=file)
-            await sleep(20)
+            await sleep(60)
         elif self.bot.current_time.split()[1] == '00:02':
             botname = self.bot.user.name
             file = f'{self.bot.files}/pricelist.json'
             file = File(file, filename=f'pricelist-{botname}-{datetime.now().strftime("%Y%m%d%H%M")}.json')
             await self.bot.channel_pricelist.send(f'{botname}\'s Daily pricelist backup', file=file)
-            await sleep(20)
+            await sleep(60)
 
     @commands.command()
     @commands.is_owner()
