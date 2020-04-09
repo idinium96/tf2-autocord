@@ -7,6 +7,7 @@ from re import findall
 from discord import Colour, Embed, HTTPException
 from discord.ext import commands, tasks
 
+from Login_details import preferences
 
 class Steam(commands.Cog):
     """Commands that are mainly owner restricted and only work if you are logged in to your Steam account"""
@@ -67,11 +68,7 @@ class Steam(commands.Cog):
             sbotresp = self.bot.sbotresp
             message = sbotresp
             if sbotresp.startswith('Trade '):
-                if 'accepted' in sbotresp:
-                    color = 0x5C7E10
-                else:
-                    color = Colour.red()
-                embed = Embed(color=color)
+                embed = Embed(color=self.bot.color)
 
                 ids = findall(r'\d+', sbotresp)
                 trade_num = ids[0]
@@ -80,24 +77,87 @@ class Steam(commands.Cog):
                 message = message.replace(f" #{trade_num}", "")
                 if trader is not None:
                     message = message.replace(f'Trade with {trader_id} is',
-                                              f'A trade with {trader.name} has been marked as')
+                                              f'A trade with ||{trader.name}|| {trader.name} ({trader_id}) has been marked as')
+                    message = message.replace(f" ||{trader.name}||", "")
                     message = message.replace('Summary:', '\n__Summary:__')
                     message = message.replace('Asked:', '- **Asked:**')
                     message = message.replace('Offered:', '- **Offered:**')
+                    message = message.replace('Current key selling price:', '- **Current key selling price:**')
                     embed.set_author(name=f'Trade from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message
-                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")}',
+                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} UTC',
                                  icon_url=self.bot.user.avatar_url)
-                await self.bot.channel.send(embed=embed)
+                await self.bot.channel_live_trades.send(embed=embed)
+            
+            elif sbotresp.startswith('Offer '):
+                if 'not active' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+                elif 'not exist' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+                else:
+                    embed = Embed(color=self.bot.color)
+                    ownerID = preferences.owner_id
+                    ids = findall(r'\d+', sbotresp)
+                    offer_num = ids[0]
+                    trader_id = int(ids[1])
+                    trader = self.bot.client.get_user(trader_id)
+                    message = message.replace(f" #{offer_num}", "")
+                    if trader is not None:
+                        message = message.replace(f'Offer from {trader_id} is waiting for review',
+                                                  f'An offer (#{offer_num}) sent by ||{trader.name}|| {trader.name} ({trader_id}) is waiting for review')
+                        message = message.replace(f" ||{trader.name}||", "")
+                        message = message.replace('Summary:', '\n__Summary:__')
+                        message = message.replace('Asked:', '- **Asked:**')
+                        message = message.replace('Offered:', '- **Offered:**')
+                        message = message.replace('Current key selling price:', '\nCurrent key selling price:')
+                        embed.set_author(name=f'Offer from: {trader.name}',
+                                         url=trader.steam_id.community_url,
+                                         icon_url=trader.get_avatar_url())
+                    embed.description = message
+                    embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
+                                     icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+                    await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
+                
+            elif sbotresp.startswith('Declining '):
+                embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_offer_review.send(embed=embed)
+
+            elif sbotresp.startswith('Accepting '):
+                embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_offer_review.send(embed=embed)
+
+            elif sbotresp.startswith('🧾There is '):
+                if 'can review' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+
+            elif sbotresp.startswith('❌There are '):
+                if 'no active offers' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+
+            elif sbotresp.startswith('All trades '):
+                embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_trades_statistic.send(embed=embed)
             else:
                 embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
-                embed.set_footer(text=datetime.now().strftime('%c'), icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.owner.send(embed=embed)
             self.bot.sbotresp = 0
 
-    @tasks.loop(minutes=30)
+    @tasks.loop(minutes=10)
     async def user_message(self):
         embed = Embed(color=Colour.dark_gold())
         if self.bot.messager:
@@ -218,6 +278,42 @@ class Steam(commands.Cog):
         async with ctx.typing():
             self.bot.s_bot.send_message(message)
             await ctx.send(f"Sent `{message}` to the bot")
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def accepttrade(self, ctx, *, offerID):
+        """accept trade offer that is in review
+        eg. `{prefix}accepttrade <offerID>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}accepttrade {offerID}')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def declinetrade(self, ctx, *, offerID):
+        """decline trade offer that is in review
+        eg. `{prefix}declinetrade <offerID>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}declinetrade {offerID}')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def trade(self, ctx, *, offerID):
+        """check trade offer that is in review
+        eg. `{prefix}trade <offerID>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}trade {offerID}')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def trades(self, ctx):
+        """check active trade offers that are in review
+        eg. `{prefix}trades`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
             await sleep(3)
 
     @commands.command(aliases=['bp'])

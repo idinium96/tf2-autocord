@@ -26,10 +26,10 @@ class Discord(commands.Cog):
         self.location = 'Login_details\\graph.png'
         self.accepted_files = ('pricelist', 'pricelist.json', 'polldata', 'polldata.json')
 
-        self.profitgraphing.start()
+        self.statsAndpolldata.start()
 
     def cog_unload(self):
-        self.profitgraphing.cancel()
+        self.statsAndpolldata.cancel()
 
     def gen_graph(self, points: int = None):
         plt.close()  # close the old session
@@ -63,47 +63,14 @@ class Discord(commands.Cog):
         return f'`{days}d, {hours}h, {minutes}m, {seconds}s`'
 
     @tasks.loop(seconds=20)
-    async def profitgraphing(self):
-        """A task that at 23:59 will get your profit
-        It will convert all your values to keys"""
+    async def statsAndpolldata(self):
+    # pylint: disable=unbalanced-tuple-unpacking
+        """A task that at every 6 hours UTC will get trade statistic and
+        send the polldata.json file as backup every 00:01 UTC"""
         self.bot.current_time = datetime.now().strftime("%d-%m-%Y %H:%M")
-        if self.bot.current_time.split()[1] == '23:59':
-            self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
-            await sleep(2)
-            async with self.bot.session.get('https://api.prices.tf/items/5021;6?src=bptf') as response:
-                response = await response.json()
-                key_value = response["sell"]["metal"]
-
-            tod_profit = search(r'(made (.*?) today)', self.bot.graphplots).group(1)[5:-6]
-            tot_profit = search(r'(today, (.*?) in)', self.bot.graphplots).group(1)[7:-3]
-            try:
-                pred_profit = search(r'(\((.*?) more)', self.bot.graphplots).group(1)[1:-5]
-            except:
-                pred_profit = 0
-
-            fixed = []
-            for to_fix in [tod_profit, tot_profit, pred_profit]:
-                if to_fix == 0:
-                    total = 0
-                elif ', ' in to_fix:
-                    to_fix = to_fix.split(', ')
-                    keys = int(to_fix[0][:-5]) if 'keys' in to_fix[0] else int(to_fix[0][:-4])
-                    multiplier = -1 if keys < 0 else 1
-                    ref = multiplier * float(to_fix[1][:-4])
-                    ref_keys = round(ref / key_value, 2)
-                    total = keys + ref_keys
-                else:
-                    ref = float(tod_profit[:-4])
-                    total = round(ref / key_value, 2)
-                fixed.append(total)
-
-            tod_profit, tot_profit, pred_profit = fixed
-            graphdata = [tod_profit, tot_profit, pred_profit, self.bot.trades]
-            tempprofit = {self.bot.current_time.split()[0]: graphdata}
-            data = load(open('Login_details\\profit_graphing.json'))
-            data.update(tempprofit)
-            dump(data, open('Login_details\\profit_graphing.json', 'w'), indent=4)
-            await sleep(120)
+        if self.bot.current_time.split()[1] in ['23:59', '05:59', '11:59', '17:59']:
+            self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
+            await sleep(60)
 
     @commands.command()
     @commands.is_owner()
@@ -171,7 +138,7 @@ class Discord(commands.Cog):
     async def classifieds(self, ctx):
         """Check your number of listings and get a easy read version of them in a text file"""
         file = load(open(f'{self.bot.files}/pricelist.json', 'r'))
-        listings = '\n'.join([listing['name'] for listing in file])
+        listings = '\n'.join([listing['sku'] for listing in file])
         open('listings.txt', 'w+').write(listings)
         f = File("listings.txt", filename="listings.txt")
         await ctx.send(f'You have {len(file)} listings, view them here:', file=f)
