@@ -1,6 +1,6 @@
 # These can be shared freely
 
-# Your bot's steam id this needs to be your 64 one
+# Your tf2-automatic bot's steam id this needs to be your 64 one
 bots_steam_id = 76561198034345222
 # Your command prefix can either be ! ? . or / as they are used by tf2automatic
 command_prefix = '!'
