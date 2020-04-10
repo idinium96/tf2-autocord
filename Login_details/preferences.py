@@ -1,7 +1,7 @@
 # These can be shared freely
 
-# Your bot's steam id this needs to be your 64 one
-bots_steam_id = 76561198163439235
+# Your tf2-automatic bot's steam id this needs to be your 64 one
+bots_steam_id = 76561198163541169
 # Your command prefix can either be ! ? . or / as they are used by tf2automatic
 command_prefix = '!'
 # Your Discord user ID
