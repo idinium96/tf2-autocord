@@ -143,6 +143,16 @@ class Steam(commands.Cog):
                 await self.bot.channel_message.send(embed=embed)
                 await self.bot.channel_message.send(f'<@!{ownerID}>, check this!')
 
+            elif 'send a message' in sbotresp:
+                embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_message.send(embed=embed)
+
+            elif 'message has been' in sbotresp:
+                embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_message.send(embed=embed)
+
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
