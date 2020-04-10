@@ -112,7 +112,7 @@ class Steam(commands.Cog):
                         message = message.replace(f'Offer from {trader_id} is waiting for review',
                                                   f'An offer (#{offer_num}) sent by ||{trader.name}|| {trader.name} ({trader_id}) is waiting for review')
                         message = message.replace(f" ||{trader.name}||", "")
-                        message = message.replace('Summary:', '\n__Summary:__')
+                        message = message.replace('Offer Summary:', '__Offer Summary:__')
                         message = message.replace('Asked:', '- **Asked:**')
                         message = message.replace('Offered:', '- **Offered:**')
                         message = message.replace('Current key selling price:', '\nCurrent key selling price:')
