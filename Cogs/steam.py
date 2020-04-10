@@ -148,7 +148,7 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
 
-            elif sbotresp.startswith('message has been', 1, 5):
+            elif 'message has been' in sbotresp:
                 embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
