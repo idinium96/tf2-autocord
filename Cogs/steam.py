@@ -125,6 +125,24 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
 
+            elif sbotresp.startswith('Message from '):
+                embed = Embed(color=self.bot.color)
+                ownerID = preferences.owner_id
+                ids = findall(r'\d+', sbotresp)
+                trader_id = int(ids[0])
+                trader = self.bot.client.get_user(trader_id)
+                message = message.replace(f" ({trader_id})", "")
+                if trader is not None:
+                    message = message.replace(f'Message from ','')
+                    embed.set_author(name=f'Message from: {trader.name}',
+                                     url=trader.steam_id.community_url,
+                                     icon_url=trader.get_avatar_url())
+                embed.description = message
+                embed.set_footer(text=f'Steam ID: {trader_id} • {datetime.now().strftime("%c")} UTC',
+                                 icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_message.send(embed=embed)
+                await self.bot.channel_message.send(f'<@!{ownerID}>, check this!')
+
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
@@ -311,6 +329,15 @@ class Steam(commands.Cog):
         eg. `{prefix}trade <offerID>`"""
         async with ctx.typing():
             self.bot.s_bot.send_message(f'{self.bot.prefix}trade {offerID}')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def message(self, ctx, *, SteamIDandMessage):
+        """send message to a user
+        eg. `{prefix}message <steamID> <Your message>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}message {SteamIDandMessage}')
             await sleep(3)
 
     @commands.command()
