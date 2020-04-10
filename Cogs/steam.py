@@ -79,7 +79,7 @@ class Steam(commands.Cog):
                     message = message.replace(f'Trade with {trader_id} is',
                                               f'A trade with ||{trader.name}|| {trader.name} ({trader_id}) has been marked as')
                     message = message.replace(f" ||{trader.name}||", "")
-                    message = message.replace('Summary:', '\n__Summary:__')
+                    message = message.replace('Offer Summary:', '__Offer Summary:__')
                     message = message.replace('Asked:', '- **Asked:**')
                     message = message.replace('Offered:', '- **Offered:**')
                     message = message.replace('Current key selling price:', '- **Current key selling price:**')
