@@ -175,24 +175,6 @@ class Steam(commands.Cog):
                 await self.bot.owner.send(embed=embed)
             self.bot.sbotresp = 0
 
-    @tasks.loop(minutes=30)
-    async def user_message(self):
-        embed = Embed(color=Colour.dark_gold())
-        if self.bot.messager:
-            embed.set_author(name=f'Message from {self.bot.messager.name}',
-                             url=self.bot.messager.steam_id.community_url,
-                             icon_url=self.bot.messager.get_avatar_url())
-        embed.add_field(name='User Message:',
-                        value=f'You have a message from a user:\n> {self.bot.user_message.split(":", 1)[1]}'
-                              f'\nType {self.bot.prefix}acknowledged if you have dealt with this', inline=False)
-        self.bot.message = await self.bot.owner.send(embed=embed)
-        if self.first:
-            try:
-                await self.bot.message.pin()
-            except HTTPException:
-                pass
-            self.first = False
-
     @commands.command()
     @commands.is_owner()
     async def acknowledged(self, ctx):
