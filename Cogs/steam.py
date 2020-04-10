@@ -125,7 +125,7 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
 
-            elif sbotresp.startswith('Message from '):
+            elif sbotresp.startswith('Message from'):
                 embed = Embed(color=self.bot.color)
                 ownerID = preferences.owner_id
                 ids = findall(r'\d+', sbotresp)
@@ -148,7 +148,7 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
 
-            elif 'message has been' in sbotresp:
+            elif sbotresp.startswith('message has been', 1, 5):
                 embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
