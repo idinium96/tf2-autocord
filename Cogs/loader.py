@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from Login_details import preferences, sensitive_details
 
 
-__version__ = '1.5.3'
+__version__ = '1.5.3-i.1.1.0'
 __author__ = 'Gobot1234#2435'
 
 
