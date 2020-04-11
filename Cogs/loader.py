@@ -51,6 +51,7 @@ class Loader(commands.Cog):
             self.bot.channel_polldata = self.bot.get_channel(preferences.channel_id_polldata) or self.bot.owner
             self.bot.channel_pricelist = self.bot.get_channel(preferences.channel_id_pricelist) or self.bot.owner
             self.bot.channel_message = self.bot.get_channel(preferences.channel_id_message) or self.bot.owner
+            self.bot.channel_message_ignore = self.bot.get_channel(preferences.channel_id_message_ignore) or self.bot.owner
             await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__}',
                                                              type=ActivityType.watching,
                                                              url='https://backpack.tf/profiles/76561198053911511',

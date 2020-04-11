@@ -169,7 +169,7 @@ class Steam(commands.Cog):
                     self.bot.log.info('message contains "sent a message"')
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
-                    await self.bot.channel_message.send(embed=embed)
+                    await self.bot.channel_message_ignore.send(embed=embed)
                     self.bot.log.info('Sent to message!')
             
             elif sbotresp.startswith ('Your '):

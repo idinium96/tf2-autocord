@@ -20,3 +20,4 @@ channel_id_offer_review = 698200864208453642
 channel_id_polldata = 698205585249665165
 channel_id_pricelist = 698205703529037865
 channel_id_message = 698200940863291402
+channel_id_message_ignore = 698389020656271390
