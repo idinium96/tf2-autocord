@@ -124,14 +124,14 @@ class Steam(commands.Cog):
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
-
+            
             elif sbotresp.startswith('Message from'):
                 embed = Embed(color=self.bot.color)
                 ownerID = preferences.owner_id
                 ids = findall(r'\d+', sbotresp)
                 trader_id = int(ids[0])
                 trader = self.bot.client.get_user(trader_id)
-                message = message.replace(f" {trader_id}", "")
+                message = message.replace(f" # {trader_id} ", "")
                 if trader is not None:
                     message = message.replace(f'Message from ','')
                     embed.set_author(name=f'Message from: {trader.name}',
@@ -141,42 +141,42 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'Steam ID: {trader_id} • {datetime.now().strftime("%c")} UTC',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
-                await self.bot.channel_message.send(f'<@!{ownerID}>, check this!')
-
+                await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
+            
             elif sbotresp.startswith ('Other admins'):
                 if 'sent a message' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
-
+            
             elif sbotresp.startswith ('Your '):
                 if 'message has been' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
-
+            
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
-
+            
             elif sbotresp.startswith('Accepting '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
-
+            
             elif sbotresp.startswith('🧾There is '):
                 if 'can review' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-
+            
             elif sbotresp.startswith('❌There are '):
                 if 'no active offers' in sbotresp:
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-
+            
             elif sbotresp.startswith('All trades '):
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
