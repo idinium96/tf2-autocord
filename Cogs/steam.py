@@ -68,11 +68,14 @@ class Steam(commands.Cog):
             sbotresp = self.bot.sbotresp
             message = sbotresp
             if sbotresp.startswith('Trade '):
+                self.bot.log.info('Message received starts with "Trade "!')
                 embed = Embed(color=self.bot.color)
 
                 ids = findall(r'\d+', sbotresp)
                 trade_num = ids[0]
+                self.bot.log.info('Obtained trade_num!')
                 trader_id = int(ids[1])
+                self.bot.log.info('Obtained trader_id!')
                 trader = self.bot.client.get_user(trader_id)
                 message = message.replace(f" #{trade_num}", "")
                 if trader is not None:
@@ -90,22 +93,32 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} UTC',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_live_trades.send(embed=embed)
+                self.bot.log.info('Sent to live-trades!')
             
             elif sbotresp.startswith('Offer '):
+                self.bot.log.info('Message received starts with "Offer"!')
                 if 'not active' in sbotresp:
+                    self.bot.log.info('Offer not active!')
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
+                    self.bot.log.info('Sent to offer-review!')
                 elif 'not exist' in sbotresp:
+                    self.bot.log.info('Offer not exist!')
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
+                    self.bot.log.info('Sent to offer-review!')
                 else:
+                    self.bot.log.info('Processing offer review!')
                     embed = Embed(color=self.bot.color)
                     ownerID = preferences.owner_id
                     ids = findall(r'\d+', sbotresp)
+                    self.bot.log.info('Obtained ids!')
                     offer_num = ids[0]
+                    self.bot.log.info('Obtained offer_num!')
                     trader_id = int(ids[1])
+                    self.bot.log.info('Obtained trader_id!')
                     trader = self.bot.client.get_user(trader_id)
                     message = message.replace(f" #{offer_num}", "")
                     if trader is not None:
@@ -124,56 +137,104 @@ class Steam(commands.Cog):
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
-                
+                    self.bot.log.info('Sent to offer-review!')
+            
+            elif sbotresp.startswith("You've got "):
+                self.bot.log.info("Message received starts with You've got !")
+                embed = Embed(color=self.bot.color)
+                ownerID = preferences.owner_id
+                ids = findall(r'\d+', sbotresp)
+                self.bot.log.info('Obtained ids!')
+                trader_id = int(ids[0])
+                self.bot.log.info('Obtained trader_id!')
+                trader = self.bot.client.get_user(trader_id)
+                message = message.replace(f" # {trader_id} :", "")
+                self.bot.log.info('Processing messages')
+                if trader is not None:
+                    message = message.replace(f"You've got a message from ",f"💬||{trader.name}|| {trader.name}: ")
+                    message = message.replace(f"||{trader.name}||", "")
+                    embed.set_author(name=f'Message from: {trader.name}',
+                                     url=trader.steam_id.community_url,
+                                     icon_url=trader.get_avatar_url())
+                embed.description = message
+                embed.set_footer(text=f'Steam ID - #{trader_id} • {datetime.now().strftime("%c")} UTC',
+                                 icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_message.send(embed=embed)
+                await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
+                self.bot.log.info('Sent to message!')
+            
+            elif sbotresp.startswith ('Other admins'):
+                self.bot.log.info('Message received starts with "Other admins "!')
+                if 'sent a message' in sbotresp:
+                    self.bot.log.info('message contains "sent a message"')
+                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_message_ignore.send(embed=embed)
+                    self.bot.log.info('Sent to message!')
+            
+            elif sbotresp.startswith ('Your '):
+                self.bot.log.info('message contains "Your "')
+                if 'message has been' in sbotresp:
+                    self.bot.log.info('message contains "message has been sent"')
+                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_message.send(embed=embed)
+                    self.bot.log.info('Sent to message!')
+            
             elif sbotresp.startswith('Declining '):
+                self.bot.log.info('Message starts with "Declining "')
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
-
+                self.bot.log.info('Sent to offer_review!')
+            
             elif sbotresp.startswith('Accepting '):
+                self.bot.log.info('Message received starts with "Accepting "')
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
-
+                self.bot.log.info('Sent to offer_review!')
+            
             elif sbotresp.startswith('🧾There is '):
+                self.bot.log.info('Message received starts with "🧾There is "')
                 if 'can review' in sbotresp:
+                    self.bot.log.info('message contains "can review"')
                     embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-
+                    self.bot.log.info('Sent to offer_review!')
+            
             elif sbotresp.startswith('❌There are '):
+                self.bot.log.info('Message received starts with "❌There are "')
                 if 'no active offers' in sbotresp:
+                    self.bot.log.info('message contains "no active offers"')
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
-
+                    self.bot.log.info('Sent to offer_review!')
+            
             elif sbotresp.startswith('All trades '):
+                self.bot.log.info('Message received starts with "All trades "')
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_trades_statistic.send(embed=embed)
+                self.bot.log.info('Sent to trades_statistic!')
+            
+            elif sbotresp.startswith('⬅I '):
+                self.bot.log.info('Message received starts with "⬅I "')
+                if 'Mann Co. Supply Crate Key' in sbotresp:
+                    self.bot.log.info('message contains "Mann Co. Supply Crate Key"')
+                    embed = Embed(color=self.bot.color, title='Current Key Price', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_key_price.send(embed=embed)
+                    self.bot.log.info('Sent to key_price!')
             else:
+                self.bot.log.info('Message received starts with something else')
                 embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
                 await self.bot.owner.send(embed=embed)
+                self.bot.log.info('Sent to owner!')
             self.bot.sbotresp = 0
-
-    @tasks.loop(minutes=30)
-    async def user_message(self):
-        embed = Embed(color=Colour.dark_gold())
-        if self.bot.messager:
-            embed.set_author(name=f'Message from {self.bot.messager.name}',
-                             url=self.bot.messager.steam_id.community_url,
-                             icon_url=self.bot.messager.get_avatar_url())
-        embed.add_field(name='User Message:',
-                        value=f'You have a message from a user:\n> {self.bot.user_message.split(":", 1)[1]}'
-                              f'\nType {self.bot.prefix}acknowledged if you have dealt with this', inline=False)
-        self.bot.message = await self.bot.owner.send(embed=embed)
-        if self.first:
-            try:
-                await self.bot.message.pin()
-            except HTTPException:
-                pass
-            self.first = False
 
     @commands.command()
     @commands.is_owner()
@@ -276,8 +337,10 @@ class Steam(commands.Cog):
         """Send is used to send a message to the bot
         eg. `{prefix}send {prefix}message 76561198248053954 Get on steam`"""
         async with ctx.typing():
+            self.bot.log.info('Received command from owner !send')
             self.bot.s_bot.send_message(message)
             await ctx.send(f"Sent `{message}` to the bot")
+            self.bot.log.info('Sent to bot.')
             await sleep(3)
 
     @commands.command()
@@ -286,7 +349,9 @@ class Steam(commands.Cog):
         """accept trade offer that is in review
         eg. `{prefix}accepttrade <offerID>`"""
         async with ctx.typing():
+            self.bot.log.info('Received command from owner !accepttrade')
             self.bot.s_bot.send_message(f'{self.bot.prefix}accepttrade {offerID}')
+            self.bot.log.info('Sent to bot.')
             await sleep(3)
 
     @commands.command()
@@ -295,7 +360,9 @@ class Steam(commands.Cog):
         """decline trade offer that is in review
         eg. `{prefix}declinetrade <offerID>`"""
         async with ctx.typing():
+            self.bot.log.info('Received command from owner !declinetrade')
             self.bot.s_bot.send_message(f'{self.bot.prefix}declinetrade {offerID}')
+            self.bot.log.info('Sent to bot.')
             await sleep(3)
 
     @commands.command()
@@ -304,7 +371,20 @@ class Steam(commands.Cog):
         """check trade offer that is in review
         eg. `{prefix}trade <offerID>`"""
         async with ctx.typing():
+            self.bot.log.info('Received command from owner !trade')
             self.bot.s_bot.send_message(f'{self.bot.prefix}trade {offerID}')
+            self.bot.log.info('Sent to bot.')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def message(self, ctx, *, SteamIDandMessage):
+        """send message to a user
+        eg. `{prefix}message <steamID> <Your message>`"""
+        async with ctx.typing():
+            self.bot.log.info('Received command from owner !message')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}message {SteamIDandMessage}')
+            self.bot.log.info('Sent to bot.')
             await sleep(3)
 
     @commands.command()
@@ -313,7 +393,9 @@ class Steam(commands.Cog):
         """check active trade offers that are in review
         eg. `{prefix}trades`"""
         async with ctx.typing():
+            self.bot.log.info('Received command from owner !trades')
             self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
+            self.bot.log.info('Sent to bot.')
             await sleep(3)
 
     @commands.command(aliases=['bp'])
