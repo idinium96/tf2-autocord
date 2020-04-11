@@ -125,20 +125,21 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
             
-            elif sbotresp.startswith('Message from'):
+            elif sbotresp.startswith('Message from '):
                 embed = Embed(color=self.bot.color)
                 ownerID = preferences.owner_id
                 ids = findall(r'\d+', sbotresp)
                 trader_id = int(ids[0])
                 trader = self.bot.client.get_user(trader_id)
-                message = message.replace(f"#{trader_id} ", "")
+                message = message.replace(f" #{trader_id} :", "")
                 if trader is not None:
-                    message = message.replace(f"Message from :","")
+                    message = message.replace(f"Message from",f"💬||{trader.name}|| {trader.name}: ")
+                    message = message.replace(f" ||{trader.name}||", "")
                     embed.set_author(name=f'Message from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message
-                embed.set_footer(text=f'Steam ID: {trader_id} • {datetime.now().strftime("%c")} UTC',
+                embed.set_footer(text=f'Steam ID - #{trader_id} • {datetime.now().strftime("%c")} UTC',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
                 await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
