@@ -152,7 +152,7 @@ class Steam(commands.Cog):
                 self.bot.log.info('Processing messages')
                 if trader is not None:
                     message = message.replace(f"You've got a message from ",f"💬||{trader.name}|| {trader.name}: ")
-                    message = message.replace(f" ||{trader.name}||", "")
+                    message = message.replace(f"||{trader.name}||", "")
                     embed.set_author(name=f'Message from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
