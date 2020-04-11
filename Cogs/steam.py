@@ -139,8 +139,8 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
                     self.bot.log.info('Sent to offer-review!')
             
-            elif sbotresp.startswith('Message from '):
-                self.bot.log.info('Message received starts with "Message from "!')
+            elif sbotresp.startswith("You've got "):
+                self.bot.log.info("Message received starts with You've got !")
                 embed = Embed(color=self.bot.color)
                 ownerID = preferences.owner_id
                 ids = findall(r'\d+', sbotresp)
