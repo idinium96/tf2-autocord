@@ -131,7 +131,7 @@ class Steam(commands.Cog):
                 ids = findall(r'\d+', sbotresp)
                 trader_id = int(ids[0])
                 trader = self.bot.client.get_user(trader_id)
-                message = message.replace(f" #{trader_id} :", "")
+                message = message.replace(f" # {trader_id} :", "")
                 if trader is not None:
                     message = message.replace(f"Message from",f"💬||{trader.name}|| {trader.name}: ")
                     message = message.replace(f" ||{trader.name}||", "")
