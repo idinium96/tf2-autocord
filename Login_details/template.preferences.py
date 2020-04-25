@@ -16,3 +16,5 @@ files = '/home/ubuntu/tf2bot/tf2-automatic/files/username'
 channel_id_live_trades = None
 channel_id_trades_statistic = None
 channel_id_offer_review = None
+#Your timezone - default is UTC
+yourTimeZone = 'UTC'

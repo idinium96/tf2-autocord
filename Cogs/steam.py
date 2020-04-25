@@ -87,18 +87,18 @@ class Steam(commands.Cog):
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message
-                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} UTC',
+                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_live_trades.send(embed=embed)
             
             elif sbotresp.startswith('Offer '):
                 if 'not active' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                 elif 'not exist' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                 else:
                     embed = Embed(color=self.bot.color)
@@ -120,40 +120,40 @@ class Steam(commands.Cog):
                                          url=trader.steam_id.community_url,
                                          icon_url=trader.get_avatar_url())
                     embed.description = message
-                    embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
+                    embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
                 
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
 
             elif sbotresp.startswith('Accepting '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
 
             elif sbotresp.startswith('🧾There is '):
                 if 'can review' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
 
             elif sbotresp.startswith('❌There are '):
                 if 'no active offers' in sbotresp:
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
 
             elif sbotresp.startswith('All trades '):
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_trades_statistic.send(embed=embed)
             else:
                 embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.owner.send(embed=embed)
             self.bot.sbotresp = 0
 
