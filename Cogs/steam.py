@@ -90,7 +90,7 @@ class Steam(commands.Cog):
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message
-                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} UTC',
+                embed.set_footer(text=f'Trade #{trade_num} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_live_trades.send(embed=embed)
                 self.bot.log.info('Sent to live-trades!')
@@ -100,13 +100,13 @@ class Steam(commands.Cog):
                 if 'not active' in sbotresp:
                     self.bot.log.info('Offer not active!')
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     self.bot.log.info('Sent to offer-review!')
                 elif 'not exist' in sbotresp:
                     self.bot.log.info('Offer not exist!')
                     embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     self.bot.log.info('Sent to offer-review!')
                 else:
@@ -133,7 +133,7 @@ class Steam(commands.Cog):
                                          url=trader.steam_id.community_url,
                                          icon_url=trader.get_avatar_url())
                     embed.description = message
-                    embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} UTC',
+                    embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
@@ -157,7 +157,7 @@ class Steam(commands.Cog):
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
                 embed.description = message
-                embed.set_footer(text=f'Steam ID - #{trader_id} • {datetime.now().strftime("%c")} UTC',
+                embed.set_footer(text=f'Steam ID - #{trader_id} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
                                  icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_message.send(embed=embed)
                 await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
@@ -168,7 +168,7 @@ class Steam(commands.Cog):
                 if 'sent a message' in sbotresp:
                     self.bot.log.info('message contains "sent a message"')
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message_ignore.send(embed=embed)
                     self.bot.log.info('Sent to message!')
             
@@ -177,21 +177,21 @@ class Steam(commands.Cog):
                 if 'message has been' in sbotresp:
                     self.bot.log.info('message contains "message has been sent"')
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
                     self.bot.log.info('Sent to message!')
             
             elif sbotresp.startswith('Declining '):
                 self.bot.log.info('Message starts with "Declining "')
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
                 self.bot.log.info('Sent to offer_review!')
             
             elif sbotresp.startswith('Accepting '):
                 self.bot.log.info('Message received starts with "Accepting "')
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
                 self.bot.log.info('Sent to offer_review!')
             
@@ -200,7 +200,7 @@ class Steam(commands.Cog):
                 if 'can review' in sbotresp:
                     self.bot.log.info('message contains "can review"')
                     embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     self.bot.log.info('Sent to offer_review!')
             
@@ -209,14 +209,14 @@ class Steam(commands.Cog):
                 if 'no active offers' in sbotresp:
                     self.bot.log.info('message contains "no active offers"')
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     self.bot.log.info('Sent to offer_review!')
             
             elif sbotresp.startswith('All trades '):
                 self.bot.log.info('Message received starts with "All trades "')
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_trades_statistic.send(embed=embed)
                 self.bot.log.info('Sent to trades_statistic!')
             
@@ -225,13 +225,13 @@ class Steam(commands.Cog):
                 if 'Mann Co. Supply Crate Key' in sbotresp:
                     self.bot.log.info('message contains "Mann Co. Supply Crate Key"')
                     embed = Embed(color=self.bot.color, title='Current Key Price', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_key_price.send(embed=embed)
                     self.bot.log.info('Sent to key_price!')
             else:
                 self.bot.log.info('Message received starts with something else')
                 embed = Embed(color=self.bot.color, title='New Message:', description=sbotresp)
-                embed.set_footer(text=f'• {datetime.now().strftime("%c")} UTC', icon_url=self.bot.user.avatar_url)
+                embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.owner.send(embed=embed)
                 self.bot.log.info('Sent to owner!')
             self.bot.sbotresp = 0

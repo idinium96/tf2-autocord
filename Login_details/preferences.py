@@ -22,3 +22,5 @@ channel_id_offer_review = 696875976918827028
 channel_id_message = 698190072234901654
 channel_id_polldata = 697107665075044453
 channel_id_pricelist = 697113570315337831
+#Your timezone - default is UTC
+yourTimeZone = 'MYT'
