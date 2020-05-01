@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from Login_details import preferences, sensitive_details
 
 
-__version__ = '1.5.3-i.1.0.0'
+__version__ = '1.5.4-i'
 __author__ = 'Gobot1234#2435'
 
 
@@ -47,6 +47,7 @@ class Loader(commands.Cog):
             self.bot.channel_live_trades = self.bot.get_channel(preferences.channel_id_live_trades) or self.bot.owner
             self.bot.channel_trades_statistic = self.bot.get_channel(preferences.channel_id_trades_statistic) or self.bot.owner
             self.bot.channel_offer_review = self.bot.get_channel(preferences.channel_id_offer_review) or self.bot.owner
+            self.bot.channel_message = self.bot.get_channel(preferences.channel_id_message) or self.bot.owner
             await self.bot.change_presence(activity=Activity(name=f'{self.bot.owner.name}\'s trades | V{__version__}',
                                                              type=ActivityType.watching))
             print('-' * 30, f'\n{self.bot.user.name} is ready')

@@ -124,7 +124,49 @@ class Steam(commands.Cog):
                                      icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
-                
+
+            elif sbotresp.startswith("You've got "):
+                self.bot.log.info("Message received starts with You've got !")
+                embed = Embed(color=self.bot.color)
+                ownerID = preferences.owner_id
+                ids = findall(r'\d+', sbotresp)
+                self.bot.log.info('Obtained ids!')
+                trader_id = int(ids[0])
+                self.bot.log.info('Obtained trader_id!')
+                trader = self.bot.client.get_user(trader_id)
+                message = message.replace(f" # {trader_id} :", "")
+                self.bot.log.info('Processing messages')
+                if trader is not None:
+                    message = message.replace(f"You've got a message from ",f"💬||{trader.name}|| {trader.name}: ")
+                    message = message.replace(f"||{trader.name}||", "")
+                    embed.set_author(name=f'Message from: {trader.name}',
+                                     url=trader.steam_id.community_url,
+                                     icon_url=trader.get_avatar_url())
+                embed.description = message
+                embed.set_footer(text=f'Steam ID - #{trader_id} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
+                                 icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_message.send(embed=embed)
+                await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
+                self.bot.log.info('Sent to message!')
+
+            elif sbotresp.startswith ('Other admins'):
+                self.bot.log.info('Message received starts with "Other admins "!')
+                if 'sent a message' in sbotresp:
+                    self.bot.log.info('message contains "sent a message"')
+                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_message.send(embed=embed)
+                    self.bot.log.info('Sent to message!')
+
+            elif sbotresp.startswith ('Your '):
+                self.bot.log.info('message contains "Your "')
+                if 'message has been' in sbotresp:
+                    self.bot.log.info('message contains "message has been sent"')
+                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_message.send(embed=embed)
+                    self.bot.log.info('Sent to message!')
+
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
