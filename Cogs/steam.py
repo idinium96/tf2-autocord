@@ -156,12 +156,6 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
             
-            elif sbotresp.startswith ('I am not '):
-                if 'friends with the user' in sbotresp:
-                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
-                    await self.bot.channel_message.send(embed=embed)
-            
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
@@ -178,24 +172,12 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
 
-            elif sbotresp.startswith('There is '):
-                if 'can review' in sbotresp:
-                    embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
-                    await self.bot.channel_offer_review.send(embed=embed)
-            
             elif sbotresp.startswith('❌There are '):
                 if 'no active offers' in sbotresp:
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
 
-            elif sbotresp.startswith('There are '):
-                if 'no active offers' in sbotresp:
-                    embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
-                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
-                    await self.bot.channel_offer_review.send(embed=embed)
-            
             elif sbotresp.startswith('All trades '):
                 embed = Embed(color=self.bot.color, title='Successful trades made statistic:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
@@ -228,7 +210,6 @@ class Steam(commands.Cog):
     @commands.is_owner()
     async def acknowledged(self, ctx):
         """Used to acknowledge a user message
-
         This is so user messages don't get lost in the channel history"""
         self.bot.user_message = 0
         self.user_message.stop()
@@ -238,6 +219,86 @@ class Steam(commands.Cog):
         except HTTPException:
             pass
         await ctx.send('Acknowledged the user\'s message')
+
+    @commands.group(invoke_without_command=True)
+    @commands.is_owner()
+    async def add(self, ctx):
+        """Add is used to add items from your bot's classifieds don't use an "=" between name and the item
+        eg. `{prefix}add name The Team Captain`
+        It allows the chaining of commands
+        eg. `{prefix}add names This&intent=sell, That, The other&quality=Strange`"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
+
+    @add.command(name='name')
+    async def a_name(self, ctx, *, name):
+        """Handles singular classified additions"""
+        name = f'{self.bot.addm}{name}'
+        await self.classifieds(ctx, name)
+
+    @add.command(name='names')
+    async def a_names(self, ctx, *, name):
+        """Handles multiple classified additions"""
+        name = name.split(',')
+        name = [f'{self.bot.addm}{x.strip()}' for x in name]
+        await self.classifieds(ctx, name)
+
+    @commands.group(invoke_without_command=True)
+    @commands.is_owner()
+    async def update(self, ctx):
+        """Update is used to update items from your bot's classifieds don't use an "=" between name and the item
+        eg. `{prefix}update name The Team Captain`
+        It allows the chaining of commands
+        eg. `{prefix}update names This&intent=bank, That, The other&quality=Strange`"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
+
+    @update.command(name='name')
+    async def u_name(self, ctx, *, name):
+        """Handles singular updates"""
+        name = f'{self.bot.updatem}{name}'
+        await self.classifieds(ctx, name)
+
+    @update.command(name='names')
+    async def u_names(self, ctx, *, name):
+        """Handles multiple updates"""
+        name = name.split(',')
+        name = [f'{self.bot.updatem}{x.strip()}' for x in name]
+        await self.classifieds(ctx, name)
+
+    @commands.group(invoke_without_command=True)
+    @commands.is_owner()
+    async def remove(self, ctx):
+        """Remove is used to remove items from your bot's classifieds don't use an "=" between item and the item
+        eg. `{prefix}remove item The Team Captain`
+        It allows the chaining of commands
+        eg. `{prefix}remove items This&intent=bank, That, The other&quality=Strange`"""
+        if ctx.invoked_subcommand is None:
+            await ctx.send('You need to pass in a type of refractory to perform')
+            await ctx.send_help(ctx.command)
+
+    @remove.command(name='item')
+    async def r_item(self, ctx, *, name):
+        """Handles singular removals"""
+        name = f'{self.bot.removem}{name}'
+        await self.classifieds(ctx, name)
+
+    @remove.command(name='items')
+    async def r_items(self, ctx, *, name):
+        """Handles multiple removals"""
+        name = name.split(',')
+        name = [f'{self.bot.removem}{x.strip()}' for x in name]
+        await self.classifieds(ctx, name)
+
+    @commands.command(aliases=['p'])
+    @commands.is_owner()
+    async def profit(self, ctx):
+        """Returns your bot's profit as it normally would"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
+            await sleep(5)
 
     @commands.command()
     @commands.is_owner()
@@ -285,150 +346,6 @@ class Steam(commands.Cog):
             self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
             await sleep(3)
 
-    @commands.command()
-    @commands.is_owner()
-    async def get(self, ctx, *, sku):
-        """Get raw information about a pricelist entry
-        eg. `{prefix}get sku=<item's sku>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}get {sku}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def add(self, ctx, *, skuAndParameter):
-        """Add a pricelist entry
-        eg. `{prefix}add sku=<item's sku>&intent=bank`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}add {skuAndParameter}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def remove(self, ctx, *, sku):
-        """Remove a pricelist entry
-        eg. `{prefix}remove sku=<item's sku>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}remove {sku}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def update(self, ctx, *, skuAndParameter):
-        """Update a pricelist entry
-        eg. `{prefix}update sku=<item's sku>&intent=bank`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}update {skuAndParameter}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def pricecheck(self, ctx, *, sku):
-        """Requests an item to be priced by PricesTF
-        eg. `{prefix}pricecheck sku=<item's sku>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}pricecheck {sku}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def expand(self, ctx, *, craftableFalseOrTrue):
-        """Uses Backpack Expanders to increase the inventory limit
-        eg. `{prefix}expand craftable=false|true`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}expand {craftableFalseOrTrue}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def stop(self, ctx):
-        """Stop the bot
-        eg. `{prefix}stop`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}stop')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def restart(self, ctx):
-        """Restart the bot
-        eg. `{prefix}restart`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}restart')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def version(self, ctx):
-        """Get version that the bot is running
-        eg. `{prefix}version`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}version')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def avatar(self, ctx, *, avatarURL):
-        """Change avatar
-        eg. `{prefix}avatar <avatar_url>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}avatar {avatarURL}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def name(self, ctx, *, newName):
-        """Change name
-        eg. `{prefix}name <New name>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}name {newName}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def stats(self, ctx):
-        """Get statistics for accepted trades
-        eg. `{prefix}stats`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def message(self, ctx, *, steamID, yourMessage):
-        """Send a message to a user
-        eg. `{prefix}message <steamID> <your Message>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}message {SteamID} {yourMessage}')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def rate(self, ctx):
-        """Get current key prices
-        eg. `{prefix}rate`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}rate')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def stock(self, ctx):
-        """Get a list of items that the bot has
-        eg. `{prefix}stock`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}stock')
-            await sleep(3)
-    
-    @commands.command()
-    @commands.is_owner()
-    async def price(self, ctx, *, itemName):
-        """Get the price and stock of an item
-        eg. `{prefix}price <Item Name>`"""
-        async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}price {itemName}')
-            await sleep(3)
-    
     @commands.command(aliases=['bp'])
     async def backpack(self, ctx):
         """Get a link to your inventory and your bot's"""
@@ -451,6 +368,7 @@ class Steam(commands.Cog):
             await ctx.send(command)
             await sleep(3)
         await ctx.send('Completed the intent update')
+
     @commands.command(aliases=['raw_add', 'add-raw', 'raw-add'])
     @commands.is_owner()
     async def add_raw(self, ctx, *, ending=''):
@@ -471,21 +389,25 @@ class Steam(commands.Cog):
         if file.attachments:
             await sleep(10)
             remove(f'{self.bot.templocation}/raw_add_listings.txt')
+
     @commands.command()
     @commands.is_owner()
     async def scc(self, ctx):
         """SCC - Steam Command Creator is a worse version of Hackerino's command generator tool"""
         ngt1, ngt2, ngt3, ngt4, ngt5, ngt6, ngt7, ngt8, ngt9 = True
         escape = False
+
         scclist = '\n__You can change the:__\nPrice\nLimit\nQuality\nIntent\nCraftable\nAustralium\n' \
                   'Killstreak\nEffect\nAutopricing'
         intents = 'Bank, Buy or Sell'
         qualities = 'Unique, Strange, Vintage, Genuine, Haunted or Collector\'s'
+
         await ctx.send('What do you want to do?\nUpdate, Remove or Add?')
         response = 0
         while response == 0:
             choice = await self.bot.wait_for('message', check=self.check)
             choice = choice.content.lower()
+
             if choice == 'update' or choice == 'u' or choice == 'add' or choice == 'a' or choice == 'remove' or choice == 'r':
                 if choice == 'update' or choice == 'u':
                     do = 'update'
@@ -497,6 +419,7 @@ class Steam(commands.Cog):
                 item_to_uar = await self.bot.wait_for('message', check=self.check)
                 item_to_uar = item_to_uar.content
                 steamcommand = item_to_uar
+
                 if do == 'remove':
                     f'{self.bot.removem}{steamcommand}'
                 else:
@@ -504,11 +427,13 @@ class Steam(commands.Cog):
                     while 1:
                         choice = await self.bot.wait_for('message', check=self.check)
                         choice = choice.content.lower()
+
                         if choice == 'yes' or choice == 'y':
                             await ctx.send(scclist)
                             while escape is False:
                                 prefix = await self.bot.wait_for('message', check=self.check)
                                 prefix = prefix.content.lower()
+
                                 if prefix == 'price' or prefix == 'p' and ngt1:  # buy price prefix
                                     await ctx.send('Buy price in refined metal')
                                     bp = await self.bot.wait_for('message', check=self.check)
@@ -519,6 +444,7 @@ class Steam(commands.Cog):
                                     bp = bp.content.lower()
                                     buy2 = f'&buy_keys={bp}'
                                     steamcommand += f'{buy1}{buy2}'
+
                                     await ctx.send('Sell price in refined metal')
                                     sp = await self.bot.wait_for('message', check=self.check)
                                     sp = sp.content.lower()
@@ -532,6 +458,7 @@ class Steam(commands.Cog):
                                     ngt1 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'limit' or prefix == 'l' and ngt2:  # limit prefix
                                     await ctx.send('Max stock is')
                                     limit = await self.bot.wait_for('message', check=self.check)
@@ -541,6 +468,7 @@ class Steam(commands.Cog):
                                     ngt2 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'quality' or prefix == 'q' and ngt3:  # quality prefix
                                     await ctx.send(f'Quality (enter {qualities})')
                                     while 1:
@@ -549,16 +477,19 @@ class Steam(commands.Cog):
                                         if quality in qualities.replace(',', '').lower():
                                             if do == 'update':
                                                 steamcommand = f'{quality} {steamcommand}'
+
                                             elif do == 'add':
                                                 quality = f'&quality={quality}'
                                                 steamcommand += quality
                                             break
                                         else:
                                             await ctx.send(f'Try again with a valid value ({qualities}')
+
                                     scclist = scclist.replace('\nQuality', '')
                                     ngt3 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'intent' or prefix == 'i' and ngt4:  # intent prefix
                                     await ctx.send(f'Intent is to ({intents})')
                                     while 1:
@@ -573,6 +504,7 @@ class Steam(commands.Cog):
                                     ngt4 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'craftable' or prefix == 'c' and ngt5:  # craftable prefix
                                     await ctx.send('Is the item craftable?')
                                     while 1:
@@ -597,6 +529,7 @@ class Steam(commands.Cog):
                                     ngt5 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'australium' or prefix == 'au' and ngt6:  # australium prefix
                                     await ctx.send('Is the item australium?')
                                     while 1:
@@ -619,6 +552,7 @@ class Steam(commands.Cog):
                                     ngt6 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'killstreak' or prefix == 'k' and ngt7:  # killstreak prefix
                                     await ctx.send(
                                         'Is the item killstreak (Killstreak (1), Specialized (2) or Professional (3))')
@@ -649,6 +583,7 @@ class Steam(commands.Cog):
                                     ngt7 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'effect' or prefix == 'e' and ngt8:  # effect suffix
                                     await ctx.send('What is the unusual effect? E.g Burning Flames')
                                     suffix = await self.bot.wait_for('message', check=self.check)
@@ -661,6 +596,7 @@ class Steam(commands.Cog):
                                     ngt8 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
+
                                 elif prefix == 'autoprice' or prefix == 'ap' and ngt9:  # effect suffix
                                     await ctx.send('Is autoprice enabled?')
                                     while 1:
@@ -673,13 +609,16 @@ class Steam(commands.Cog):
                                             break
                                         else:
                                             await ctx.send('Try again with a valid value (Y/N or T/F)')
+
                                     scclist = scclist.replace('\nAutopricing', '')
                                     ngt9 = False
                                     await ctx.send(
                                         f'Want to add more options to your command from the list: {scclist}\nIf not type escape')
                                     break
+
                                 elif prefix == 'escape' or prefix == 'esc':
                                     escape = True
+
                                 else:
                                     await ctx.send('Try again this time with something in the list')
                             if do == 'update':
@@ -687,22 +626,28 @@ class Steam(commands.Cog):
                             elif do == 'add':
                                 steamcommand = f'{self.bot.addm}{steamcommand}'
                             break
+
                         elif choice == 'no' or choice == 'n':
                             if do == 'update':
                                 steamcommand = f'{self.bot.updatem}{steamcommand}'
                             elif do == 'add':
                                 steamcommand = f'{self.bot.addm}{steamcommand}'
                             break
+
                         else:
                             await ctx.send('Please try again')
+
             else:
                 await ctx.send('Please try again with Update/Add/Remove')
+
             # sending msgs ---------------------------------------------------------------------------------------------
+
             await ctx.send(f'Command to {do} {item_to_uar} is `{steamcommand}`')
             await ctx.send('Do you want to send the command to the bot?\nType yes or no')
             while 1:
                 choice = await self.bot.wait_for('message', check=self.check)
                 choice = choice.content.lower()
+
                 if choice == 'yes' or choice == 'y':
                     await ctx.send("You have sent the bot a new command")
                     self.bot.s_bot.send_message(steamcommand)
@@ -712,6 +657,7 @@ class Steam(commands.Cog):
                     return
                 else:
                     await ctx.send('Please try again with y/n')
+
 
 def setup(bot):
     bot.add_cog(Steam(bot))
