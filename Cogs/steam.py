@@ -395,7 +395,7 @@ class Steam(commands.Cog):
     
     @commands.command()
     @commands.is_owner()
-    async def message(self, ctx, *, ,steamID, yourMessage):
+    async def message(self, ctx, *, steamID, yourMessage):
         """Send a message to a user
         eg. `{prefix}message <steamID> <your Message>`"""
         async with ctx.typing():
