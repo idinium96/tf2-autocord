@@ -346,6 +346,123 @@ class Steam(commands.Cog):
             self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
             await sleep(3)
 
+    @commands.command()
+    @commands.is_owner()
+    async def get(self, ctx, *, sku):
+        """Get raw information about a pricelist entry
+        eg. `{prefix}get sku=<item's sku>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}get {sku}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def pricecheck(self, ctx, *, sku):
+        """Requests an item to be priced by PricesTF
+        eg. `{prefix}pricecheck sku=<item's sku>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}pricecheck {sku}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def expand(self, ctx, *, craftableFalseOrTrue):
+        """Uses Backpack Expanders to increase the inventory limit
+        eg. `{prefix}expand craftable=false|true`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}expand {craftableFalseOrTrue}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def stop(self, ctx):
+        """Stop the bot
+        eg. `{prefix}stop`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}stop')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def restart(self, ctx):
+        """Restart the bot
+        eg. `{prefix}restart`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}restart')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def version(self, ctx):
+        """Get version that the bot is running
+        eg. `{prefix}version`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}version')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def avatar(self, ctx, *, avatarURL):
+        """Change avatar
+        eg. `{prefix}avatar <avatar_url>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}avatar {avatarURL}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def name(self, ctx, *, newName):
+        """Change name
+        eg. `{prefix}name <New name>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}name {newName}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def stats(self, ctx):
+        """Get statistics for accepted trades
+        eg. `{prefix}stats`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def message(self, ctx, *, steamID, yourMessage):
+        """Send a message to a user
+        eg. `{prefix}message <steamID> <your Message>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}message {SteamID} {yourMessage}')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def rate(self, ctx):
+        """Get current key prices
+        eg. `{prefix}rate`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}rate')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def stock(self, ctx):
+        """Get a list of items that the bot has
+        eg. `{prefix}stock`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}stock')
+            await sleep(3)
+    
+    @commands.command()
+    @commands.is_owner()
+    async def price(self, ctx, *, itemName):
+        """Get the price and stock of an item
+        eg. `{prefix}price <Item Name>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}price {itemName}')
+            await sleep(3)
+    
     @commands.command(aliases=['bp'])
     async def backpack(self, ctx):
         """Get a link to your inventory and your bot's"""
