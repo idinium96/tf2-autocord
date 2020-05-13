@@ -90,7 +90,7 @@ class AutoCord(Bot):
             bot.s_bot = bot.client.get_user(bot.bot64id)
             bot.logged_on = True
             bot.log.info(f'Logged on as: {bot.client.user.name}')
-            bot.client.games_played(440)
+            bot.client.games_played([440])
 
         @bot.client.on('chat_message')
         def handle_message(user, message_text):
