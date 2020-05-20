@@ -81,8 +81,9 @@ class Steam(commands.Cog):
                     message = message.replace(f" ||{trader.name}||", "")
                     message = message.replace('Offer Summary:', '__Offer Summary:__')
                     message = message.replace('Asked:', '- **Asked:**')
-                    message = message.replace('Offered:', '- **Offered:**')
-                    message = message.replace('Current key selling price:', '- **Current key selling price:**')
+                    message = message.replace('Offered:', '\n- **Offered:**')
+                    message = message.replace('📈Profit from overpay', '📈***Profit from overpay***')
+                    message = message.replace('📉Loss from underpay', '📉***Loss from underpay***')
                     embed.set_author(name=f'Trade from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
@@ -114,8 +115,9 @@ class Steam(commands.Cog):
                         message = message.replace(f" ||{trader.name}||", "")
                         message = message.replace('Summary:', '\n__Summary:__')
                         message = message.replace('Asked:', '- **Asked:**')
-                        message = message.replace('Offered:', '- **Offered:**')
-                        message = message.replace('Current key selling price:', '\nCurrent key selling price:')
+                        message = message.replace('Offered:', '\n- **Offered:**')
+                        message = message.replace('📈Profit from overpay', '📈***Profit from overpay***')
+                        message = message.replace('📉Loss from underpay', '📉***Loss from underpay***')
                         embed.set_author(name=f'Offer from: {trader.name}',
                                          url=trader.steam_id.community_url,
                                          icon_url=trader.get_avatar_url())
