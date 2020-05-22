@@ -82,8 +82,8 @@ class Steam(commands.Cog):
                     message = message.replace('Offer Summary:', '__Offer Summary:__')
                     message = message.replace('Asked:', '- **Asked:**')
                     message = message.replace('Offered:', '- **Offered:**')
-                    message = message.replace('📈Profit from overpay', '📈***Profit from overpay***')
-                    message = message.replace('📉Loss from underpay', '📉***Loss from underpay***')
+                    message = message.replace('📈 Profit from overpay', '📈***Profit from overpay***')
+                    message = message.replace('📉 Loss from underpay', '📉***Loss from underpay***')
                     embed.set_author(name=f'Trade from: {trader.name}',
                                      url=trader.steam_id.community_url,
                                      icon_url=trader.get_avatar_url())
@@ -116,8 +116,8 @@ class Steam(commands.Cog):
                         message = message.replace('Summary:', '\n__Summary:__')
                         message = message.replace('Asked:', '- **Asked:**')
                         message = message.replace('Offered:', '- **Offered:**')
-                        message = message.replace('📈Profit from overpay', '📈***Profit from overpay***')
-                        message = message.replace('📉Loss from underpay', '📉***Loss from underpay***')
+                        message = message.replace('📈 Profit from overpay', '📈***Profit from overpay***')
+                        message = message.replace('📉 Loss from underpay', '📉***Loss from underpay***')
                         embed.set_author(name=f'Offer from: {trader.name}',
                                          url=trader.steam_id.community_url,
                                          icon_url=trader.get_avatar_url())
@@ -158,6 +158,12 @@ class Steam(commands.Cog):
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
             
+            elif sbotresp.startswith ('✅ Your '):
+                if 'message has been' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_message.send(embed=embed)
+            
             elif sbotresp.startswith('Declining '):
                 embed = Embed(color=self.bot.color, title='Offer review status:', description=sbotresp)
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
@@ -168,13 +174,19 @@ class Steam(commands.Cog):
                 embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                 await self.bot.channel_offer_review.send(embed=embed)
 
-            elif sbotresp.startswith('🧾There is '):
+            elif sbotresp.startswith('🧾 There is '):
                 if 'can review' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_offer_review.send(embed=embed)
 
-            elif sbotresp.startswith('❌There are '):
+            elif sbotresp.startswith('There is '):
+                if 'can review' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='Active offer(s):', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
+                    await self.bot.channel_offer_review.send(embed=embed)
+            
+            elif sbotresp.startswith('❌ There are '):
                 if 'no active offers' in sbotresp:
                     embed = Embed(color=self.bot.color, title='No active offer', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
@@ -310,6 +322,24 @@ class Steam(commands.Cog):
         async with ctx.typing():
             self.bot.s_bot.send_message(message)
             await ctx.send(f"Sent `{message}` to the bot")
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def accepttrade(self, ctx, *, offerID):
+        """accept trade offer that is in review
+        eg. `{prefix}accepttrade <offerID>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}accepttrade {offerID}')
+            await sleep(3)
+
+    @commands.command()
+    @commands.is_owner()
+    async def declinetrade(self, ctx, *, offerID):
+        """decline trade offer that is in review
+        eg. `{prefix}declinetrade <offerID>`"""
+        async with ctx.typing():
+            self.bot.s_bot.send_message(f'{self.bot.prefix}declinetrade {offerID}')
             await sleep(3)
 
     @commands.command()
