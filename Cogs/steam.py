@@ -314,20 +314,20 @@ class Steam(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def accepttrade(self, ctx, *, offerID):
+    async def accept(self, ctx, *, offerID):
         """accept trade offer that is in review
         eg. `{prefix}accepttrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}accepttrade {offerID}')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}accept {offerID}')
             await sleep(3)
 
     @commands.command()
     @commands.is_owner()
-    async def declinetrade(self, ctx, *, offerID):
+    async def decline(self, ctx, *, offerID):
         """decline trade offer that is in review
         eg. `{prefix}declinetrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}declinetrade {offerID}')
+            self.bot.s_bot.send_message(f'{self.bot.prefix}decline {offerID}')
             await sleep(3)
 
     @commands.command()
