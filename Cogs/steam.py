@@ -127,13 +127,39 @@ class Steam(commands.Cog):
                     await self.bot.channel_offer_review.send(embed=embed)
                     await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
 
-            elif sbotresp.startswith("You've got "):
+            elif sbotresp.startswith('⚠️ Offer '):
+                embed = Embed(color=self.bot.color)
+                ownerID = preferences.owner_id
+                ids = findall(r'\d+', sbotresp)
+                offer_num = ids[0]
+                trader_id = int(ids[1])
+                trader = self.bot.client.get_user(trader_id)
+                message = message.replace(f" #{offer_num}", "")
+                if trader is not None:
+                    message = message.replace(f'Offer from {trader_id} is waiting for review',
+                                              f'An offer (#{offer_num}) sent by ||{trader.name}|| {trader.name} ({trader_id}) is waiting for review')
+                    message = message.replace(f" ||{trader.name}||", "")
+                    message = message.replace('Summary:', '\n__Summary:__')
+                    message = message.replace('Asked:', '- **Asked:**')
+                    message = message.replace('Offered:', '- **Offered:**')
+                    message = message.replace('📈 Profit from overpay', '📈***Profit from overpay***')
+                    message = message.replace('📉 Loss from underpay', '📉***Loss from underpay***')
+                    embed.set_author(name=f'Offer from: {trader.name}',
+                                     url=trader.steam_id.community_url,
+                                     icon_url=trader.get_avatar_url())
+                embed.description = message
+                embed.set_footer(text=f'Offer #{offer_num} • {datetime.now().strftime("%c")} {preferences.yourTimeZone}',
+                                 icon_url=self.bot.user.avatar_url)
+                await self.bot.channel_offer_review.send(embed=embed)
+                await self.bot.channel_offer_review.send(f'<@!{ownerID}>, check this!')
+            
+            elif sbotresp.startswith("💬 You've got "):
                 embed = Embed(color=self.bot.color)
                 ownerID = preferences.owner_id
                 ids = findall(r'\d+', sbotresp)
                 trader_id = int(ids[0])
                 trader = self.bot.client.get_user(trader_id)
-                message = message.replace(f" # {trader_id} :", "")
+                message = message.replace(f" #{trader_id}", "")
                 if trader is not None:
                     message = message.replace(f"You've got a message from ",f"💬||{trader.name}|| {trader.name}: ")
                     message = message.replace(f"||{trader.name}||", "")
@@ -146,19 +172,19 @@ class Steam(commands.Cog):
                 await self.bot.channel_message.send(embed=embed)
                 await self.bot.channel_message.send(f'<@!{ownerID}>, New Message!')
 
-            elif sbotresp.startswith ('Other admins'):
+            elif sbotresp.startswith('Other admins'):
                 if 'sent a message' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
 
-            elif sbotresp.startswith ('Your '):
+            elif sbotresp.startswith('Your '):
                 if 'message has been' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
             
-            elif sbotresp.startswith ('✅ Your '):
+            elif sbotresp.startswith('✅ Your '):
                 if 'message has been' in sbotresp:
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
