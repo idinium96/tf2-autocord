@@ -2,7 +2,7 @@ from asyncio import sleep
 from datetime import datetime
 from json import load, dump
 from math import floor
-from os import remove, getcwd
+from os import remove
 from platform import python_version
 from subprocess import getoutput
 from re import search
@@ -150,7 +150,7 @@ class Discord(commands.Cog):
         """Get some interesting info about the bot"""
         uptime = await self.get_uptime()
         rawram = virtual_memory()
-        updateable = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout {getcwd()}')
+        updateable = await self.bot.loop.run_in_executor(None, getoutput, f'git checkout Public')
 
         if 'Your branch is up to date with' in updateable:
             emoji = '<:tick:626829044134182923>'
