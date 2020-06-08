@@ -183,6 +183,10 @@ class Steam(commands.Cog):
                     embed = Embed(color=self.bot.color, title='Message system info', description=sbotresp)
                     embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
                     await self.bot.channel_message.send(embed=embed)
+                elif 'autoKeys' in sbotresp:
+                    embed = Embed(color=self.bot.color, title='AutoKeys status', description=sbotresp)
+                    embed.set_footer(text=f'• {datetime.now().strftime("%c")} {preferences.yourTimeZone}', icon_url=self.bot.user.avatar_url)
+                    await self.bot.owner.send(embed=embed)
             
             elif sbotresp.startswith('✅ Your '):
                 if 'message has been' in sbotresp:
