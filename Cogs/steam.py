@@ -341,13 +341,13 @@ class Steam(commands.Cog):
     async def profit(self, ctx):
         """Returns your bot's profit as it normally would"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}profit')
+            self.bot.s_bot.send_message('!profit')
             await sleep(5)
 
     @commands.command()
     @commands.is_owner()
     async def send(self, ctx, *, message):
-        """Send is used to send a message to the bot
+        """Send is used to send a message or any other commands to the bot
         eg. `{prefix}send {prefix}message 76561198248053954 Get on steam`"""
         async with ctx.typing():
             self.bot.s_bot.send_message(message)
@@ -360,7 +360,7 @@ class Steam(commands.Cog):
         """accept trade offer that is in review
         eg. `{prefix}accepttrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}accepttrade {offerID}')
+            self.bot.s_bot.send_message(f'!accepttrade {offerID}')
             await sleep(3)
 
     @commands.command()
@@ -369,7 +369,7 @@ class Steam(commands.Cog):
         """decline trade offer that is in review
         eg. `{prefix}declinetrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}declinetrade {offerID}')
+            self.bot.s_bot.send_message(f'!declinetrade {offerID}')
             await sleep(3)
 
     @commands.command()
@@ -378,7 +378,7 @@ class Steam(commands.Cog):
         """accept trade offer that is in review
         eg. `{prefix}accepttrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}accept {offerID}')
+            self.bot.s_bot.send_message(f'!accept {offerID}')
             await sleep(3)
 
     @commands.command()
@@ -387,7 +387,7 @@ class Steam(commands.Cog):
         """decline trade offer that is in review
         eg. `{prefix}declinetrade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}decline {offerID}')
+            self.bot.s_bot.send_message(f'!decline {offerID}')
             await sleep(3)
 
     @commands.command()
@@ -396,7 +396,7 @@ class Steam(commands.Cog):
         """check trade offer that is in review
         eg. `{prefix}trade <offerID>`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}trade {offerID}')
+            self.bot.s_bot.send_message(f'!trade {offerID}')
             await sleep(3)
 
     @commands.command()
@@ -405,7 +405,7 @@ class Steam(commands.Cog):
         """check active trade offers that are in review
         eg. `{prefix}trades`"""
         async with ctx.typing():
-            self.bot.s_bot.send_message(f'{self.bot.prefix}trades')
+            self.bot.s_bot.send_message('!trades')
             await sleep(3)
     
     @commands.command(aliases=['bp'])
