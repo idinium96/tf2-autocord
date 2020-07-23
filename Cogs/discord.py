@@ -69,7 +69,7 @@ class Discord(commands.Cog):
         send the polldata.json file as backup every 00:01 UTC"""
         self.bot.current_time = datetime.now().strftime("%d-%m-%Y %H:%M")
         if self.bot.current_time.split()[1] in ['23:59', '05:59', '11:59', '17:59']:
-            self.bot.s_bot.send_message(f'{self.bot.prefix}stats')
+            self.bot.s_bot.send_message('!stats')
             await sleep(60)
 
     @commands.command()
